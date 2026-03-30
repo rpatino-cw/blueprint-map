@@ -41,7 +41,17 @@ const TypeLibrary = {
     const all = [...this._custom, ...this.categories];
     for (const cat of all) {
       for (const p of cat.prefixes) {
-        if (v === p || v.startsWith(p)) return cat;
+        if (v === p) return cat;
+        if (v.startsWith(p)) {
+          // Single-char prefixes (like "U") must be followed by space, digit, or end
+          // to avoid matching "US-DTN01..." as Unallocated
+          if (p.length === 1) {
+            const next = v[1];
+            if (!next || next === ' ' || /\d/.test(next)) return cat;
+          } else {
+            return cat;
+          }
+        }
       }
     }
     return null;

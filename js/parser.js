@@ -144,9 +144,14 @@ class LayoutParser {
   _classifyOne(v, r, c) {
     if (!v) return 'empty';
 
-    // Site + hall header: US-EAST-03A DH201, GB-PPL01 Data Hall 1, etc.
-    if (/(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+/i.test(v) && (/DH\d/i.test(v) || /DATA\s*HALL/i.test(v) || /APPROVED/i.test(v))) {
-      this.hallHeaders.push({ row: r, col: c, value: v });
+    // Site + hall header: "US-DTN01 NORTH CAMPUS BUILDING E 8 MegaWatts", "US-EAST-03A DH201", etc.
+    if (/(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+/i.test(v) &&
+        (/DH\d/i.test(v) || /DATA\s*HALL/i.test(v) || /APPROVED/i.test(v) || /\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i.test(v))) {
+      // Extract building/hall name: "US-DTN01 NORTH CAMPUS BUILDING E 8 MegaWatts" → "NORTH CAMPUS BUILDING E"
+      const bm = v.match(/((?:NORTH|SOUTH|EAST|WEST)?\s*CAMPUS\s+BUILDING\s+[A-Z\d]+)/i) ||
+                 v.match(/((?:BUILDING|BLDG)\s+[A-Z\d]+)/i);
+      const hallValue = bm ? bm[1].trim() : v;
+      this.hallHeaders.push({ row: r, col: c, value: hallValue });
       const sm = v.match(/((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+-[\w]+)/i) ||
                  v.match(/((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+)/i);
       if (sm && !this.site) this.site = sm[1];
@@ -156,9 +161,12 @@ class LayoutParser {
       this.hallHeaders.push({ row: r, col: c, value: v });
       return 'hall-header';
     }
-    // Campus/Building naming: "NORTH CAMPUS BUILDING E", "SOUTH CAMPUS BUILDING A", etc.
-    if (/\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i.test(v) && /[A-Z\d]$/i.test(v.trim()) && v.length >= 8 && v.length <= 40) {
-      this.hallHeaders.push({ row: r, col: c, value: v });
+    // Campus/Building naming without site prefix: "NORTH CAMPUS BUILDING E", "BUILDING A", etc.
+    if (/\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i.test(v) && v.length >= 8) {
+      const bm = v.match(/((?:NORTH|SOUTH|EAST|WEST)?\s*CAMPUS\s+BUILDING\s+[A-Z\d]+)/i) ||
+                 v.match(/((?:BUILDING|BLDG|WING|SUITE)\s+[A-Z\d]+)/i);
+      const hallValue = bm ? bm[1].trim() : v.replace(/\d+\.?\d*\s*(?:MW|MegaWatts?|kW).*$/i, '').trim();
+      this.hallHeaders.push({ row: r, col: c, value: hallValue });
       return 'hall-header';
     }
     // Standalone site header in first 3 rows (e.g., "ORD3-ALBATROSS" or "LGA1" alone in a row)
