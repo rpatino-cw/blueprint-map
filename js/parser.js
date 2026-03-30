@@ -1,7 +1,18 @@
 // ════════════════════════════════════════════════════════════════
 // LAYOUT PARSER
-// 4-pass structural analysis of the raw CSV grid.
+// 6-pass structural analysis of the raw CSV grid.
 // Pure function: grid in → ParseResult out.
+// ════════════════════════════════════════════════════════════════
+// TABLE OF CONTENTS
+//   Line  27  LayoutParser class + constructor
+//   Line  90  Pass 1     — Cell classification
+//   Line 188  Pass 1.5a  — Merge multi-cell grid labels
+//   Line 209  Pass 1.5b  — Row pattern analysis (statistical)
+//   Line 270  Pass 2     — Rack block detection + serpentine
+//   Line 407  Pass 2.5   — Type discovery (unsupervised)
+//   Line 515  Pass 3     — Section grouping + pod=20 heuristic
+//   Line 716  Pass 4     — Hierarchy assignment (halls/grids/pods)
+//   Line 879  result()   — Final output assembly
 // ════════════════════════════════════════════════════════════════
 
 // DH number decoder: DH102 → {floor:1, hall:2}, DH1 → {floor:null, hall:1}

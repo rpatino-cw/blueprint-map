@@ -29,11 +29,13 @@ No install. No build step. No dependencies. Just open the file.
 
 ## How it works
 
+The app turns messy datacenter spreadsheets into visual maps. The flow is:
+
 ```
-CSV file → Parse cells → Classify (rack #, type, hall header, grid label)
-         → Detect rack blocks → Group into sections → Assign to halls
-         → Render as SVG (grid view or structured view)
+CSV file  →  2D grid array  →  4-pass parser  →  hierarchy tree  →  SVG render
 ```
+
+It takes a dumb 2D array of strings and figures out what everything means — which cells are rack numbers, which are rack types, where pods start and end, which halls exist.
 
 The parser runs 4 passes over the spreadsheet:
 1. **Classify** every cell (rack number, rack type, hall header, etc.)
