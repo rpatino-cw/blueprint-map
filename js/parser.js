@@ -142,6 +142,11 @@ class LayoutParser {
       this.hallHeaders.push({ row: r, col: c, value: v });
       return 'hall-header';
     }
+    // Campus/Building naming: "NORTH CAMPUS BUILDING E", "SOUTH CAMPUS BUILDING A", etc.
+    if (/\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i.test(v) && /[A-Z\d]$/i.test(v.trim()) && v.length >= 8 && v.length <= 40) {
+      this.hallHeaders.push({ row: r, col: c, value: v });
+      return 'hall-header';
+    }
     // Standalone site header in first 3 rows (e.g., "ORD3-ALBATROSS" or "LGA1" alone in a row)
     if (r < 3 && /^[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?$/i.test(v) && v.length <= 20) {
       if (!this.site) this.site = v.toUpperCase();
@@ -750,7 +755,7 @@ class LayoutParser {
     const hallMap = new Map();
     for (const hh of this.hallHeaders) {
       const dhm = hh.value.match(/DH(\d+)|DATA\s*HALL\s*(\d+)|^Hall\s*(\d+)$/i);
-      const hallName = dhm ? 'DH' + (dhm[1] || dhm[2] || dhm[3]) : hh.value.substring(0, 20).trim();
+      const hallName = dhm ? 'DH' + (dhm[1] || dhm[2] || dhm[3]) : hh.value.trim().substring(0, 40);
 
       let span = 1;
       for (let cc = hh.col + 1; cc < this.cols; cc++) {
@@ -771,10 +776,22 @@ class LayoutParser {
       let bestHall = null;
       let bestDist = Infinity;
 
+      // Primary: match by column overlap (tight)
       for (const [, hall] of hallMap) {
         if (secMid >= hall.colMin - 3 && secMid <= hall.colMax + 3) {
           const dist = Math.abs(secMid - (hall.colMin + hall.colMax) / 2);
           if (dist < bestDist) { bestDist = dist; bestHall = hall; }
+        }
+      }
+      // Fallback: nearest hall header ABOVE section by row distance
+      if (!bestHall) {
+        let bestRowDist = Infinity;
+        for (const [, hall] of hallMap) {
+          const rowDist = section.minRow - hall.header.row;
+          if (rowDist > 0 && rowDist < bestRowDist) {
+            bestRowDist = rowDist;
+            bestHall = hall;
+          }
         }
       }
       if (bestHall) {
