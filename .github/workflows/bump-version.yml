@@ -1,0 +1,25 @@
+name: Bump BP_VERSION
+on:
+  push:
+    branches: [main]
+    paths: ['js/**', 'css/**']
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump BP_VERSION
+        run: |
+          VERSION="$(date -u +%Y.%m.%d)-$(git rev-parse --short HEAD)"
+          sed -i "s/window.BP_VERSION = '.*'/window.BP_VERSION = '$VERSION'/" index.html
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet index.html; then
+            git commit -am "chore: bump BP_VERSION"
+            git push
+          fi
