@@ -6,14 +6,15 @@
 
 const TypeLibrary = {
   categories: [
-    { id:'compute',  label:'Compute',        prefixes:['HD-B2','HD-GB'],                              fill:'#0d2b3d', stroke:'#4a9ec4' },
+    { id:'compute',  label:'Compute',        prefixes:['HD-B2','HD-GB','H1 x','H1-','H2 x','H2-'],   fill:'#0d2b3d', stroke:'#4a9ec4' },
     { id:'ib-spine', label:'IB Spine',        prefixes:['IB x','IB-'],                                fill:'#330d1f', stroke:'#c45a8a' },
     { id:'xdr',      label:'XDR Spine',       prefixes:['XDR'],                                       fill:'#33200d', stroke:'#c4955a' },
     { id:'sc',       label:'Spine Connector', prefixes:['SC-'],                                       fill:'#1f0d33', stroke:'#8a5cc4' },
-    { id:'tor',      label:'TOR / Edge',      prefixes:['T0-E','T1-E','T2-E','T3-E'],                 fill:'#0d3324', stroke:'#4ac49a' },
+    { id:'tor',      label:'TOR / Edge',      prefixes:['T0-EOR','T0+IB','T0-E','T1-E','T2-E','T3-E','EDGE-','EDGE '], fill:'#0d3324', stroke:'#4ac49a' },
     { id:'frontend', label:'Frontend',        prefixes:['T0-FE','T1-FE','T2-FE','T0-RO','T1-RO'],     fill:'#1f330d', stroke:'#95c45a' },
     { id:'dpr',      label:'DPR',             prefixes:['DPR'],                                       fill:'#33330d', stroke:'#c4c45a' },
-    { id:'fcr',      label:'FCR',             prefixes:['FCR'],                                       fill:'#33290d', stroke:'#c4a65a' },
+    { id:'fcr',      label:'FCR',             prefixes:['FCR-','FCR'],                                fill:'#33290d', stroke:'#c4a65a' },
+    { id:'ms-sec',   label:'MS-SEC',          prefixes:['MS-SEC','MS-'],                              fill:'#331a1a', stroke:'#c45a5a' },
     { id:'core',     label:'Core / Spine',    prefixes:['CP','C-C','C-1','C1','C2','C3','C4','C5','C6','C7','C8'], fill:'#200d33', stroke:'#955ac4' },
     { id:'storage',  label:'Storage',         prefixes:['V x','VAST'],                                fill:'#0d1f33', stroke:'#5a8ac4' },
     { id:'fabric',   label:'Fabric',          prefixes:['Fab'],                                       fill:'#1a1a0d', stroke:'#8a8a3a' },

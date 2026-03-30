@@ -78,7 +78,10 @@ class LayoutParser {
 
   parse() {
     this.pass1_classify();
+    this.pass1_5_mergeGridLabels();
+    this.pass1_5_rowPatterns();
     this.pass2_detectBlocks();
+    this.pass2_5_discoverTypes();
     this.pass3_groupSections();
     this.pass4_assignHierarchy();
     return this.result();
@@ -122,7 +125,7 @@ class LayoutParser {
       if (sm && !this.site) this.site = sm[1];
       return 'hall-header';
     }
-    if (/^DH\s*\d+$/i.test(v) || /^DATA\s*HALL\s*\d+$/i.test(v) || /DATA\s*HALL\s*\d+/i.test(v)) {
+    if (/^DH\s*\d+$/i.test(v) || /^DATA\s*HALL\s*\d+$/i.test(v) || /DATA\s*HALL\s*\d+/i.test(v) || /^Hall\s*\d+$/i.test(v)) {
       this.hallHeaders.push({ row: r, col: c, value: v });
       return 'hall-header';
     }
@@ -162,6 +165,88 @@ class LayoutParser {
     return 'text';
   }
 
+  // ── PASS 1.5a: MERGE MULTI-CELL GRID LABELS ──
+  // Overhead sheets often have grid labels spanning merged cells that export
+  // as: "GRID-GROUP 1" | "GRID-A" | "GRID-POD 1" | "gg1-a1-" | "A1"
+  // Merge adjacent text cells into the first grid-label cell for richer parsing.
+  pass1_5_mergeGridLabels() {
+    for (const gl of this.gridLabels) {
+      let merged = gl.value;
+      for (let cc = gl.col + 1; cc < Math.min(gl.col + 8, this.cols); cc++) {
+        const cls = this.classified[gl.row]?.[cc];
+        if (!cls || cls.kind === 'empty') continue;
+        if (cls.kind === 'text' || cls.kind === 'grid-label') {
+          merged += ' ' + cls.value;
+          cls.kind = 'grid-label-cont'; // mark as consumed
+        } else {
+          break;
+        }
+      }
+      gl.value = merged.replace(/\s+/g, ' ').trim();
+    }
+  }
+
+  // ── PASS 1.5b: ROW PATTERN ANALYSIS ──
+  // Statistically identify rack number and type rows without AI hints.
+  // If 3+ rows share the pattern [number, number, ..., number] in the same
+  // column range, they are definitively rack number rows.
+  pass1_5_rowPatterns() {
+    if (this.hints) return; // AI hints already provide this — skip
+
+    // Find rows dominated by 'number' cells in a contiguous range
+    const numberRowCandidates = [];
+    for (let r = 0; r < this.rows; r++) {
+      let numCount = 0, totalNonEmpty = 0;
+      let minC = Infinity, maxC = 0;
+      for (let c = 0; c < (this.grid[r]?.length || 0); c++) {
+        const cls = this.classified[r]?.[c]?.kind;
+        if (cls && cls !== 'empty') {
+          totalNonEmpty++;
+          if (cls === 'number') {
+            numCount++;
+            if (c < minC) minC = c;
+            if (c > maxC) maxC = c;
+          }
+        }
+      }
+      if (numCount >= 3 && numCount / totalNonEmpty >= 0.5) {
+        numberRowCandidates.push({ row: r, numCount, minC, maxC });
+      }
+    }
+
+    // For each number row candidate, check adjacent rows for type-like patterns
+    // (rows with repeated non-number text values in the same column range)
+    for (const nr of numberRowCandidates) {
+      for (const offset of [1, -1]) {
+        const tr = nr.row + offset;
+        if (tr < 0 || tr >= this.rows) continue;
+        const valueCounts = {};
+        let textCount = 0;
+        for (let c = nr.minC; c <= nr.maxC; c++) {
+          const cls = this.classified[tr]?.[c];
+          if (cls && (cls.kind === 'text' || cls.kind === 'rack-type')) {
+            textCount++;
+            const v = cls.value;
+            valueCounts[v] = (valueCounts[v] || 0) + 1;
+          }
+        }
+        // If most cells have text AND some values repeat, it's likely a type row
+        if (textCount >= 3) {
+          const maxRepeat = Math.max(0, ...Object.values(valueCounts));
+          if (maxRepeat >= 2) {
+            // Mark unrecognized text cells as type candidates
+            for (let c = nr.minC; c <= nr.maxC; c++) {
+              const cls = this.classified[tr]?.[c];
+              if (cls && cls.kind === 'text' && cls.value) {
+                cls.kind = 'rack-type-candidate';
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   // ── PASS 2: RACK BLOCK DETECTION ──
   pass2_detectBlocks() {
     const usedRows = new Set();
@@ -194,10 +279,11 @@ class LayoutParser {
             const tv = this.cell(tr, col);
             if (tv) {
               totalChecked++;
-              if (TypeLibrary.isType(tv)) typeCount++;
+              const cls = this.classified[tr]?.[col]?.kind;
+              if (TypeLibrary.isType(tv) || cls === 'rack-type-candidate') typeCount++;
             }
           }
-          if (totalChecked > 0 && typeCount / totalChecked >= 0.4) {
+          if (totalChecked > 0 && typeCount / totalChecked >= 0.3) {
             typeRow = [];
             typeRowIdx = tr;
             for (let ci = 0; ci < run.length; ci++) {
@@ -278,6 +364,96 @@ class LayoutParser {
       const second = a.rackNums[0] < b.rackNums[0] ? b : a;
       first.cornerIndices = [0, first.rackNums.length - 1];
       second.cornerIndices = [0, second.rackNums.length - 1];
+    }
+  }
+
+  // ── PASS 2.5: TYPE DISCOVERY ──
+  // For blocks with no matched type row, look for repeated unknown values
+  // in adjacent rows and register them as discovered types.
+  pass2_5_discoverTypes() {
+    const discovered = new Map(); // value → count across all blocks
+
+    for (const block of this.blocks) {
+      if (block.rackTypes.length > 0 && block.rackTypes.some(t => t)) continue; // already has types
+
+      // Check ±1 row from the number row for repeated text
+      for (const offset of [1, -1]) {
+        const tr = block.numberRow + offset;
+        if (tr < 0 || tr >= this.rows) continue;
+        if (tr === block.typeRow) continue; // already checked
+
+        const valueCounts = {};
+        let textCells = 0;
+        for (let c = block.startCol; c <= block.endCol; c++) {
+          const v = this.cell(tr, c);
+          if (v && !TypeLibrary.isType(v) && !/^\d{1,3}$/.test(v)) {
+            textCells++;
+            valueCounts[v] = (valueCounts[v] || 0) + 1;
+          }
+        }
+
+        // If 3+ cells have the same unrecognized value, it's a type
+        for (const [val, count] of Object.entries(valueCounts)) {
+          if (count >= 2 && textCells >= 3) {
+            discovered.set(val, (discovered.get(val) || 0) + count);
+          }
+        }
+      }
+    }
+
+    if (discovered.size === 0) return;
+
+    // Register discovered types with generic colors
+    const palette = [
+      { fill: '#1a2233', stroke: '#5a7a9a' },
+      { fill: '#1a2a1a', stroke: '#5a9a5a' },
+      { fill: '#2a1a2a', stroke: '#9a5a9a' },
+      { fill: '#2a2a1a', stroke: '#9a9a5a' },
+    ];
+    let pi = 0;
+    for (const [val, count] of discovered) {
+      if (count < 3) continue;
+      if (TypeLibrary.isType(val)) continue; // was already registered by AI or custom
+      const colors = palette[pi++ % palette.length];
+      TypeLibrary.addCustom({
+        id: `disc-${val.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        label: val.replace(/\s+x\d+$/, ''), // "H1 x2" → "H1"
+        prefixes: [val],
+        ...colors,
+      });
+      this.warnings.push(`Auto-discovered type: "${val}" (found ${count} times)`);
+    }
+
+    // Re-run block type detection with new types
+    for (const block of this.blocks) {
+      if (block.rackTypes.length > 0 && block.rackTypes.some(t => t)) continue;
+      for (const offset of [1, -1]) {
+        const tr = block.numberRow + offset;
+        if (tr < 0 || tr >= this.rows) continue;
+
+        let typeCount = 0, totalChecked = 0;
+        const types = [];
+        for (let c = block.startCol; c <= block.endCol; c++) {
+          const tv = this.cell(tr, c);
+          types.push(tv);
+          if (tv) {
+            totalChecked++;
+            if (TypeLibrary.isType(tv)) typeCount++;
+          }
+        }
+        if (totalChecked > 0 && typeCount / totalChecked >= 0.3) {
+          block.typeRow = tr;
+          block.rackTypes = types;
+          // Update classified cells
+          for (let c = block.startCol; c <= block.endCol; c++) {
+            const cls = this.classified[tr]?.[c];
+            if (cls && TypeLibrary.isType(cls.value)) {
+              cls.kind = 'rack-type';
+            }
+          }
+          break;
+        }
+      }
     }
   }
 
@@ -383,14 +559,70 @@ class LayoutParser {
       }
       if (bestLabel) {
         section.gridLabel = bestLabel;
-        const gm = bestLabel.match(/GRID[-\s]?([A-Z])/i);
+        const gm = bestLabel.match(/GRID[-\s]([A-Z])(?![-\w]*(?:ROUP|OD|GROUP|POD))/i);
         if (gm) section.gridLetter = gm[1].toUpperCase();
-        const pm = bestLabel.match(/POD\s*(\d+|[A-Z]\d+)/i);
+        // Prefer trailing pod code (A1, B2) over "GRID-POD 1" keyword
+        const pm = bestLabel.match(/\b([A-Z]\d+)\s*$/) ||
+                   bestLabel.match(/POD\s+([A-Z]\d+)/i) ||
+                   bestLabel.match(/GRID-POD\s*(\d+)/i);
         if (pm) section.podLabel = pm[1].toUpperCase();
       }
 
       this.sections.push(section);
     }
+
+    // Post-processing: split oversized sections at rack number resets
+    // If racks go 1-20 then restart at 1-20, that's a new pod
+    const splitSections = [];
+    for (const sec of this.sections) {
+      if (sec.blocks.length > 4) {
+        let splitIdx = -1;
+        for (let bi = 2; bi < sec.blocks.length; bi++) {
+          const prev = sec.blocks[bi - 2];
+          const curr = sec.blocks[bi];
+          // Detect reset: previous pair had high numbers, current pair starts low again
+          if (prev.rackNums[0] > 10 && curr.rackNums[0] <= 10 && curr.ascending) {
+            // Check there's a gap between them
+            const gap = curr.numberRow - (sec.blocks[bi-1].typeRow >= 0 ? sec.blocks[bi-1].typeRow : sec.blocks[bi-1].numberRow);
+            if (gap >= 2) {
+              splitIdx = bi;
+              break;
+            }
+          }
+        }
+        if (splitIdx > 0) {
+          const newSec = {
+            blocks: sec.blocks.splice(splitIdx),
+            startCol: sec.startCol,
+            endCol: sec.endCol,
+            gridLabel: null,
+            podLabel: null,
+          };
+          newSec.minRow = newSec.blocks[0].numberRow;
+          newSec.maxRow = Math.max(...newSec.blocks.map(b => Math.max(b.numberRow, b.typeRow >= 0 ? b.typeRow : 0)));
+          sec.maxRow = Math.max(...sec.blocks.map(b => Math.max(b.numberRow, b.typeRow >= 0 ? b.typeRow : 0)));
+          // Look for grid label above the new section
+          for (let rr = newSec.minRow - 1; rr >= Math.max(0, newSec.minRow - 8); rr--) {
+            for (let cc = newSec.startCol - 3; cc <= newSec.endCol + 3; cc++) {
+              const cls = this.classified[rr]?.[cc];
+              if (cls && (cls.kind === 'grid-label' || cls.kind === 'grid-label-cont')) {
+                newSec.gridLabel = cls.value;
+                const gm2 = cls.value.match(/GRID[-\s]([A-Z])(?![-\w]*(?:ROUP|OD|GROUP|POD))/i);
+                if (gm2) newSec.gridLetter = gm2[1].toUpperCase();
+                const pm2 = cls.value.match(/\b([A-Z]\d+)\s*$/) ||
+                            cls.value.match(/POD\s+([A-Z]\d+)/i) ||
+                            cls.value.match(/GRID-POD\s*(\d+)/i);
+                if (pm2) newSec.podLabel = pm2[1].toUpperCase();
+                break;
+              }
+            }
+            if (newSec.gridLabel) break;
+          }
+          splitSections.push(newSec);
+        }
+      }
+    }
+    this.sections.push(...splitSections);
 
     for (const sec of this.sections) {
       if (sec.gridLabel) {
