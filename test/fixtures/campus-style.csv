@@ -1,0 +1,8 @@
+,,,,,,,,,,,,,,,,,,,,,,,,,,
+,US-DTN01 NORTH CAMPUS BUILDING E 8 MegaWatts,,,,,,,,,,,,US-DTN01 SOUTH CAMPUS BUILDING A 8 MegaWatts *** COREWEAVE RESERVED ***,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,ROWS 5,6,7,8,9,10,11,,ROWS 12,13,14,15,16,17,18,,,,,,,,,,,,,,
+,,1,2,3,4,5,6,7,8,9,10,,1,2,3,4,5,6,7,8,9,10,,,,,
+,,FDP-B2,RES,RES,RES,RES,RES,RES,RES,RES,FDP,,T2-E-v1a,T2-E-v1b,T0-R-v2a,T0-R-v2b,T0-R-v2a,T0-R-v2b,T0-R-v2a,T0-R-v2b,RING-1b,RING-1b,,,,,
+,,10,9,8,7,6,5,4,3,2,1,,10,9,8,7,6,5,4,3,2,1,,,,,
+,,FDP-B1,RES,RES,RES,RES,RES,RES,RES,RES,FDP,,RES,RES,RES,RES,RES,RES,RES,RES,RING-1b,RING-1b,,,,,
