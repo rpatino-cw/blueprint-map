@@ -211,8 +211,9 @@ async function ingest(csvText) {
     if (parserTypeOnly.length) console.log('  Parser found beyond AI sample:', parserTypeOnly.sort((a,b)=>a-b));
 
     const aiGrids = (hints.grid_labels || []).map(g => g.text);
-    const parserGrids = pr.gridLabels.map(g => g.value.replace(/\n/g,' ').replace(/\s+/g,' ').trim());
-    console.log(`GRID LABELS — AI: ${aiGrids.length} | Parser: ${parserGrids.length}`);
+    const parserGridsAll = pr.gridLabels.map(g => g.value.replace(/\n/g,' ').replace(/\s+/g,' ').trim());
+    const parserGrids = [...new Set(parserGridsAll)];
+    console.log(`GRID LABELS — AI: ${aiGrids.length} | Parser: ${parserGrids.length} unique (${parserGridsAll.length} total)`);
     if (aiGrids.length !== parserGrids.length) {
       console.warn('  AI grids:', aiGrids);
       console.warn('  Parser grids:', parserGrids);

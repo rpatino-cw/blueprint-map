@@ -151,6 +151,8 @@ function renderGrid() {
   const cx = c => PAD + (c - minC) * CW;
   const cy = r => PAD + (r - minR) * CH;
 
+  // Dedup grid labels: ROWS labels repeat across buildings — only show once per hall column band
+  const shownGridLabels = new Set();
   for (const sec of pr.sections) {
     const sx = cx(sec.startCol) - 2;
     const sy = cy(sec.minRow) - 2;
@@ -163,11 +165,17 @@ function renderGrid() {
     svg.appendChild(bg);
 
     if (sec.gridLabel) {
-      const label = sec.gridLabel.substring(0, 45);
-      const t = mkText(sx + sw/2, sy - 3, label, '#3d7cc9', 7, 500);
-      t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('opacity', '.6');
-      svg.appendChild(t);
+      // Dedup key: label text + hall (by column band, rounded to nearest 24 cols)
+      const hallBand = Math.floor(sec.startCol / 24);
+      const dedupKey = sec.gridLabel + '|' + hallBand;
+      if (!shownGridLabels.has(dedupKey)) {
+        shownGridLabels.add(dedupKey);
+        const label = sec.gridLabel.substring(0, 45);
+        const t = mkText(sx + sw/2, sy - 3, label, '#3d7cc9', 7, 500);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('opacity', '.6');
+        svg.appendChild(t);
+      }
     }
   }
 
