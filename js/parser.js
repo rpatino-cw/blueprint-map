@@ -157,6 +157,15 @@ class LayoutParser {
       this.gridLabels.push({ row: r, col: c, value: v });
       return 'grid-label';
     }
+    // Row grouping labels: "ROWS 5,6,7,8,9,10,11" or "ROWS 1-10"
+    if (/^ROWS?\s+[\d,\s-]+$/i.test(v) && v.length >= 6) {
+      this.gridLabels.push({ row: r, col: c, value: v });
+      return 'grid-label';
+    }
+    // Column headers: "ROW | TYPE | PWR" or "ROW  TYPE  PWR"
+    if (/^ROW\b.*\bTYPE\b/i.test(v)) {
+      return 'col-header';
+    }
 
     if (/^SP\s*\d/i.test(v)) {
       this.superpods.push({ row: r, col: c, value: v });
