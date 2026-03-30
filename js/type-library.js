@@ -12,7 +12,7 @@ const TypeLibrary = {
     { id:'sc',       label:'Spine Connector', prefixes:['SC-'],                                       fill:'#1f0d33', stroke:'#8a5cc4' },
     { id:'tor',      label:'TOR / Edge',      prefixes:['T0-EOR','T0+IB','T0-E','T1-E','T2-E','T3-E','EDGE-','EDGE '], fill:'#0d3324', stroke:'#4ac49a' },
     { id:'frontend', label:'Frontend',        prefixes:['T0-FE','T1-FE','T2-FE','T0-RO','T1-RO'],     fill:'#1f330d', stroke:'#95c45a' },
-    { id:'dpr',      label:'DPR',             prefixes:['DPR'],                                       fill:'#33330d', stroke:'#c4c45a' },
+    { id:'dpr',      label:'DPR',             prefixes:['DPR','dpu-','DPU'],                            fill:'#33330d', stroke:'#c4c45a' },
     { id:'fcr',      label:'FCR',             prefixes:['FCR-','FCR'],                                fill:'#33290d', stroke:'#c4a65a' },
     { id:'ms-sec',   label:'MS-SEC',          prefixes:['MS-SEC','MS-'],                              fill:'#331a1a', stroke:'#c45a5a' },
     { id:'core',     label:'Core / Spine',    prefixes:['CP','C-C','C-1','C1','C2','C3','C4','C5','C6','C7','C8'], fill:'#200d33', stroke:'#955ac4' },
@@ -28,6 +28,8 @@ const TypeLibrary = {
     { id:'t-tier',   label:'T-Tier Spine',    prefixes:['T4-','T3-','T2-','T1-','T0-'],               fill:'#1a2a33', stroke:'#5a9ac4' },
     { id:'fbs',      label:'FBS',             prefixes:['FBS','fbs'],                                  fill:'#2a1a2a', stroke:'#9a5a9a' },
     { id:'dss',      label:'DSS / Shim',      prefixes:['dss','DSS'],                                  fill:'#2a2a1a', stroke:'#9a9a3a' },
+    { id:'roce',     label:'RoCE',            prefixes:['RoCE','ROCE','roce'],                         fill:'#1a2a33', stroke:'#5ab4c4' },
+    { id:'overflow', label:'Overflow',        prefixes:['OVERFLOW','overflow','OVF'],                  fill:'#2a1a1a', stroke:'#9a5a5a' },
   ],
 
   _custom: [],

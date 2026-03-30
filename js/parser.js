@@ -119,15 +119,22 @@ class LayoutParser {
   _classifyOne(v, r, c) {
     if (!v) return 'empty';
 
-    if (/US-[\w-]+/i.test(v) && (/DH\d/i.test(v) || /DATA\s*HALL/i.test(v) || /APPROVED/i.test(v))) {
+    // Site + hall header: US-EAST-03A DH201, GB-PPL01 Data Hall 1, etc.
+    if (/(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+/i.test(v) && (/DH\d/i.test(v) || /DATA\s*HALL/i.test(v) || /APPROVED/i.test(v))) {
       this.hallHeaders.push({ row: r, col: c, value: v });
-      const sm = v.match(/(US-[\w]+-[\w]+)/i);
+      const sm = v.match(/((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+-[\w]+)/i) ||
+                 v.match(/((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+)/i);
       if (sm && !this.site) this.site = sm[1];
       return 'hall-header';
     }
     if (/^DH\s*\d+$/i.test(v) || /^DATA\s*HALL\s*\d+$/i.test(v) || /DATA\s*HALL\s*\d+/i.test(v) || /^Hall\s*\d+$/i.test(v)) {
       this.hallHeaders.push({ row: r, col: c, value: v });
       return 'hall-header';
+    }
+    // Standalone site header in first 3 rows (e.g., "ORD3-ALBATROSS" or "LGA1" alone in a row)
+    if (r < 3 && /^[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?$/i.test(v) && v.length <= 20) {
+      if (!this.site) this.site = v.toUpperCase();
+      return 'site-header';
     }
 
     if (/GRID[-\s]?[A-Z]/i.test(v) || /GRID-POD/i.test(v) || /GRID-GROUP/i.test(v)) {
@@ -157,6 +164,19 @@ class LayoutParser {
     }
     if (/^Totals?$/i.test(v)) return 'stat';
     if (/^[A-Z][\w\s]+:\s*\d/i.test(v) && v.length < 50) return 'stat';
+
+    // Hostname detection: t0-gg1-a1-01-r001-..., con-01-dh1-r001-..., mgmt-core-01a-r001-...
+    // These appear in some overheads as device names within rack cells
+    if (/^(t[0-4][a-d]?|con|net|oob-fw|mgmt-core|dss|dpu|comp-dist|comp-agg|net-dist|net-agg|grid-agg|pod-dist|infra-dist|infra-sw|br|tlr|dsr|dclr|fbs)-/i.test(v) && /r\d{2,3}/i.test(v)) {
+      return 'rack-type';
+    }
+
+    // Location code as site identifier: XX-XXXXX (GB-PPL01, SE-SKH01, NO-OVO01)
+    if (/^[A-Z]{2}-[A-Z]{3}\d{2}$/i.test(v)) {
+      if (!this.site) this.site = v.toUpperCase();
+      this.hallHeaders.push({ row: r, col: c, value: v });
+      return 'hall-header';
+    }
 
     if (TypeLibrary.isType(v)) return 'rack-type';
     if (/^\d{1,3}$/.test(v) && +v >= 1 && +v <= 999) return 'number';
@@ -364,6 +384,23 @@ class LayoutParser {
       const second = a.rackNums[0] < b.rackNums[0] ? b : a;
       first.cornerIndices = [0, first.rackNums.length - 1];
       second.cornerIndices = [0, second.rackNums.length - 1];
+
+      // Corner rack validation: positions 1/10/11/20 in a 20-rack pod
+      // should be switches or empty (IB, TOR, edge) — not compute
+      const totalPairRacks = first.rackNums.length + second.rackNums.length;
+      if (totalPairRacks === 20 && first.rackNums.length === 10) {
+        first.isPodRow = true;
+        second.isPodRow = true;
+        first.podSize = 20;
+        second.podSize = 20;
+        // Tag corner rack types for validation
+        for (const block of [first, second]) {
+          if (block.rackTypes.length > 0) {
+            const corners = block.cornerIndices || [];
+            block.cornerRackTypes = corners.map(i => block.rackTypes[i] || null);
+          }
+        }
+      }
     }
   }
 
@@ -525,16 +562,28 @@ class LayoutParser {
           if (labelBetween) continue;
 
           const gap = b.numberRow - section.maxRow;
-          if (gap >= 4) {
+          if (gap >= 3) {
             let emptyCount = 0;
+            let labelCount = 0;
             for (let rr = section.maxRow + 1; rr < b.numberRow; rr++) {
               const rowCells = this.grid[rr] || [];
-              const hasContent = rowCells.some((c, ci) =>
-                ci >= section.startCol - 1 && ci <= section.endCol + 1 && c && c.trim() &&
-                !/^\s*$/.test(c) && !this.classified[rr]?.[ci]?.kind?.startsWith('grid-label'));
-              if (!hasContent) emptyCount++;
+              let hasContent = false;
+              let hasLabel = false;
+              for (let ci = Math.max(0, section.startCol - 1); ci <= Math.min(section.endCol + 1, (rowCells.length || 0) - 1); ci++) {
+                const cellVal = rowCells[ci];
+                const cellKind = this.classified[rr]?.[ci]?.kind;
+                if (cellKind?.startsWith('grid-label') || cellKind === 'grid-label-cont') {
+                  hasLabel = true;
+                } else if (cellVal && cellVal.trim() && !/^\s*$/.test(cellVal)) {
+                  hasContent = true;
+                }
+              }
+              if (!hasContent && !hasLabel) emptyCount++;
+              if (hasLabel) labelCount++;
             }
-            if (emptyCount >= 4) continue;
+            // CW overhead spec: 4 empty rows between pods = definitive boundary
+            // Also split if 3+ empty rows with labels between (GG/G/GP label rows)
+            if (emptyCount >= 4 || (emptyCount >= 3 && labelCount >= 1)) continue;
           }
 
           section.blocks.push(b);
@@ -624,6 +673,29 @@ class LayoutParser {
     }
     this.sections.push(...splitSections);
 
+    // Pod=20 auto-detection: if a section has exactly 20 racks from serpentine
+    // pairs (2 rows of 10), auto-label as a pod even without grid labels
+    for (const sec of this.sections) {
+      const totalRacks = sec.blocks.reduce((s, b) => s + b.rackNums.length, 0);
+      const hasSerpentine = sec.blocks.some(b => b.serpentine);
+      const pairCount = sec.blocks.filter(b => b.partner != null).length;
+      // 2 blocks of 10 = 1 pod, 4 blocks of 10 = 2 pods (should've been split), etc.
+      if (totalRacks === 20 && hasSerpentine && pairCount === 2) {
+        sec.autoPod = true;
+        sec.podSize = 20;
+        if (!sec.podLabel) {
+          // Infer pod label from rack numbers: e.g., racks 1-20 → pod from row context
+          const minRack = Math.min(...sec.blocks.flatMap(b => b.rackNums));
+          const maxRack = Math.max(...sec.blocks.flatMap(b => b.rackNums));
+          sec.inferredPodRange = `${minRack}-${maxRack}`;
+        }
+      }
+      // Also detect multi-pod sections: 40 racks = 2 pods, 60 = 3, etc.
+      if (totalRacks > 0 && totalRacks % 20 === 0 && hasSerpentine && !sec.podLabel) {
+        sec.inferredPodCount = totalRacks / 20;
+      }
+    }
+
     for (const sec of this.sections) {
       if (sec.gridLabel) {
         sec.gridLabelRaw = sec.gridLabel;
@@ -666,8 +738,8 @@ class LayoutParser {
 
     const hallMap = new Map();
     for (const hh of this.hallHeaders) {
-      const dhm = hh.value.match(/DH(\d+)|DATA\s*HALL\s*(\d+)/i);
-      const hallName = dhm ? 'DH' + (dhm[1] || dhm[2]) : hh.value.substring(0, 10);
+      const dhm = hh.value.match(/DH(\d+)|DATA\s*HALL\s*(\d+)|^Hall\s*(\d+)$/i);
+      const hallName = dhm ? 'DH' + (dhm[1] || dhm[2] || dhm[3]) : hh.value.substring(0, 20).trim();
 
       let span = 1;
       for (let cc = hh.col + 1; cc < this.cols; cc++) {
