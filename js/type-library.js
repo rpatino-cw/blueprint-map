@@ -30,6 +30,8 @@ const TypeLibrary = {
     { id:'dss',      label:'DSS / Shim',      prefixes:['dss','DSS'],                                  fill:'#2a2a1a', stroke:'#9a9a3a' },
     { id:'roce',     label:'RoCE',            prefixes:['RoCE','ROCE','roce'],                         fill:'#1a2a33', stroke:'#5ab4c4' },
     { id:'overflow', label:'Overflow',        prefixes:['OVERFLOW','overflow','OVF'],                  fill:'#2a1a1a', stroke:'#9a5a5a' },
+    { id:'fdp',      label:'FDP',             prefixes:['FDP'],                                        fill:'#1a2a2a', stroke:'#5a9a9a' },
+    { id:'ring',     label:'Ring',            prefixes:['RING'],                                       fill:'#2a1a2a', stroke:'#9a5a8a' },
   ],
 
   _custom: [],

@@ -89,20 +89,6 @@ class LayoutParser {
 
   parse() {
     this.pass1_classify();
-    // DEBUG: dump first 15 rows to see what cells look like
-    if (typeof console !== 'undefined') {
-      const debugRows = [];
-      for (let r = 0; r < Math.min(15, this.rows); r++) {
-        const cells = [];
-        for (let c = 0; c < (this.grid[r]?.length || 0); c++) {
-          const v = this.cell(r, c);
-          const k = this.classified[r]?.[c]?.kind;
-          if (v) cells.push(`[${c}]${k}:"${v}"`);
-        }
-        if (cells.length) debugRows.push(`Row ${r}: ${cells.join(' | ')}`);
-      }
-      console.log('[Parser DEBUG] First 15 rows:\n' + debugRows.join('\n'));
-    }
     this.pass1_5_mergeGridLabels();
     this.pass1_5_rowPatterns();
     this.pass2_detectBlocks();
