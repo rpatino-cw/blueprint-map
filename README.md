@@ -13,6 +13,12 @@
   [![Deploy](https://img.shields.io/github/deployments/rpatino-cw/blueprint-map/github-pages?style=flat-square&label=live)](https://rpatino-cw.github.io/blueprint-map/)
 </div>
 
+<br>
+
+<div align="center">
+  <img src="assets/demo.gif" alt="Blueprint Map demo — drop CSV, get visual map" width="700">
+</div>
+
 ---
 
 ## Try it
@@ -65,10 +71,9 @@ The parser takes a raw 2D grid of strings and figures out what everything means 
 | **Grid** | 1:1 cell layout — every cell from the original CSV, color-coded by classification |
 | **Structured** | Clean rack diagram grouped by hall, grid, and pod. Serpentine arrows, corner badges, type fills |
 
-<!-- Replace with real screenshots when available:
-<img src="assets/grid-view.png" alt="Grid view" width="600">
-<img src="assets/structured-view.png" alt="Structured view" width="600">
--->
+<img src="assets/grid-view.png" alt="Grid view — color-coded cells from CSV" width="700">
+
+<img src="assets/structured-view.png" alt="Structured view — grouped by hall, grid, pod" width="700">
 
 ---
 
