@@ -5,7 +5,7 @@
 
   **For DCTs who read CSV overheads and see racks, not cells.**
 
-  Zero-dependency browser app that turns datacenter overhead spreadsheets into zoomable visual floor maps. Drop a CSV, get a blueprint.
+  Browser app that turns datacenter overhead spreadsheets into zoomable visual floor maps. Drop a CSV, get a blueprint.
 
   [![License](https://img.shields.io/github/license/rpatino-cw/blueprint-map?style=flat-square)](LICENSE)
   [![Issues](https://img.shields.io/github/issues/rpatino-cw/blueprint-map?style=flat-square)](https://github.com/rpatino-cw/blueprint-map/issues)
@@ -26,7 +26,7 @@
 1. Open [**Blueprint Map**](https://rpatino-cw.github.io/blueprint-map/)
 2. Drop your overhead `.csv` onto the drop zone
 
-That's it. Map renders in seconds. No install, no build step, no dependencies.
+That's it. Map renders in seconds. No install, no build step.
 
 ```bash
 # Or run locally
@@ -41,8 +41,11 @@ open index.html
 
 - **Visualize** overhead layout CSVs as zoomable, color-coded blueprints
 - **Auto-detect** rack types, halls, grids, pods, and serpentine numbering with a 6-pass parser
+- **Fast CSV parsing** — PapaParse with Web Worker support for large files (>500KB), auto-detects delimiters (comma, tab, pipe)
 - **Export** publication-ready SVG vectors and 2x PNG bitmaps
 - **AI-assisted** (optional) — Claude Haiku identifies structure in messy spreadsheets
+- **CoreWeave-branded UI** — dark console aesthetic with seamless header/sidebar, glass-morphism panels, and animated accents
+- **Offline fallback** — built-in CSV parser activates when CDN is unavailable
 
 ---
 
@@ -142,13 +145,13 @@ Tests run on Node 18, 20, and 22 via GitHub Actions on every push and PR.
 
 ```
 index.html              ← app shell + cache-busted script loader
-css/style.css           ← dark datacenter theme
+css/style.css           ← CoreWeave-branded dark theme with animations
 js/
   type-library.js       ← 25+ rack type definitions + prefix matching
   parser.js             ← 6-pass layout analysis engine (~930 lines)
   renderer.js           ← SVG grid + structured view rendering
   ai.js                 ← Claude API integration + response caching
-  app.js                ← state management, CSV parsing, UI events
+  app.js                ← state management, PapaParse CSV parsing, UI events
 test/
   parser.test.js        ← 47 parser tests (Node.js, zero deps)
   fixtures/             ← anonymized CSV test fixtures

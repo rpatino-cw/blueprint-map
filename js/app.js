@@ -13,7 +13,8 @@ const state = {
 };
 
 // ── CSV PARSING ──
-function parseCSV(text) {
+// Fallback parser for offline / CDN failure
+function parseCSVFallback(text) {
   const rows = [];
   let row = [];
   let cell = '';
@@ -57,6 +58,37 @@ function parseCSV(text) {
   while (rows.length > 0 && rows[rows.length - 1].every(c => !c.trim())) rows.pop();
 
   return rows;
+}
+
+const LARGE_FILE_THRESHOLD = 500 * 1024; // 500KB — use Web Worker above this
+const PAPA_OPTS = { delimiter: '', newline: '', quoteChar: '"', skipEmptyLines: 'greedy' };
+
+function parseCSV(text) {
+  if (typeof Papa === 'undefined') return parseCSVFallback(text);
+  return Papa.parse(text, PAPA_OPTS).data;
+}
+
+function parseCSVAsync(text) {
+  return new Promise((resolve, reject) => {
+    if (typeof Papa === 'undefined') {
+      resolve(parseCSVFallback(text));
+      return;
+    }
+    Papa.parse(text, {
+      ...PAPA_OPTS,
+      worker: true,
+      complete: function(results) {
+        if (results.errors.length > 0) {
+          console.warn('[Blueprint Map] PapaParse warnings:', results.errors);
+        }
+        resolve(results.data);
+      },
+      error: function(err) {
+        console.error('[Blueprint Map] Worker parse failed, using fallback:', err);
+        resolve(parseCSVFallback(text));
+      },
+    });
+  });
 }
 
 // ── CELL SELECTION ──
@@ -122,7 +154,7 @@ function doSearch() {
     const el=document.querySelector(`rect[data-rc="${fr},${fc}"]`);
     if(el){
       const container=document.getElementById('map-container');
-      const rx=parseFloat(el.getAttribute('x'))+CW/2;
+      const rx=parseFloat(el.getAttribute('x'))+CELL_W/2;
       const ry=parseFloat(el.getAttribute('y'))+CH/2;
       state.panX=container.clientWidth/2-rx*state.zoom;
       state.panY=container.clientHeight/2-ry*state.zoom;
@@ -159,8 +191,15 @@ function dl(blob,name){const a=document.createElement('a');a.href=URL.createObje
 
 // ── INGEST ──
 async function ingest(csvText) {
-  state.grid = parseCSV(csvText);
-  console.log(`%c[Blueprint Map] CSV parsed: ${state.grid.length} rows, max ${Math.max(...state.grid.map(r=>r?.length||0))} cols`, 'color:#7ec8e3');
+  const isLarge = csvText.length > LARGE_FILE_THRESHOLD;
+  if (isLarge) {
+    toast('Parsing large file...');
+    state.grid = await parseCSVAsync(csvText);
+  } else {
+    state.grid = parseCSV(csvText);
+  }
+  const maxCols = state.grid.reduce((mx, r) => Math.max(mx, r?.length || 0), 0);
+  console.log(`%c[Blueprint Map] CSV parsed${isLarge?' (worker)':''}: ${state.grid.length} rows, max ${maxCols} cols`, 'color:#7ec8e3');
 
   let hints = null;
   const statusEl = document.getElementById('ai-status');
@@ -330,7 +369,7 @@ document.getElementById('btn-export-png').addEventListener('click',()=>{
   const str=new XMLSerializer().serializeToString(clone);
   const cvs=document.createElement('canvas');cvs.width=w*scale;cvs.height=h*scale;const ctx=cvs.getContext('2d');
   const img=new Image();const b=new Blob([str],{type:'image/svg+xml;charset=utf-8'});const u=URL.createObjectURL(b);
-  img.onload=()=>{ctx.fillStyle='#0a1628';ctx.fillRect(0,0,cvs.width,cvs.height);ctx.drawImage(img,0,0,cvs.width,cvs.height);URL.revokeObjectURL(u);cvs.toBlob(pb=>{dl(pb,`${state.parseResult?.site||'blueprint'}-overhead.png`);toast('PNG exported (2x)');},'image/png');};
+  img.onload=()=>{ctx.fillStyle='#0d1117';ctx.fillRect(0,0,cvs.width,cvs.height);ctx.drawImage(img,0,0,cvs.width,cvs.height);URL.revokeObjectURL(u);cvs.toBlob(pb=>{dl(pb,`${state.parseResult?.site||'blueprint'}-overhead.png`);toast('PNG exported (2x)');},'image/png');};
   img.src=u;
 });
 
