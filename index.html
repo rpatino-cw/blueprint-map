@@ -28,6 +28,8 @@
       <button class="bar-btn active" id="btn-grid-view">Grid</button>
       <button class="bar-btn" id="btn-struct-view">Structured</button>
       <span class="bar-sep"></span>
+      <button class="bar-btn" id="btn-refresh" title="Refresh live data">&#8635;</button>
+      <span class="bar-sep"></span>
       <button class="bar-btn" id="btn-export-svg" disabled>SVG</button>
       <button class="bar-btn" id="btn-export-png" disabled>PNG</button>
     </div>
@@ -47,9 +49,9 @@
         </div>
       </div>
       <div id="source-sheets" style="display:none">
-        <input class="input" id="sheet-url" type="text" placeholder="Google Sheet URL">
-        <p class="hint">Sheet must be public or published</p>
-        <button class="btn" id="btn-fetch-sheet">Fetch</button>
+        <input class="input" id="sheet-url" type="text" placeholder="Tab name (default: OVERHEAD)">
+        <p class="hint">Pulls live from MASTER via Apps Script (CW login required)</p>
+        <button class="btn" id="btn-fetch-sheet">Load Live</button>
       </div>
     </div>
 

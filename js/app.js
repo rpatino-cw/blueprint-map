@@ -438,14 +438,40 @@ function loadFile(file) {
   reader.readAsText(file);
 }
 
-// Google Sheets
-document.getElementById('btn-fetch-sheet').addEventListener('click',async()=>{
-  const url=document.getElementById('sheet-url').value.trim();
-  if(!url)return;
-  let csvUrl=url;
-  const m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(m){const id=m[1];const gm=url.match(/gid=(\d+)/);const gid=gm?gm[1]:'0';csvUrl=`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;}
-  try{toast('Fetching...');const resp=await fetch(csvUrl);if(!resp.ok)throw new Error(`HTTP ${resp.status}`);await ingest(await resp.text());} catch(err){toast(`Failed: ${err.message}`);}
+// ── LIVE SHEETS (JSONP) ──
+const SHEETS_ENDPOINT = 'https://script.google.com/a/macros/coreweave.com/s/AKfycbw_DYXJFneaL7C-6xP4L2XxvlJN9wm0sIEZZWC_aDEygfj5vFUPk98iDV4oUy8r45Bt/exec';
+
+function arrayToCSV(arr) {
+  return arr.map(row => (row || []).map(cell => {
+    const s = String(cell == null ? '' : cell);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }).join(',')).join('\n');
+}
+
+function loadFromSheets(tab) {
+  toast('Fetching live sheet...');
+  const cbName = '_bpSheet' + Date.now();
+  window[cbName] = async function(data) {
+    delete window[cbName];
+    if (data.error) { toast('Sheet error: ' + data.error, true); return; }
+    await ingest(arrayToCSV(data));
+  };
+  const s = document.createElement('script');
+  s.src = SHEETS_ENDPOINT + '?tab=' + encodeURIComponent(tab || 'OVERHEAD') + '&callback=' + cbName;
+  s.onerror = () => { delete window[cbName]; toast('Failed to reach Apps Script endpoint', true); };
+  document.body.appendChild(s);
+}
+
+// Google Sheets — JSONP fetch
+document.getElementById('btn-fetch-sheet').addEventListener('click', () => {
+  const url = document.getElementById('sheet-url').value.trim();
+  if (url) {
+    const tabMatch = url.match(/[?&]tab=([^&]+)/);
+    loadFromSheets(tabMatch ? decodeURIComponent(tabMatch[1]) : 'OVERHEAD');
+  } else {
+    loadFromSheets('OVERHEAD');
+  }
 });
 
 // Export
@@ -481,6 +507,9 @@ window.addEventListener('resize',()=>{if(document.getElementById('blueprint-svg'
     if (e.key === 'Escape') panel.classList.remove('open');
   });
 })();
+
+// Refresh button — re-fetches live data
+document.getElementById('btn-refresh').addEventListener('click', () => loadFromSheets('OVERHEAD'));
 
 // Allow dropping CSV anywhere on the canvas (not just the panel drop zone)
 mc.addEventListener('dragover', e => e.preventDefault());
