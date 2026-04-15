@@ -336,6 +336,29 @@ async function ingest(csvText) {
     console.log(`STATS — AI flagged ${aiStatCount} stat rows | Parser found ${parserStatCount} stats:`, pr.stats);
 
     console.log(`SUPERPODS — Parser found: ${pr.superpods.length}`, pr.superpods.map(s => s.value));
+
+    // AUTO-LEARN: register AI-discovered custom type prefixes into TypeLibrary
+    const customPrefixes = hints.custom_type_prefixes || [];
+    let learned = 0;
+    for (const cp of customPrefixes) {
+      if (!TypeLibrary.match(cp.prefix)) {
+        const catMap = { compute:'#0d2b3d/#4a9ec4', network:'#200d33/#955ac4', power:'#33330d/#c4c45a', storage:'#0d1f33/#5a8ac4' };
+        const colors = catMap[cp.likely_category] || '#1a2233/#5a8ac4';
+        const [fill, stroke] = colors.split('/');
+        TypeLibrary.addCustom({ id: 'ai-' + cp.prefix.replace(/[^a-z0-9]/gi,''), label: cp.prefix, prefixes: [cp.prefix], fill, stroke });
+        learned++;
+      }
+    }
+    if (learned) console.log(`%c[Blueprint Map] Auto-learned ${learned} new type prefixes from AI`, 'color:#34a853;font-weight:bold');
+
+    // Store exportable rules for codegen
+    state.learnedRules = {
+      site: pr.site,
+      customTypes: customPrefixes,
+      halls: aiHalls,
+      serpentine: hints.serpentine,
+      racksPerRow: hints.racks_per_row,
+    };
   } else {
     console.log('No AI hints — pure rule-based parse');
     console.log(`Blocks: ${pr.blocks.length} | Sections: ${pr.sections.length} | Halls: ${pr.halls.length} | Racks: ${pr.totalRacks}`);
@@ -523,6 +546,32 @@ document.getElementById('btn-clear-cache').addEventListener('click', () => {
   const keys = Object.keys(localStorage).filter(k => k.startsWith('bp_hints_'));
   keys.forEach(k => localStorage.removeItem(k));
   toast(keys.length ? `Cleared ${keys.length} cached analysis${keys.length > 1 ? 'es' : ''}` : 'No cached data to clear');
+});
+
+// Export rules — generates code patch for type-library.js
+document.getElementById('btn-export-rules').addEventListener('click', () => {
+  const rules = state.learnedRules;
+  if (!rules || !rules.customTypes?.length) {
+    toast('No learned rules to export — run AI analysis first');
+    return;
+  }
+  const catMap = { compute:'#0d2b3d/#4a9ec4', network:'#200d33/#955ac4', power:'#33330d/#c4c45a', storage:'#0d1f33/#5a8ac4' };
+  let code = `// Auto-generated from AI analysis of ${rules.site}\n`;
+  code += `// Paste into TypeLibrary.categories array in type-library.js\n\n`;
+  for (const cp of rules.customTypes) {
+    const colors = catMap[cp.likely_category] || '#1a2233/#5a8ac4';
+    const [fill, stroke] = colors.split('/');
+    const id = cp.prefix.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    code += `{ id:'${id}', label:'${cp.prefix}', prefixes:['${cp.prefix}'], fill:'${fill}', stroke:'${stroke}' },\n`;
+  }
+  code += `\n// Site: ${rules.site} | Halls: ${(rules.halls||[]).join(', ')} | ${rules.racksPerRow}/row | Serpentine: ${rules.serpentine}`;
+
+  navigator.clipboard.writeText(code).then(() => {
+    toast('Rules copied to clipboard — paste into type-library.js');
+  }).catch(() => {
+    console.log(code);
+    toast('Rules logged to console (clipboard blocked)');
+  });
 });
 
 // Refresh button — re-fetches live data
