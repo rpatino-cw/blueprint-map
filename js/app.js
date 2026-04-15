@@ -502,6 +502,13 @@ window.addEventListener('resize',()=>{if(document.getElementById('blueprint-svg'
   });
 })();
 
+// Clear learned data
+document.getElementById('btn-clear-cache').addEventListener('click', () => {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('bp_hints_'));
+  keys.forEach(k => localStorage.removeItem(k));
+  toast(keys.length ? `Cleared ${keys.length} cached analysis${keys.length > 1 ? 'es' : ''}` : 'No cached data to clear');
+});
+
 // Refresh button — re-fetches live data
 document.getElementById('btn-refresh').addEventListener('click', () => {
   const sheetId = document.getElementById('sheet-site').value;
