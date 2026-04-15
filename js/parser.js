@@ -631,7 +631,7 @@ class LayoutParser {
 
       let bestLabel = null;
       let bestScore = 0;
-      for (let rr = section.minRow - 1; rr >= Math.max(0, section.minRow - 8); rr--) {
+      for (let rr = section.minRow - 1; rr >= Math.max(0, section.minRow - 12); rr--) {
         for (let cc = section.startCol - 3; cc <= section.endCol + 3; cc++) {
           const cls = this.classified[rr]?.[cc];
           if (cls && cls.kind === 'grid-label') {
@@ -844,6 +844,9 @@ class LayoutParser {
       }
     }
 
+    // AI-assisted grid/pod fill: resolve '?' entries using AI hints
+    this._aiGridPodFill();
+
     for (const [, hall] of hallMap) {
       const dh = decodeDH(hall.name);
       const grids = new Map();
@@ -922,6 +925,58 @@ class LayoutParser {
         grids: [{ letter: '?', pods: [{ name: '?', sections: this.sections }] }],
       });
       this.warnings.push('No data hall headers detected — all sections grouped as one layout');
+    }
+  }
+
+  // ── AI GRID/POD FILL ──
+  // Use AI grid_labels and grid_pod_map to assign grid letters and pod labels
+  // to sections that the regex-based detection missed.
+  _aiGridPodFill() {
+    if (!this.hints) return;
+    const aiLabels = (this.hints.grid_labels || []).map(gl => ({
+      ...gl, _row: (gl.row || 1) - 1, _col: gl.col || 0
+    }));
+    const podMap = this.hints.grid_pod_map || {};
+
+    for (const section of this.sections) {
+      if (section.gridLetter && section.podLabel) continue;
+
+      // Strategy 1: nearest AI grid_label with parsed grid/pod fields
+      if (!section.gridLetter && aiLabels.length > 0) {
+        const secMidRow = (section.minRow + section.maxRow) / 2;
+        let best = null, bestDist = Infinity;
+        for (const gl of aiLabels) {
+          if (!gl.grid) continue;
+          // Label should be above or near the section, same column region
+          if (gl._row > section.maxRow + 3) continue;
+          if (gl._col < section.startCol - 6 || gl._col > section.endCol + 6) continue;
+          const dist = Math.abs(gl._row - section.minRow) + Math.abs(gl._col - section.startCol) * 0.3;
+          if (dist < bestDist) { bestDist = dist; best = gl; }
+        }
+        if (best && bestDist < 25) {
+          section.gridLetter = best.grid.toUpperCase();
+          if (!section.podLabel && best.pod) section.podLabel = best.pod.toUpperCase();
+        }
+      }
+
+      // Strategy 2: grid_pod_map — if hall has only one grid, assign it
+      if (!section.gridLetter && section.hall && podMap[section.hall]) {
+        const hallGrids = podMap[section.hall];
+        if (Array.isArray(hallGrids) && hallGrids.length === 1) {
+          section.gridLetter = hallGrids[0].letter.toUpperCase();
+        }
+      }
+
+      // Strategy 3: if grid assigned but pod missing, check grid_pod_map
+      if (section.gridLetter && !section.podLabel && section.hall && podMap[section.hall]) {
+        const hallGrids = podMap[section.hall];
+        if (Array.isArray(hallGrids)) {
+          const gridInfo = hallGrids.find(g => g.letter.toUpperCase() === section.gridLetter);
+          if (gridInfo && gridInfo.pods && gridInfo.pods.length === 1) {
+            section.podLabel = gridInfo.pods[0].toUpperCase();
+          }
+        }
+      }
     }
   }
 
