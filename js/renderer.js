@@ -7,12 +7,12 @@ const NS = 'http://www.w3.org/2000/svg';
 const CELL_W = 62, CH = 20, PAD = 60;
 
 const P = {
-  bg:'#0d1117', surface:'#161b22', text:'#c9d1d9',
-  white:'#f0f6fc', dim:'#6e7681', primary:'#4264ff', warning:'#d29922',
+  bg:'#f5f5f7', surface:'#ffffff', text:'#1d1d1f',
+  white:'#1d1d1f', dim:'#aeaeb2', primary:'#1d1d1f', warning:'#a68a3a',
 };
-const cwA = (a) => `rgba(66,100,255,${a})`;
-const FONT_DISPLAY = 'Source Sans 3,Space Grotesk,sans-serif';
-const TYPE_FALLBACK = { fill: P.surface, stroke: cwA(.2), label: 'Other' };
+const cwA = (a) => `rgba(29,29,31,${a})`;
+const FONT_DISPLAY = 'DM Serif Display,Georgia,serif';
+const TYPE_FALLBACK = { fill: '#f0f0f2', stroke: cwA(.15), label: 'Other' };
 
 function spanFrom(grid, r, c, maxC, limit) {
   let span = 1;
@@ -45,7 +45,7 @@ function mkSVG(w, h) {
   svg.appendChild(mkRect(0, 0, w, h, P.bg, 'none'));
 
   const defs = document.createElementNS(NS, 'defs');
-  defs.innerHTML = `<pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0L0 0 0 40" fill="none" stroke="${P.primary}" stroke-width=".3" opacity=".06"/></pattern>`;
+  defs.innerHTML = `<pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0L0 0 0 40" fill="none" stroke="${P.primary}" stroke-width=".2" opacity=".04"/></pattern>`;
   svg.appendChild(defs);
   svg.appendChild(mkRect(0, 0, w, h, 'url(#g)', 'none'));
 
@@ -226,8 +226,8 @@ function renderGrid() {
       const isSel = state.selectedRC?.row === r && state.selectedRC?.col === c;
 
       if (cls === 'rack-num') {
-        const bg = mkRect(x+1,y+1,CELL_W-2,CH-2, isHL?cwA(.12):'rgba(22,27,34,.7)', isSel?P.white:(isHL?P.primary:cwA(.2)));
-        bg.setAttribute('stroke-width', isSel?'2':(isHL?'1.5':'.5'));
+        const bg = mkRect(x+1,y+1,CELL_W-2,CH-2, isHL?cwA(.06):'#ffffff', isSel?P.text:(isHL?P.primary:cwA(.12)));
+        bg.setAttribute('stroke-width', isSel?'1.5':(isHL?'1':'.5'));
         bg.setAttribute('rx','2');
         bg.setAttribute('data-rc',key);
         bg.style.cursor='pointer';
@@ -265,10 +265,9 @@ function renderGrid() {
         const labelClean = v.replace(/\n/g,' ').replace(/\s+/g,' ').substring(0,40);
         const span = spanFrom(grid,r,c,maxC,8);
         const w=span*CELL_W;
-        const bg=mkRect(x,y,w,CH,cwA(.08),P.primary);
-        bg.setAttribute('stroke-width','.5');
+        const bg=mkRect(x,y,w,CH,cwA(.05),'none');
         svg.appendChild(bg);
-        const t=mkText(x+w/2,y+CH/2+3,labelClean,P.white,9,600,FONT_DISPLAY);
+        const t=mkText(x+w/2,y+CH/2+3,labelClean,P.text,9,600,FONT_DISPLAY);
         t.setAttribute('text-anchor','middle');
         svg.appendChild(t);
       }
@@ -293,7 +292,7 @@ function renderGrid() {
       }
       else if (cls === 'reserved') {
         const span = spanFrom(grid,r,c,maxC,5);
-        const bg=mkRect(x,y+2,span*CELL_W,CH-4,P.surface,cwA(.08));
+        const bg=mkRect(x,y+2,span*CELL_W,CH-4,'#f0f0f2',cwA(.08));
         bg.setAttribute('stroke-width','.3');
         bg.setAttribute('stroke-dasharray','3 2');
         svg.appendChild(bg);
@@ -395,15 +394,15 @@ function renderStructured() {
     const hy = BPAD;
     state.hallBounds.push({ name: hl.hall.name, x: hx, y: hy, w: hl.w, h: hl.h });
 
-    const hbg = mkRect(hx, hy, hl.w, hl.h, cwA(.03), cwA(.2));
+    const hbg = mkRect(hx, hy, hl.w, hl.h, '#ffffff', cwA(.1));
     hbg.setAttribute('stroke-width', '.5');
-    hbg.setAttribute('rx', '4');
+    hbg.setAttribute('rx', '6');
     svg.appendChild(hbg);
 
     const hallLabel = hl.hall.floor != null
       ? `${hl.hall.name}  Floor ${hl.hall.floor}`
       : hl.hall.name;
-    const ht = mkText(hx + 10, hy + 16, hallLabel, P.white, 12, 700, FONT_DISPLAY);
+    const ht = mkText(hx + 10, hy + 16, hallLabel, P.text, 12, 700, FONT_DISPLAY);
     ht.setAttribute('letter-spacing', '1');
     svg.appendChild(ht);
 
