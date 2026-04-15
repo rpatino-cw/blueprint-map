@@ -375,3 +375,23 @@ document.getElementById('btn-export-png').addEventListener('click',()=>{
 
 // Resize
 window.addEventListener('resize',()=>{if(document.getElementById('blueprint-svg'))fitView()});
+
+// ═══════════════════════════════════════════════════════════════
+// PANEL TOGGLE & CANVAS DROP
+// ═══════════════════════════════════════════════════════════════
+
+(function() {
+  const panel = document.getElementById('panel');
+  const btn = document.getElementById('btn-panel');
+  btn.addEventListener('click', () => panel.classList.toggle('open'));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') panel.classList.remove('open');
+  });
+})();
+
+// Allow dropping CSV anywhere on the canvas (not just the panel drop zone)
+mc.addEventListener('dragover', e => e.preventDefault());
+mc.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});

@@ -11,104 +11,107 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bkHKm0lMMTnFGnbW5DkFj+mOmOzjPYLOaHDYPv5irg1GdUY0mjBXaonSoA9Jw8SyuHA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
+
 <div class="app">
-  <header class="header">
-    <div class="header-left">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 1548 924" xmlns="http://www.w3.org/2000/svg"><path fill="#4264ff" fill-rule="evenodd" d="m610.9 697.1h-222.7c-13.3 0-27.1-8.6-35.2-22.8l-103.2-192.5c-5.2-14.2-5.2-28.4 0-39.6l103.2-192.5c8.1-14.2 21.9-22.8 35.2-22.8h127.7c13.8 0 27.1-8.6 35.7-22.8l92-172.3c8.2-14.2-2.6-31.4-15.9-31.4h-342.7c-29.6 0-54.1 17.2-70.5 42.6l-203.7 379.5q-4.8 9.4-7.4 19.7-2.5 10.3-2.5 21.1 0 10.7 2.5 21 2.6 10.4 7.4 19.8l203.7 376.9q5.2 9.5 12.9 17.2 7.3 7.7 16.8 13.8 9 5.6 19.8 8.1 10.3 3 21 3h437.7c16.3 0 24.5-16.7 16.3-30.9l-95.4-175.3c-2.6-14.2-15.9-20.2-32.2-20.2z"/><path fill="#4264ff" d="m1214.1 167.6l-86.8-153c-8.2-14.2-27.1-14.2-35.3 0l-366.7 679.5c-5.6 14.2-5.6 28.3 0 39.5l95 178.4c8.2 14.1 27.1 14.1 35.2 0l358.6-662.3q5.2-9.5 7.7-20.2 2.6-10.3 2.6-21.1 0-10.7-2.6-21-2.5-10.3-7.7-19.8z"/><path fill="#4264ff" fill-rule="evenodd" d="m771.3 478.8l108.7-200.7c5.6-11.6 5.6-28.4 0-42.6l-125.1-223.5c-8.1-14.1-27-14.1-35.2 0l-105.8 195.1c-5.6 11.2-5.6 28.4 0 39.6l122.1 229.5c8.2 16.7 29.7 16.7 35.3 2.6z"/><path fill="#4264ff" d="m1534.4 167.6l-86.9-153c-8.1-14.2-27-14.2-35.2 0l-366.7 679.5c-5.2 14.2-5.2 28.3 0 39.5l98 178.4c8.2 14.1 27.1 14.1 35.2 0l358.6-662.3c13.3-25.8 13.3-56.7-3-82.1z"/></svg></div>Blueprint Map</div>
-      <span class="header-meta">Overhead Layout</span>
+  <header class="bar">
+    <div class="bar-left">
+      <button class="bar-btn" id="btn-panel" title="Toggle panel">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 4.5h11M2 7.5h11M2 10.5h11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>
+      <span class="bar-title">Blueprint Map</span>
     </div>
-    <div class="header-right">
-      <button class="btn active" id="btn-grid-view">Grid</button>
-      <button class="btn" id="btn-struct-view">Structured</button>
-      <button class="btn" id="btn-export-svg" disabled>Export SVG</button>
-      <button class="btn" id="btn-export-png" disabled>Export PNG</button>
+    <div class="bar-right">
+      <button class="bar-btn active" id="btn-grid-view">Grid</button>
+      <button class="bar-btn" id="btn-struct-view">Structured</button>
+      <span class="bar-sep"></span>
+      <button class="bar-btn" id="btn-export-svg" disabled>SVG</button>
+      <button class="bar-btn" id="btn-export-png" disabled>PNG</button>
     </div>
   </header>
 
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Data Source</div>
+  <aside class="panel" id="panel">
+    <div class="p-section">
+      <div class="p-label">Source</div>
       <div class="source-tabs">
-        <button class="source-tab active" data-source="csv">CSV File</button>
-        <button class="source-tab" data-source="sheets">Google Sheet</button>
+        <button class="source-tab active" data-source="csv">CSV</button>
+        <button class="source-tab" data-source="sheets">Sheet</button>
       </div>
       <div id="source-csv">
         <div class="drop-zone" id="drop-zone">
-          <div class="drop-zone-text">Drop <strong>.csv</strong> here<br>or click to browse</div>
+          <span>Drop .csv or click to browse</span>
           <input type="file" accept=".csv,.tsv,.txt" id="file-input">
         </div>
       </div>
       <div id="source-sheets" style="display:none">
-        <input class="sheet-input" id="sheet-url" type="text" placeholder="Google Sheet URL...">
-        <div class="sheet-help">Sheet must be shared (anyone with link) or published.</div>
-        <button class="btn btn-primary" id="btn-fetch-sheet" style="width:100%;margin-top:5px">Fetch Sheet</button>
+        <input class="input" id="sheet-url" type="text" placeholder="Google Sheet URL">
+        <p class="hint">Sheet must be public or published</p>
+        <button class="btn" id="btn-fetch-sheet">Fetch</button>
       </div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-label">AI Analysis</div>
+    <div class="p-section">
+      <div class="p-label">AI Analysis</div>
       <div class="ai-section">
-        <div class="ai-toggle">
-          <label><input type="checkbox" id="ai-enabled" checked> Use AI to detect layout structure</label>
-        </div>
+        <label class="ai-toggle"><input type="checkbox" id="ai-enabled" checked> Detect layout</label>
         <div class="ai-key-row">
-          <input type="password" id="ai-key" placeholder="sk-ant-... (Anthropic API key)">
-          <button class="btn" id="btn-save-key" style="padding:5px 8px;font-size:9px">Save</button>
+          <input type="password" id="ai-key" placeholder="API key">
+          <button class="btn-sm" id="btn-save-key">Save</button>
         </div>
         <div class="ai-status" id="ai-status"></div>
       </div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-label">Search</div>
+    <div class="p-section">
+      <div class="p-label">Search</div>
       <div class="search-bar">
-        <input id="search-input" type="text" placeholder="Rack #, type, grid...">
-        <button id="btn-search">Find</button>
+        <input id="search-input" type="text" placeholder="Rack, type, grid...">
+        <button id="btn-search">Go</button>
       </div>
     </div>
 
-    <div class="sidebar-section" id="parse-section" style="display:none">
-      <div class="sidebar-label">Detected Structure</div>
+    <div class="p-section" id="parse-section" style="display:none">
+      <div class="p-label">Structure</div>
       <div id="parse-tree"></div>
     </div>
 
-    <div class="sidebar-section" id="legend-section" style="display:none">
-      <div class="sidebar-label">Rack Types</div>
+    <div class="p-section" id="legend-section" style="display:none">
+      <div class="p-label">Types</div>
       <div class="legend-list" id="legend"></div>
     </div>
 
-    <div class="sidebar-section detail-panel">
-      <div class="sidebar-label">Detail</div>
-      <div id="detail-content"><div class="detail-empty">Click a cell on the map</div></div>
+    <div class="p-section">
+      <div class="p-label">Detail</div>
+      <div id="detail-content"><span class="detail-empty">Click a cell on the map</span></div>
     </div>
   </aside>
 
-  <main class="map-container" id="map-container">
+  <main class="canvas" id="map-container">
     <div class="map-canvas" id="map-canvas">
       <div class="empty-state" id="empty-state">
-        <div class="empty-state-icon"></div>
-        <div class="empty-state-text">Load an overhead layout CSV<br>or Google Sheet to render</div>
+        <span class="empty-text">Drop a CSV file anywhere</span>
       </div>
     </div>
     <div class="title-block" id="title-block" style="display:none">
-      <div class="tb-title" id="tb-title">--</div>
-      <div class="tb-row"><span class="tb-label">Racks</span><span class="tb-value" id="tb-racks">--</span></div>
-      <div class="tb-row"><span class="tb-label">Halls</span><span class="tb-value" id="tb-halls">--</span></div>
-      <div class="tb-row"><span class="tb-label">Generated</span><span class="tb-value" id="tb-date">--</span></div>
-      <div class="tb-row"><span class="tb-label">Scale</span><span class="tb-value">1 : 200</span></div>
+      <span id="tb-title"></span>
+      <span class="tb-sep">/</span>
+      <span><span id="tb-racks"></span> racks</span>
+      <span class="tb-sep">/</span>
+      <span id="tb-halls"></span>
+      <span class="tb-sep">/</span>
+      <span id="tb-date"></span>
     </div>
     <div class="zoom-controls">
       <button class="zoom-btn" id="zoom-in">+</button>
-      <div class="zoom-level" id="zoom-level">100%</div>
+      <span class="zoom-level" id="zoom-level">100%</span>
       <button class="zoom-btn" id="zoom-out">&minus;</button>
-      <button class="zoom-btn" id="zoom-fit" style="font-size:10px;margin-top:2px">Fit</button>
+      <button class="zoom-btn zoom-fit" id="zoom-fit">Fit</button>
     </div>
   </main>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// Cache-bust: load JS sequentially with ?v= so GitHub Pages never serves stale files
 (function(){
   var v = window.BP_VERSION || Date.now();
   var scripts = ['js/type-library.js','js/parser.js','js/renderer.js','js/ai.js','js/app.js'];
