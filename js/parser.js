@@ -220,7 +220,16 @@ class LayoutParser {
 
     if (TypeLibrary.isType(v)) return 'rack-type';
     if (/^\d{1,3}$/.test(v) && +v >= 1 && +v <= 999) return 'number';
+    if (/^\d+\.?\d*\s*kW/i.test(v) || /^\(\d+kW/i.test(v) || /kW\s*\(/i.test(v)) return 'annotation';
+
+    // Power capacity near racks: "27.3kW (18kW allocated)", "106kW"
     if (/kW/i.test(v)) return 'annotation';
+
+    // Rack-adjacent labels that aren't types: "** XDR spines for DH3 & DH4"
+    if (/^\*\*/.test(v)) return 'annotation';
+
+    // "Insert DC CAD drawings below" and similar sheet instructions
+    if (/^Insert\b|^Named range|^Conditional formatting|^Replace values/i.test(v)) return 'stat';
 
     return 'text';
   }
