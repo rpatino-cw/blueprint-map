@@ -449,7 +449,7 @@ function arrayToCSV(arr) {
   }).join(',')).join('\n');
 }
 
-function loadFromSheets(tab) {
+function loadFromSheets(tab, sheetId) {
   toast('Fetching live sheet...');
   const cbName = '_bpSheet' + Date.now();
   window[cbName] = async function(data) {
@@ -458,20 +458,19 @@ function loadFromSheets(tab) {
     await ingest(arrayToCSV(data));
   };
   const s = document.createElement('script');
-  s.src = SHEETS_ENDPOINT + '?tab=' + encodeURIComponent(tab || 'OVERHEAD') + '&callback=' + cbName;
+  const params = '?tab=' + encodeURIComponent(tab || 'OVERHEAD')
+    + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
+    + '&callback=' + cbName;
+  s.src = SHEETS_ENDPOINT + params;
   s.onerror = () => { delete window[cbName]; toast('Failed to reach Apps Script endpoint', true); };
   document.body.appendChild(s);
 }
 
 // Google Sheets — JSONP fetch
 document.getElementById('btn-fetch-sheet').addEventListener('click', () => {
-  const url = document.getElementById('sheet-url').value.trim();
-  if (url) {
-    const tabMatch = url.match(/[?&]tab=([^&]+)/);
-    loadFromSheets(tabMatch ? decodeURIComponent(tabMatch[1]) : 'OVERHEAD');
-  } else {
-    loadFromSheets('OVERHEAD');
-  }
+  const tab = document.getElementById('sheet-url').value.trim() || 'OVERHEAD';
+  const sheetId = document.getElementById('sheet-site').value;
+  loadFromSheets(tab, sheetId);
 });
 
 // Export
@@ -509,7 +508,10 @@ window.addEventListener('resize',()=>{if(document.getElementById('blueprint-svg'
 })();
 
 // Refresh button — re-fetches live data
-document.getElementById('btn-refresh').addEventListener('click', () => loadFromSheets('OVERHEAD'));
+document.getElementById('btn-refresh').addEventListener('click', () => {
+  const sheetId = document.getElementById('sheet-site').value;
+  loadFromSheets('OVERHEAD', sheetId);
+});
 
 // Allow dropping CSV anywhere on the canvas (not just the panel drop zone)
 mc.addEventListener('dragover', e => e.preventDefault());

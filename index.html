@@ -49,8 +49,12 @@
         </div>
       </div>
       <div id="source-sheets" style="display:none">
-        <input class="input" id="sheet-url" type="text" placeholder="Tab name (default: OVERHEAD)">
-        <p class="hint">Pulls live from MASTER via Apps Script (CW login required)</p>
+        <select class="input" id="sheet-site">
+          <option value="1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI">EVI01 — Elk Grove (US-CENTRAL-07A)</option>
+          <option value="1bxVq9THKhii4y-fUGuYEuO6vy9u273Dbfu4unqD9kTw">Site 2</option>
+        </select>
+        <input class="input" id="sheet-url" type="text" placeholder="Tab name (default: OVERHEAD)" style="margin-top:6px">
+        <p class="hint">Pulls live via Apps Script (CW login required)</p>
         <button class="btn" id="btn-fetch-sheet">Load Live</button>
       </div>
     </div>
