@@ -13,6 +13,8 @@ const TypeLibrary = {
     { id:'tor',      label:'TOR / Edge',      prefixes:['T0-EOR','T0+IB','T0-E','T1-E','T2-E','T3-E','EDGE-','EDGE '], fill:'#0d3324', stroke:'#4ac49a' },
     { id:'frontend', label:'Frontend',        prefixes:['T0-FE','T1-FE','T2-FE','T0-RO','T1-RO'],     fill:'#1f330d', stroke:'#95c45a' },
     { id:'dpr',      label:'DPR',             prefixes:['DPR','dpu-','DPU'],                            fill:'#33330d', stroke:'#c4c45a' },
+    { id:'pscr',     label:'PSCR',            prefixes:['PSCR'],                                       fill:'#33330d', stroke:'#c4c45a' },
+    { id:'psdr',     label:'PSDR',            prefixes:['PSDR'],                                       fill:'#33330d', stroke:'#c4c45a' },
     { id:'fcr',      label:'FCR',             prefixes:['FCR-','FCR'],                                fill:'#33290d', stroke:'#c4a65a' },
     { id:'ms-sec',   label:'MS-SEC',          prefixes:['MS-SEC','MS-'],                              fill:'#331a1a', stroke:'#c45a5a' },
     { id:'core',     label:'Core / Spine',    prefixes:['CP','C-C','C-1','C1','C2','C3','C4','C5','C6','C7','C8'], fill:'#200d33', stroke:'#955ac4' },
