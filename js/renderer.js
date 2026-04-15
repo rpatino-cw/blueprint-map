@@ -132,6 +132,19 @@ function renderAll() {
   else renderGrid();
 }
 
+function getHallBoundsForFilter(pr, filter) {
+  if (filter === '__all') return null;
+  const hall = pr.halls.find(h => h.name === filter);
+  if (!hall) return null;
+  let rMin = Infinity, rMax = 0;
+  for (const g of hall.grids) for (const p of g.pods) for (const s of p.sections) {
+    rMin = Math.min(rMin, s.minRow);
+    rMax = Math.max(rMax, s.maxRow);
+  }
+  // add padding rows for headers/labels above and below
+  return { colMin: hall.colMin - 1, colMax: hall.colMax + 2, rowMin: Math.max(0, rMin - 4), rowMax: rMax + 2 };
+}
+
 function renderGrid() {
   const pr = state.parseResult;
   const grid = pr.grid;
@@ -139,11 +152,15 @@ function renderGrid() {
   const canvas = document.getElementById('map-canvas');
   document.getElementById('empty-state').style.display = 'none';
 
+  const hallBounds = getHallBoundsForFilter(pr, state.hallFilter);
+
   let minR = Infinity, maxR = 0, minC = Infinity, maxC = 0;
   let nonEmpty = 0;
 
   for (let r = 0; r < grid.length; r++) {
+    if (hallBounds && (r < hallBounds.rowMin || r > hallBounds.rowMax)) continue;
     for (let c = 0; c < (grid[r]?.length || 0); c++) {
+      if (hallBounds && (c < hallBounds.colMin || c > hallBounds.colMax)) continue;
       if ((grid[r][c] || '').trim()) {
         nonEmpty++;
         if (r < minR) minR = r; if (r > maxR) maxR = r;
@@ -164,7 +181,11 @@ function renderGrid() {
   const cy = r => PAD + (r - minR) * CH;
 
   const shownGridLabels = new Set();
-  for (const sec of pr.sections) {
+  const filteredSections = hallBounds ? pr.sections.filter(sec =>
+    sec.startCol >= hallBounds.colMin && sec.endCol <= hallBounds.colMax &&
+    sec.minRow >= hallBounds.rowMin && sec.maxRow <= hallBounds.rowMax
+  ) : pr.sections;
+  for (const sec of filteredSections) {
     const sx = cx(sec.startCol) - 2;
     const sy = cy(sec.minRow) - 2;
     const sw = (sec.endCol - sec.startCol + 1) * CELL_W + 4;
@@ -190,7 +211,8 @@ function renderGrid() {
   }
 
   state.hallBounds = [];
-  for (const hall of pr.halls) {
+  const filteredHalls = state.hallFilter === '__all' ? pr.halls : pr.halls.filter(h => h.name === state.hallFilter);
+  for (const hall of filteredHalls) {
     let hMinR = Infinity, hMaxR = 0;
     for (const g of hall.grids) for (const p of g.pods) for (const s of p.sections) {
       hMinR = Math.min(hMinR, s.minRow);
@@ -216,7 +238,9 @@ function renderGrid() {
 
   const typeCounts = {};
   for (let r = minR; r <= maxR; r++) {
+    if (hallBounds && (r < hallBounds.rowMin || r > hallBounds.rowMax)) continue;
     for (let c = minC; c <= maxC; c++) {
+      if (hallBounds && (c < hallBounds.colMin || c > hallBounds.colMax)) continue;
       const v = (grid[r]?.[c] || '').trim();
       if (!v) continue;
       const x = cx(c), y = cy(r);
@@ -355,7 +379,8 @@ function renderStructured() {
   let totalH = 0;
   const hallLayouts = [];
 
-  for (const hall of pr.halls) {
+  const structHalls = state.hallFilter === '__all' ? pr.halls : pr.halls.filter(h => h.name === state.hallFilter);
+  for (const hall of structHalls) {
     let hallW = 0;
     let hallH = 0;
     const gridLayouts = [];

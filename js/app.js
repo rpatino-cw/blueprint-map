@@ -11,6 +11,7 @@ const state = {
   highlightSet: new Set(),
   selectedRC: null,
   hallBounds: [],  // [{name, x, y, w, h}] computed during render
+  hallFilter: '__all',
 };
 
 // ── CSV PARSING ──
@@ -344,30 +345,9 @@ function populateHallSelect(pr) {
 }
 
 function focusHall(name) {
-  const container = document.getElementById('map-container');
-  if (!container) return;
-
-  if (name === '__all') {
-    fitView();
-    return;
-  }
-
-  const hb = state.hallBounds.find(b => b.name === name);
-  if (!hb) return;
-
-  // Zoom to fit the hall with 10% padding
-  const cw = container.clientWidth;
-  const ch = container.clientHeight;
-  const zx = cw / (hb.w * 1.1);
-  const zy = ch / (hb.h * 1.1);
-  state.zoom = Math.min(zx, zy, 4);
-
-  // Center the hall
-  const hallCx = hb.x + hb.w / 2;
-  const hallCy = hb.y + hb.h / 2;
-  state.panX = cw / 2 - hallCx * state.zoom;
-  state.panY = ch / 2 - hallCy * state.zoom;
-  applyTransform();
+  state.hallFilter = name;
+  renderAll();
+  fitView();
 }
 
 document.getElementById('hall-select').addEventListener('change', e => focusHall(e.target.value));
