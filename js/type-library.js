@@ -18,7 +18,7 @@ const TypeLibrary = {
     { id:'fcr',      label:'FCR',             prefixes:['FCR-','FCR'],                                fill:'#f4ead4', stroke:'#b89a4a' },
     { id:'ms-sec',   label:'MS-SEC',          prefixes:['MS-SEC','MS-'],                              fill:'#f4dcd8', stroke:'#b84a42' },
     { id:'core',     label:'Core / Spine',    prefixes:['CP','C-C','C-1','C1','C2','C3','C4','C5','C6','C7','C8'], fill:'#e4dcf4', stroke:'#7a4ab8' },
-    { id:'storage',  label:'Storage',         prefixes:['V x','VAST'],                                fill:'#dce4f4', stroke:'#4a6ab8' },
+    { id:'storage',  label:'Storage',         prefixes:['V x','V-x','VAST'],                           fill:'#dce4f4', stroke:'#4a6ab8' },
     { id:'fabric',   label:'Fabric',          prefixes:['Fab'],                                       fill:'#ececdc', stroke:'#8a8a4a' },
     { id:'spine-sw', label:'Spine Switch',    prefixes:['S1-','S3-','S5-','S7-','S1 ','S5 ','S9 ','S13','S17','S21','S25','S29','S33','S37','S41','S45','S49','S53','S57','S61','S65','S69'], fill:'#dcf0f4', stroke:'#3a98b8' },
     { id:'reserved', label:'Reserved',        prefixes:['RES'],                                       fill:'#ebebeb', stroke:'#a0a0a0' },

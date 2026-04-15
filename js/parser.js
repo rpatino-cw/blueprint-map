@@ -48,6 +48,7 @@ class LayoutParser {
     this.halls = [];
     this.hallHeaders = [];
     this.gridLabels = [];
+    this.colHeaders = [];    // ROW/TYPE column headers — used for hall boundary signals
     this.superpods = [];
     this.stats = {};
     this.site = '';
@@ -180,7 +181,10 @@ class LayoutParser {
       return 'superpod';
     }
 
-    if (/^ROW$/i.test(v) || /^TYPE$/i.test(v)) return 'col-header';
+    if (/^ROW$/i.test(v) || /^TYPE$/i.test(v)) {
+      this.colHeaders.push({ row: r, col: c, value: v });
+      return 'col-header';
+    }
     if (/^RESERVED$/i.test(v)) return 'reserved';
 
     if (/^SPLAT[_-]/i.test(v)) {
@@ -238,6 +242,8 @@ class LayoutParser {
   // Overhead sheets often have grid labels spanning merged cells that export
   // as: "GRID-GROUP 1" | "GRID-A" | "GRID-POD 1" | "gg1-a1-" | "A1"
   // Merge adjacent text cells into the first grid-label cell for richer parsing.
+  // Also parses "||" delimited labels (e.g. "GRID-A || GRID-GROUP-1 || GRID-POD A1")
+  // to extract structured grid/group/pod fields.
   pass1_5_mergeGridLabels() {
     // Only merge multi-cell labels for GRID-GROUP/GRID-POD patterns (CW merged cells).
     // Don't merge standalone ROWS labels — they're separate section groupings.
@@ -256,6 +262,38 @@ class LayoutParser {
         }
       }
       gl.value = merged.replace(/\s+/g, ' ').trim();
+
+      // Parse structured fields from the label (handles both "||" and space-separated)
+      this._parseGridLabelFields(gl);
+    }
+  }
+
+  // Parse structured grid/group/pod fields from a grid label string.
+  // Handles "GRID-A || GRID-GROUP-1 || GRID-POD A1" and
+  // "GRID-D GRID-GROUP-1 GRID-POD D1" (multiline merged cells flattened).
+  _parseGridLabelFields(gl) {
+    const v = gl.value;
+    // Split on "||" if present, otherwise treat as single string
+    const parts = v.includes('||') ? v.split('||').map(p => p.trim()) : [v];
+
+    for (const part of parts) {
+      // Grid letter: "GRID-A", "GRID A", "GRID D" (not followed by -GROUP/-POD)
+      if (!gl.gridLetter) {
+        const gm = part.match(/GRID[-\s]?([A-Z])(?![-\w]*(?:ROUP|OD|GROUP|POD))/i);
+        if (gm) gl.gridLetter = gm[1].toUpperCase();
+      }
+      // Grid-group number: "GRID-GROUP-1", "GRID-GROUP 1", "GG1"
+      if (!gl.gridGroup) {
+        const ggm = part.match(/GRID[-\s]?GROUP[-\s]?(\d+)/i) || part.match(/\bGG(\d+)\b/i);
+        if (ggm) gl.gridGroup = +ggm[1];
+      }
+      // Pod label: "GRID-POD A1", "POD A1", trailing "A1"
+      if (!gl.podLabel) {
+        const pm = part.match(/POD\s+([A-Z]\d+)/i) ||
+                   part.match(/GRID-POD\s*(\d+)/i) ||
+                   part.match(/\b([A-Z]\d+)\s*$/);
+        if (pm) gl.podLabel = pm[1].toUpperCase();
+      }
     }
   }
 
@@ -476,7 +514,7 @@ class LayoutParser {
         let textCells = 0;
         for (let c = block.startCol; c <= block.endCol; c++) {
           const v = this.cell(tr, c);
-          if (v && !TypeLibrary.isType(v) && !/^\d{1,3}$/.test(v)) {
+          if (v && !TypeLibrary.isType(v) && !/^\d{1,3}$/.test(v) && !/kW/i.test(v)) {
             textCells++;
             valueCounts[v] = (valueCounts[v] || 0) + 1;
           }
@@ -605,9 +643,13 @@ class LayoutParser {
             Math.abs(b.endCol - section.endCol) <= 2 &&
             b.numberRow - section.maxRow <= 6) {
 
+          // Check for grid labels between sections or at the next block's row.
+          // CW overheads often place grid labels (GRID-C, GRID-POD C1, etc.)
+          // on the same row as the first rack numbers of a new section, just
+          // a few columns to the left. These must trigger a section split.
           let labelBetween = false;
           for (const lr of labelRows) {
-            if (lr > section.maxRow && lr < b.numberRow) {
+            if (lr > section.maxRow && lr <= b.numberRow) {
               labelBetween = true;
               break;
             }
@@ -645,9 +687,15 @@ class LayoutParser {
         }
       }
 
+      // Find the best grid label above or at this section.
+      // Search includes minRow itself — CW overheads often place grid labels
+      // (in multiline merged cells) on the same row as the first rack numbers.
+      // Scoring: proximity wins over label completeness when grids differ.
+      let bestGl = null;
       let bestLabel = null;
       let bestScore = 0;
-      for (let rr = section.minRow - 1; rr >= Math.max(0, section.minRow - 12); rr--) {
+      let bestRow = -1;
+      for (let rr = section.minRow; rr >= Math.max(0, section.minRow - 20); rr--) {
         for (let cc = section.startCol - 3; cc <= section.endCol + 3; cc++) {
           const cls = this.classified[rr]?.[cc];
           if (cls && cls.kind === 'grid-label') {
@@ -655,19 +703,53 @@ class LayoutParser {
             let score = 1;
             if (/GRID.?GROUP/i.test(val)) score = 2;
             if (/POD/i.test(val)) score = 3;
-            if (score > bestScore) { bestScore = score; bestLabel = val; }
+
+            // Proximity trumps score when the grid letter changes.
+            // A nearby "GRID-C" should beat a distant "GRID-A POD A2".
+            const thisGrid = val.match(/GRID[-\s]?([A-Z])(?![-\w]*(?:ROUP|OD))/i)?.[1]?.toUpperCase();
+            const bestGrid = bestLabel?.match(/GRID[-\s]?([A-Z])(?![-\w]*(?:ROUP|OD))/i)?.[1]?.toUpperCase();
+
+            let isBetter = false;
+            if (!bestLabel) {
+              isBetter = true;
+            } else if (thisGrid && bestGrid && thisGrid !== bestGrid) {
+              // Different grids: prefer the closer one (higher row number)
+              isBetter = rr > bestRow;
+            } else {
+              // Same grid or unknown: prefer higher score, then proximity
+              isBetter = score > bestScore || (score === bestScore && rr > bestRow);
+            }
+
+            if (isBetter) {
+              bestScore = score;
+              bestLabel = val;
+              bestRow = rr;
+              bestGl = this.gridLabels.find(gl => gl.row === rr && gl.col === cc) || null;
+            }
           }
         }
       }
       if (bestLabel) {
         section.gridLabel = bestLabel;
-        const gm = bestLabel.match(/GRID[-\s]([A-Z])(?![-\w]*(?:ROUP|OD|GROUP|POD))/i);
-        if (gm) section.gridLetter = gm[1].toUpperCase();
-        // Prefer trailing pod code (A1, B2) over "GRID-POD 1" keyword
-        const pm = bestLabel.match(/\b([A-Z]\d+)\s*$/) ||
-                   bestLabel.match(/POD\s+([A-Z]\d+)/i) ||
-                   bestLabel.match(/GRID-POD\s*(\d+)/i);
-        if (pm) section.podLabel = pm[1].toUpperCase();
+        // Use pre-parsed fields from _parseGridLabelFields if available
+        if (bestGl?.gridLetter) {
+          section.gridLetter = bestGl.gridLetter;
+        } else {
+          const gm = bestLabel.match(/GRID[-\s]([A-Z])(?![-\w]*(?:ROUP|OD|GROUP|POD))/i);
+          if (gm) section.gridLetter = gm[1].toUpperCase();
+        }
+        if (bestGl?.podLabel) {
+          section.podLabel = bestGl.podLabel;
+        } else {
+          const pm = bestLabel.match(/\b([A-Z]\d+)\s*$/) ||
+                     bestLabel.match(/POD\s+([A-Z]\d+)/i) ||
+                     bestLabel.match(/GRID-POD\s*(\d+)/i);
+          if (pm) section.podLabel = pm[1].toUpperCase();
+        }
+        // Preserve grid-group number (GG1, GG2, etc.) if parsed
+        if (bestGl?.gridGroup) {
+          section.gridGroup = bestGl.gridGroup;
+        }
       }
 
       this.sections.push(section);
@@ -808,6 +890,37 @@ class LayoutParser {
       }
     }
 
+    // Refine hall boundaries using inter-header distances and ROW/TYPE signals.
+    // CW overheads often have halls spanning wide column ranges (left + right sections
+    // separated by ROW/TYPE columns). The span-based calculation is the primary source,
+    // but we resolve overlaps and extend ranges using ROW/TYPE column header positions.
+    if (hallMap.size >= 2) {
+      const sorted = [...hallMap.values()].sort((a, b) => a.colMin - b.colMin);
+      for (let i = 0; i < sorted.length; i++) {
+        const hall = sorted[i];
+        const nextMin = i < sorted.length - 1 ? sorted[i + 1].colMin : this.cols;
+
+        // Use ROW/TYPE column headers to extend hall range:
+        // The last ROW header before the next hall's header marks where this hall's
+        // rack sections actually end.
+        const rowTypeInRange = this.colHeaders.filter(ch =>
+          /^ROW$/i.test(ch.value) && ch.col > hall.colMin && ch.col < nextMin
+        );
+        if (rowTypeInRange.length > 0) {
+          const lastRT = Math.max(...rowTypeInRange.map(ch => ch.col));
+          // Extend to cover columns up to ~3 past the last ROW header
+          hall.colMax = Math.max(hall.colMax, lastRT + 3);
+        }
+
+        // Resolve overlaps: if this hall's colMax exceeds next hall's colMin,
+        // split at the midpoint between the last ROW header and next hall header
+        if (i < sorted.length - 1 && hall.colMax >= sorted[i + 1].colMin) {
+          const midpoint = Math.floor((hall.colMax + sorted[i + 1].colMin) / 2);
+          hall.colMax = midpoint;
+        }
+      }
+    }
+
     for (const section of this.sections) {
       const secMid = (section.startCol + section.endCol) / 2;
       let bestHall = null;
@@ -868,11 +981,17 @@ class LayoutParser {
       const grids = new Map();
       for (const sec of hall.sections) {
         const letter = sec.gridLetter || '?';
-        if (!grids.has(letter)) grids.set(letter, { letter, pods: new Map() });
+        if (!grids.has(letter)) grids.set(letter, { letter, gridGroups: new Map(), pods: new Map() });
         const g = grids.get(letter);
         const pod = sec.podLabel || '?';
         if (!g.pods.has(pod)) g.pods.set(pod, { name: pod, sections: [] });
         g.pods.get(pod).sections.push(sec);
+        // Track grid-groups for this grid
+        if (sec.gridGroup) {
+          const ggKey = `GG${sec.gridGroup}`;
+          if (!g.gridGroups.has(ggKey)) g.gridGroups.set(ggKey, new Set());
+          g.gridGroups.get(ggKey).add(pod);
+        }
       }
       this.halls.push({
         name: hall.name,
@@ -882,6 +1001,10 @@ class LayoutParser {
         colMax: hall.colMax,
         grids: [...grids.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([, g]) => ({
           letter: g.letter,
+          gridGroups: [...g.gridGroups.entries()].map(([gg, pods]) => ({
+            name: gg,
+            pods: [...pods],
+          })),
           pods: [...g.pods.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([, p]) => ({
             name: p.name,
             sections: p.sections,
@@ -916,16 +1039,24 @@ class LayoutParser {
         const grids = new Map();
         for (const sec of hall.sections) {
           const letter = sec.gridLetter || '?';
-          if (!grids.has(letter)) grids.set(letter, { letter, pods: new Map() });
+          if (!grids.has(letter)) grids.set(letter, { letter, gridGroups: new Map(), pods: new Map() });
           const g = grids.get(letter);
           const pod = sec.podLabel || '?';
           if (!g.pods.has(pod)) g.pods.set(pod, { name: pod, sections: [] });
           g.pods.get(pod).sections.push(sec);
+          if (sec.gridGroup) {
+            const ggKey = `GG${sec.gridGroup}`;
+            if (!g.gridGroups.has(ggKey)) g.gridGroups.set(ggKey, new Set());
+            g.gridGroups.get(ggKey).add(pod);
+          }
         }
         this.halls.push({
           name: hall.name, colMin: hall.colMin, colMax: hall.colMax,
           grids: [...grids.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([, g]) => ({
             letter: g.letter,
+            gridGroups: [...g.gridGroups.entries()].map(([gg, pods]) => ({
+              name: gg, pods: [...pods],
+            })),
             pods: [...g.pods.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([, p]) => ({ name: p.name, sections: p.sections })),
           })),
         });
