@@ -518,11 +518,13 @@ function loadFromSheets(tab, sheetId) {
 }
 
 // Google Sheets — JSONP fetch
-document.getElementById('btn-fetch-sheet').addEventListener('click', () => {
+function fetchSelectedSheet() {
   const tab = document.getElementById('sheet-url').value.trim() || 'OVERHEAD';
   const sheetId = document.getElementById('sheet-site').value;
   loadFromSheets(tab, sheetId);
-});
+}
+document.getElementById('btn-fetch-sheet').addEventListener('click', fetchSelectedSheet);
+document.getElementById('sheet-site').addEventListener('change', fetchSelectedSheet);
 
 // Export helpers
 function getExportName() { return state.parseResult?.site || 'blueprint'; }
