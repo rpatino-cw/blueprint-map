@@ -242,12 +242,27 @@ async function ingest(csvText) {
 
   let hints = null;
   const statusEl = document.getElementById('ai-status');
+
+  // Check localStorage for cached AI hints from previous runs
+  const cachedKey = 'bp_hints_' + (state.grid[2]?.join('') || '').replace(/\s+/g,'').substring(0,40);
+  const cached = localStorage.getItem(cachedKey);
+
   if (AI.isEnabled()) {
     hints = await AI.analyze(state.grid);
+    // Cache hints for future runs without AI
+    if (hints) {
+      try { localStorage.setItem(cachedKey, JSON.stringify(hints)); } catch(e) {}
+      console.log('%c[Blueprint Map] AI hints cached for this site', 'color:#34a853');
+    }
+  } else if (cached) {
+    try { hints = JSON.parse(cached); } catch(e) { hints = null; }
+    statusEl.className = 'ai-status active';
+    statusEl.innerHTML = '<strong style="color:#34a853">LEARNED</strong> — using cached AI hints from previous analysis';
+    console.log('%c[Blueprint Map] Using cached AI hints (no API call)', 'color:#34a853;font-weight:bold');
   } else {
     statusEl.className = 'ai-status active';
-    statusEl.innerHTML = '<strong style="color:#c4a035">AI OFF</strong> — pure rule-based parsing';
-    console.log('%c[Blueprint Map] AI disabled — pure rule-based parsing', 'color:#c4a035;font-weight:bold');
+    statusEl.innerHTML = '<strong style="color:#a68a3a">AI OFF</strong> — pure rule-based parsing';
+    console.log('%c[Blueprint Map] AI disabled, no cache — pure rule-based parsing', 'color:#a68a3a;font-weight:bold');
   }
 
   const parser = new LayoutParser(state.grid, hints);
