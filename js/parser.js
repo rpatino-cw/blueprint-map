@@ -198,6 +198,13 @@ class LayoutParser {
     if (/^Totals?$/i.test(v)) return 'stat';
     if (/^[A-Z][\w\s]+:\s*\d/i.test(v) && v.length < 50) return 'stat';
 
+    // Metadata rows: emails, service accounts, sharing permissions, names, admin notes
+    if (/@[\w.-]+\.\w{2,}/.test(v)) return 'stat'; // email addresses
+    if (/^SHARING\b/i.test(v)) return 'stat'; // sharing headers
+    if (/^(Editor|Viewer|Commenter)s?$/i.test(v)) return 'stat'; // permission roles
+    if (/\.iam\.gserviceaccount\.com/.test(v)) return 'stat'; // GCP service accounts
+    if (/^(Insert|Named range|Conditional formatting|Replace)/i.test(v) && v.length > 15) return 'stat'; // sheet admin notes
+
     // Hostname detection: t0-gg1-a1-01-r001-..., con-01-dh1-r001-..., mgmt-core-01a-r001-...
     // These appear in some overheads as device names within rack cells
     if (/^(t[0-4][a-d]?|con|net|oob-fw|mgmt-core|dss|dpu|comp-dist|comp-agg|net-dist|net-agg|grid-agg|pod-dist|infra-dist|infra-sw|br|tlr|dsr|dclr|fbs)-/i.test(v) && /r\d{2,3}/i.test(v)) {
@@ -752,7 +759,7 @@ class LayoutParser {
 
   // ── PASS 4: HIERARCHY ASSIGNMENT ──
   pass4_assignHierarchy() {
-    const statPatterns = /node count|gpu count|superpods|spine.*count|core count|total switch|leaf count|spine.*racks|HD-B2|rack count|cabinet count|total racks|total nodes|total gpus|row count|kW|power|capacity/i;
+    const statPatterns = /node count|gpu count|superpods|spine.*count|core count|total switch|leaf count|spine.*racks|HD-B2|rack count|cabinet count|total racks|total nodes|total gpus|row count|kW|power|capacity|@[\w.-]+\.\w{2,}|\.iam\.gserviceaccount|^SHARING\b|^(Editor|Viewer)s?$/i;
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < (this.grid[r]?.length || 0); c++) {
         const v = this.cell(r, c);
