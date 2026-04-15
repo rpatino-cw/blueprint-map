@@ -25,20 +25,23 @@
       <div class="hall-pills" id="hall-pills"></div>
     </div>
     <div class="bar-right">
-      <div class="view-toggle">
-        <button class="vt-btn active" id="btn-grid-view">Grid</button>
-        <button class="vt-btn" id="btn-struct-view">Structured</button>
-      </div>
       <button class="bar-btn" id="btn-refresh" title="Refresh">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 7a5.5 5.5 0 019.37-3.9M12.5 7a5.5 5.5 0 01-9.37 3.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11 1v2.5h-2.5M3 13v-2.5h2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <div class="export-wrap">
+        <button class="bar-btn export-btn" id="btn-export" disabled title="Export">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10v2h10v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Export</span>
+        </button>
+        <div class="export-menu" id="export-menu">
+          <button class="export-opt" id="btn-export-png">PNG</button>
+          <button class="export-opt" id="btn-export-svg">SVG</button>
+          <button class="export-opt" id="btn-export-pdf">PDF</button>
+        </div>
+      </div>
       <button class="bar-btn" id="btn-panel" title="Settings">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M7 1.5v1.3M7 11.2v1.3M1.5 7h1.3M11.2 7h1.3M3.1 3.1l.9.9M10 10l.9.9M3.1 10.9l.9-.9M10 4l.9-.9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
       </button>
-      <div class="export-group">
-        <button class="bar-btn" id="btn-export-svg" disabled>SVG</button>
-        <button class="bar-btn" id="btn-export-png" disabled>PNG</button>
-      </div>
     </div>
   </header>
 
@@ -127,6 +130,8 @@
 <select id="hall-select" style="display:none"><option value="__all">All halls</option></select>
 <span id="hall-sep" style="display:none"></span>
 <button id="btn-fetch-sheet" style="display:none"></button>
+<button id="btn-grid-view" style="display:none"></button>
+<button id="btn-struct-view" style="display:none"></button>
 
 <div class="toast" id="toast"></div>
 

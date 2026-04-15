@@ -80,8 +80,7 @@ function insertSVG(svg, canvas) {
   document.getElementById('tb-halls').textContent = pr.halls.map(h => h.name).join(', ') || '--';
   document.getElementById('tb-date').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
 
-  document.getElementById('btn-export-svg').disabled = false;
-  document.getElementById('btn-export-png').disabled = false;
+  document.getElementById('btn-export').disabled = false;
 }
 
 function updateSidebar(pr, typeCounts) {

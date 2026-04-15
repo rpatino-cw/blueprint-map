@@ -432,19 +432,18 @@ function focusHall(name) {
 document.getElementById('btn-search').addEventListener('click',doSearch);
 document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
 
-// View mode toggle
-document.getElementById('btn-grid-view').addEventListener('click',()=>{
-  state.viewMode='grid';
-  document.getElementById('btn-grid-view').classList.add('active');
-  document.getElementById('btn-struct-view').classList.remove('active');
-  if(state.parseResult) renderAll();
-});
-document.getElementById('btn-struct-view').addEventListener('click',()=>{
-  state.viewMode='structured';
-  document.getElementById('btn-struct-view').classList.add('active');
-  document.getElementById('btn-grid-view').classList.remove('active');
-  if(state.parseResult) renderAll();
-});
+// Force grid view always
+state.viewMode = 'grid';
+
+// Export menu toggle
+(function() {
+  const btn = document.getElementById('btn-export');
+  const menu = document.getElementById('export-menu');
+  btn.addEventListener('click', () => menu.classList.toggle('open'));
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.export-wrap')) menu.classList.remove('open');
+  });
+})();
 
 // Pan & zoom
 const mc=document.getElementById('map-canvas');
@@ -525,21 +524,49 @@ document.getElementById('btn-fetch-sheet').addEventListener('click', () => {
   loadFromSheets(tab, sheetId);
 });
 
-// Export
+// Export helpers
+function getExportName() { return state.parseResult?.site || 'blueprint'; }
+function getExportSVG() { return document.getElementById('blueprint-svg'); }
+function closeExportMenu() { document.getElementById('export-menu').classList.remove('open'); }
+
 document.getElementById('btn-export-svg').addEventListener('click',()=>{
-  const svg=document.getElementById('blueprint-svg');if(!svg)return;
+  closeExportMenu();
+  const svg=getExportSVG();if(!svg)return;
   const clone=svg.cloneNode(true);clone.removeAttribute('style');
-  dl(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'}),`${state.parseResult?.site||'blueprint'}-overhead.svg`);
+  dl(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'}),`${getExportName()}-overhead.svg`);
   toast('SVG exported');
 });
+
 document.getElementById('btn-export-png').addEventListener('click',()=>{
-  const svg=document.getElementById('blueprint-svg');if(!svg)return;
+  closeExportMenu();
+  const svg=getExportSVG();if(!svg)return;
   const w=parseFloat(svg.getAttribute('width')),h=parseFloat(svg.getAttribute('height')),scale=2;
   const clone=svg.cloneNode(true);clone.removeAttribute('style');
   const str=new XMLSerializer().serializeToString(clone);
   const cvs=document.createElement('canvas');cvs.width=w*scale;cvs.height=h*scale;const ctx=cvs.getContext('2d');
   const img=new Image();const b=new Blob([str],{type:'image/svg+xml;charset=utf-8'});const u=URL.createObjectURL(b);
-  img.onload=()=>{ctx.fillStyle='#f5f5f7';ctx.fillRect(0,0,cvs.width,cvs.height);ctx.drawImage(img,0,0,cvs.width,cvs.height);URL.revokeObjectURL(u);cvs.toBlob(pb=>{dl(pb,`${state.parseResult?.site||'blueprint'}-overhead.png`);toast('PNG exported (2x)');},'image/png');};
+  img.onload=()=>{ctx.fillStyle='#f5f5f7';ctx.fillRect(0,0,cvs.width,cvs.height);ctx.drawImage(img,0,0,cvs.width,cvs.height);URL.revokeObjectURL(u);cvs.toBlob(pb=>{dl(pb,`${getExportName()}-overhead.png`);toast('PNG exported (2x)');},'image/png');};
+  img.src=u;
+});
+
+document.getElementById('btn-export-pdf').addEventListener('click',()=>{
+  closeExportMenu();
+  const svg=getExportSVG();if(!svg)return;
+  const w=parseFloat(svg.getAttribute('width')),h=parseFloat(svg.getAttribute('height')),scale=2;
+  const clone=svg.cloneNode(true);clone.removeAttribute('style');
+  const str=new XMLSerializer().serializeToString(clone);
+  const cvs=document.createElement('canvas');cvs.width=w*scale;cvs.height=h*scale;const ctx=cvs.getContext('2d');
+  const img=new Image();const b=new Blob([str],{type:'image/svg+xml;charset=utf-8'});const u=URL.createObjectURL(b);
+  img.onload=()=>{
+    ctx.fillStyle='#f5f5f7';ctx.fillRect(0,0,cvs.width,cvs.height);ctx.drawImage(img,0,0,cvs.width,cvs.height);
+    URL.revokeObjectURL(u);
+    const dataUrl=cvs.toDataURL('image/png');
+    const win=window.open('','_blank');
+    if(!win){toast('Popup blocked — allow popups for PDF',true);return;}
+    win.document.write(`<html><head><title>${getExportName()} Overhead</title><style>@page{size:landscape;margin:0}body{margin:0}img{width:100%;height:auto}</style></head><body><img src="${dataUrl}"><script>setTimeout(()=>{window.print()},300)<\/script></body></html>`);
+    win.document.close();
+    toast('PDF — use print dialog to save');
+  };
   img.src=u;
 });
 

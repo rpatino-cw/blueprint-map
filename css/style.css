@@ -108,18 +108,55 @@ html, body {
 .bar-btn:disabled { opacity: 0.25; pointer-events: none; }
 .bar-btn svg { flex-shrink: 0; }
 
-.export-group {
-  display: flex;
-  gap: 2px;
-  margin-left: 4px;
+/* ── EXPORT DROPDOWN ── */
+
+.export-wrap { position: relative; }
+
+.export-btn {
+  width: auto !important;
+  padding: 0 14px !important;
+  gap: 6px;
 }
-.export-group .bar-btn {
-  width: auto;
-  padding: 0 12px;
-  font-size: 11px;
-  font-family: var(--mono);
-  letter-spacing: 0.02em;
+.export-btn span { font-size: 12px; }
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+  z-index: 50;
+  min-width: 100px;
 }
+.export-menu.open {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.export-opt {
+  display: block;
+  width: 100%;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s var(--ease);
+}
+.export-opt:hover { background: var(--hover); }
+.export-opt + .export-opt { border-top: 1px solid var(--border2); }
 
 /* ── SITE SELECTOR ── */
 
@@ -184,28 +221,6 @@ html, body {
   to { opacity: 1; transform: none; }
 }
 
-/* ── VIEW TOGGLE ── */
-
-.view-toggle {
-  display: flex;
-  border: 1px solid var(--border2);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.vt-btn {
-  font-family: var(--font);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 14px;
-  border: none;
-  background: var(--surface);
-  color: var(--text2);
-  cursor: pointer;
-  transition: all 0.2s var(--ease);
-}
-.vt-btn:first-child { border-right: 1px solid var(--border2); }
-.vt-btn:hover { color: var(--text); }
-.vt-btn.active { background: var(--selected); color: var(--selected-text); }
 
 /* ── PANEL (SETTINGS DRAWER) ── */
 
