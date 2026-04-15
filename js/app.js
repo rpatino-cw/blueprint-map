@@ -10,6 +10,7 @@ const state = {
   dragging: false, dragStart: {x:0,y:0}, panStart: {x:0,y:0},
   highlightSet: new Set(),
   selectedRC: null,
+  hallBounds: [],  // [{name, x, y, w, h}] computed during render
 };
 
 // ── CSV PARSING ──
@@ -314,7 +315,62 @@ async function ingest(csvText) {
 
   toast(`Parsed: ${pr.totalRacks} racks, ${pr.halls.length} halls, ${pr.blocks.length} blocks`);
   renderAll();
+  populateHallSelect(pr);
 }
+
+// ── HALL SELECTOR ──
+function populateHallSelect(pr) {
+  const sel = document.getElementById('hall-select');
+  const sep = document.getElementById('hall-sep');
+  sel.innerHTML = '<option value="__all">All halls</option>';
+
+  // Only show if 2+ real halls (skip the fallback "Layout" hall)
+  const realHalls = pr.halls.filter(h => h.name !== 'Layout');
+  if (realHalls.length < 2) {
+    sel.style.display = 'none';
+    sep.style.display = 'none';
+    return;
+  }
+
+  for (const h of realHalls) {
+    const opt = document.createElement('option');
+    opt.value = h.name;
+    opt.textContent = h.name;
+    sel.appendChild(opt);
+  }
+  sel.style.display = '';
+  sep.style.display = '';
+  sel.value = '__all';
+}
+
+function focusHall(name) {
+  const container = document.getElementById('map-container');
+  if (!container) return;
+
+  if (name === '__all') {
+    fitView();
+    return;
+  }
+
+  const hb = state.hallBounds.find(b => b.name === name);
+  if (!hb) return;
+
+  // Zoom to fit the hall with 10% padding
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const zx = cw / (hb.w * 1.1);
+  const zy = ch / (hb.h * 1.1);
+  state.zoom = Math.min(zx, zy, 4);
+
+  // Center the hall
+  const hallCx = hb.x + hb.w / 2;
+  const hallCy = hb.y + hb.h / 2;
+  state.panX = cw / 2 - hallCx * state.zoom;
+  state.panY = ch / 2 - hallCy * state.zoom;
+  applyTransform();
+}
+
+document.getElementById('hall-select').addEventListener('change', e => focusHall(e.target.value));
 
 // ═══════════════════════════════════════════════════════════════
 // EVENT LISTENERS

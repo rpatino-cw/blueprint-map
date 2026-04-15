@@ -189,6 +189,7 @@ function renderGrid() {
     }
   }
 
+  state.hallBounds = [];
   for (const hall of pr.halls) {
     let hMinR = Infinity, hMaxR = 0;
     for (const g of hall.grids) for (const p of g.pods) for (const s of p.sections) {
@@ -201,6 +202,7 @@ function renderGrid() {
     const hy = cy(hMinR) - 16;
     const hw = (hall.colMax - hall.colMin + 1) * CELL_W + 12;
     const hh = (hMaxR - hMinR + 1) * CH + 28;
+    state.hallBounds.push({ name: hall.name, x: hx, y: hy, w: hw, h: hh });
     const hbg = mkRect(hx, hy, hw, hh, 'none', P.primary);
     hbg.setAttribute('stroke-width', '.5');
     hbg.setAttribute('stroke-dasharray', '8 4');
@@ -386,10 +388,12 @@ function renderStructured() {
   const svg = mkSVG(svgW, svgH);
 
   const typeCounts = {};
+  state.hallBounds = [];
 
   for (const hl of hallLayouts) {
     const hx = hl.x;
     const hy = BPAD;
+    state.hallBounds.push({ name: hl.hall.name, x: hx, y: hy, w: hl.w, h: hl.h });
 
     const hbg = mkRect(hx, hy, hl.w, hl.h, cwA(.03), cwA(.2));
     hbg.setAttribute('stroke-width', '.5');
