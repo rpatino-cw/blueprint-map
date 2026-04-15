@@ -453,6 +453,7 @@ html, body {
   pointer-events: none;
 }
 .toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { border-color: var(--danger); color: var(--danger); max-width: 420px; }
 
 /* ── SCROLLBAR ── */
 

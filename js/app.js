@@ -184,10 +184,38 @@ function fitView() {
 }
 
 // ── TOAST ──
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000)}
+function toast(msg,isError){const el=document.getElementById('toast');el.textContent=msg;el.classList.remove('error');if(isError)el.classList.add('error');el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show','error'),isError?8000:3000)}
 
 // ── DOWNLOAD HELPER ──
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+
+// ── FORMAT DETECTION ──
+// Cutsheets / connection tables have distinctive header columns that don't belong in overheads
+const CUTSHEET_HEADERS = /\b(A-SIDE|Z-SIDE|A-LOC|Z-LOC|A-PORT|Z-PORT|A-MODEL|Z-MODEL|A-OPTIC|Z-OPTIC|CABLE|PATCH-PANEL|BREAKOUT|DNS-NAME)\b/i;
+const MAX_GRID_ROWS = 600;
+const MAX_GRID_CELLS = 60000;
+
+function detectFormat(grid) {
+  // Check first 3 rows for cutsheet-style headers
+  for (let r = 0; r < Math.min(3, grid.length); r++) {
+    const row = (grid[r] || []).join(' ');
+    const matches = row.match(new RegExp(CUTSHEET_HEADERS, 'gi'));
+    if (matches && matches.length >= 3) {
+      return { ok: false, reason: 'This looks like a cutsheet (cable/connection table), not an overhead layout. Blueprint Map only renders overhead floor plans.' };
+    }
+  }
+  // Size guard
+  const rows = grid.length;
+  const maxCols = grid.reduce((mx, r) => Math.max(mx, r?.length || 0), 0);
+  const cells = rows * maxCols;
+  if (rows > MAX_GRID_ROWS) {
+    return { ok: false, reason: `CSV has ${rows.toLocaleString()} rows — overhead layouts are typically under ${MAX_GRID_ROWS}. This file may not be an overhead sheet.` };
+  }
+  if (cells > MAX_GRID_CELLS) {
+    return { ok: false, reason: `Grid is ${rows} x ${maxCols} (${cells.toLocaleString()} cells) — too large to render. Overhead layouts are typically much smaller.` };
+  }
+  return { ok: true };
+}
 
 // ── INGEST ──
 async function ingest(csvText) {
@@ -198,6 +226,15 @@ async function ingest(csvText) {
   } else {
     state.grid = parseCSV(csvText);
   }
+
+  const check = detectFormat(state.grid);
+  if (!check.ok) {
+    toast(check.reason, true);
+    console.warn(`%c[Blueprint Map] Rejected: ${check.reason}`, 'color:#f85149');
+    state.grid = [];
+    return;
+  }
+
   const maxCols = state.grid.reduce((mx, r) => Math.max(mx, r?.length || 0), 0);
   console.log(`%c[Blueprint Map] CSV parsed${isLarge?' (worker)':''}: ${state.grid.length} rows, max ${maxCols} cols`, 'color:#7ec8e3');
 
