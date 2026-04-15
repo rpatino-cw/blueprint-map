@@ -373,38 +373,56 @@ async function ingest(csvText) {
   populateHallSelect(pr);
 }
 
-// ── HALL SELECTOR ──
+// ── HALL PILLS ──
 function populateHallSelect(pr) {
-  const sel = document.getElementById('hall-select');
-  const sep = document.getElementById('hall-sep');
-  sel.innerHTML = '<option value="__all">All halls</option>';
+  const container = document.getElementById('hall-pills');
+  container.innerHTML = '';
 
-  // Only show if 2+ real halls (skip the fallback "Layout" hall)
   const realHalls = pr.halls.filter(h => h.name !== 'Layout');
-  if (realHalls.length < 2) {
-    sel.style.display = 'none';
-    sep.style.display = 'none';
-    return;
-  }
+  if (realHalls.length < 2) return;
 
+  // "All" pill
+  const allPill = document.createElement('button');
+  allPill.className = 'hall-pill active';
+  allPill.textContent = 'All';
+  allPill.dataset.hall = '__all';
+  allPill.style.animationDelay = '0s';
+  container.appendChild(allPill);
+
+  realHalls.forEach((h, i) => {
+    const pill = document.createElement('button');
+    pill.className = 'hall-pill';
+    pill.textContent = h.name;
+    pill.dataset.hall = h.name;
+    pill.style.animationDelay = (0.05 * (i + 1)) + 's';
+    container.appendChild(pill);
+  });
+
+  container.addEventListener('click', e => {
+    const pill = e.target.closest('.hall-pill');
+    if (!pill) return;
+    container.querySelectorAll('.hall-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    focusHall(pill.dataset.hall);
+  });
+
+  // keep hidden select in sync for backward compat
+  const sel = document.getElementById('hall-select');
+  sel.innerHTML = '<option value="__all">All halls</option>';
   for (const h of realHalls) {
     const opt = document.createElement('option');
     opt.value = h.name;
     opt.textContent = h.name;
     sel.appendChild(opt);
   }
-  sel.style.display = '';
-  sep.style.display = '';
-  sel.value = '__all';
 }
 
 function focusHall(name) {
   state.hallFilter = name;
+  document.getElementById('hall-select').value = name;
   renderAll();
   fitView();
 }
-
-document.getElementById('hall-select').addEventListener('change', e => focusHall(e.target.value));
 
 // ═══════════════════════════════════════════════════════════════
 // EVENT LISTENERS
@@ -586,3 +604,21 @@ mc.addEventListener('drop', e => {
   e.preventDefault();
   if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
 });
+
+// Site selector — reload when changed
+document.getElementById('sheet-site').addEventListener('change', () => {
+  const sheetId = document.getElementById('sheet-site').value;
+  const tab = document.getElementById('sheet-url')?.value.trim() || 'OVERHEAD';
+  state.hallFilter = '__all';
+  loadFromSheets(tab, sheetId);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-LOAD — no blank screen
+// ═══════════════════════════════════════════════════════════════
+(function autoLoad() {
+  const sheetId = document.getElementById('sheet-site').value;
+  if (sheetId && typeof loadFromSheets === 'function') {
+    loadFromSheets('OVERHEAD', sheetId);
+  }
+})();

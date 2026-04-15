@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script>window.BP_VERSION = '2026.03.30a';</script>
+<script>window.BP_VERSION = '2026.04.15a';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -15,52 +15,52 @@
 <div class="app">
   <header class="bar">
     <div class="bar-left">
-      <button class="bar-btn" id="btn-panel" title="Toggle panel">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 4.5h11M2 7.5h11M2 10.5h11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-      </button>
       <span class="bar-title">Blueprint Map</span>
     </div>
-    <div class="bar-right">
-      <select class="hall-select" id="hall-select" style="display:none">
-        <option value="__all">All halls</option>
+    <div class="bar-center">
+      <select class="site-select" id="sheet-site">
+        <option value="1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI">EVI01 — Elk Grove</option>
+        <option value="1bxVq9THKhii4y-fUGuYEuO6vy9u273Dbfu4unqD9kTw">Site 2</option>
       </select>
-      <span class="bar-sep" id="hall-sep" style="display:none"></span>
-      <button class="bar-btn active" id="btn-grid-view">Grid</button>
-      <button class="bar-btn" id="btn-struct-view">Structured</button>
-      <span class="bar-sep"></span>
-      <button class="bar-btn" id="btn-refresh" title="Refresh live data">&#8635;</button>
-      <span class="bar-sep"></span>
-      <button class="bar-btn" id="btn-export-svg" disabled>SVG</button>
-      <button class="bar-btn" id="btn-export-png" disabled>PNG</button>
+      <div class="hall-pills" id="hall-pills"></div>
+    </div>
+    <div class="bar-right">
+      <div class="view-toggle">
+        <button class="vt-btn active" id="btn-grid-view">Grid</button>
+        <button class="vt-btn" id="btn-struct-view">Structured</button>
+      </div>
+      <button class="bar-btn" id="btn-refresh" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 7a5.5 5.5 0 019.37-3.9M12.5 7a5.5 5.5 0 01-9.37 3.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11 1v2.5h-2.5M3 13v-2.5h2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="bar-btn" id="btn-panel" title="Settings">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M7 1.5v1.3M7 11.2v1.3M1.5 7h1.3M11.2 7h1.3M3.1 3.1l.9.9M10 10l.9.9M3.1 10.9l.9-.9M10 4l.9-.9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      </button>
+      <div class="export-group">
+        <button class="bar-btn" id="btn-export-svg" disabled>SVG</button>
+        <button class="bar-btn" id="btn-export-png" disabled>PNG</button>
+      </div>
     </div>
   </header>
 
   <aside class="panel" id="panel">
     <div class="p-section">
-      <div class="p-label">Source</div>
-      <div class="source-tabs">
-        <button class="source-tab active" data-source="csv">CSV</button>
-        <button class="source-tab" data-source="sheets">Sheet</button>
-      </div>
-      <div id="source-csv">
-        <div class="drop-zone" id="drop-zone">
-          <span>Drop .csv or click to browse</span>
-          <input type="file" accept=".csv,.tsv,.txt" id="file-input">
-        </div>
-      </div>
-      <div id="source-sheets" style="display:none">
-        <select class="input" id="sheet-site">
-          <option value="1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI">EVI01 — Elk Grove (US-CENTRAL-07A)</option>
-          <option value="1bxVq9THKhii4y-fUGuYEuO6vy9u273Dbfu4unqD9kTw">Site 2</option>
-        </select>
-        <input class="input" id="sheet-url" type="text" placeholder="Tab name (default: OVERHEAD)" style="margin-top:6px">
-        <p class="hint">Pulls live via Apps Script (CW login required)</p>
-        <button class="btn" id="btn-fetch-sheet">Load Live</button>
+      <div class="p-label">Upload CSV</div>
+      <div class="drop-zone" id="drop-zone">
+        <span>Drop .csv or click to browse</span>
+        <input type="file" accept=".csv,.tsv,.txt" id="file-input">
       </div>
     </div>
 
     <div class="p-section">
-      <div class="p-label">AI Analysis</div>
+      <div class="p-label">Search</div>
+      <div class="search-bar">
+        <input id="search-input" type="text" placeholder="Rack, type, grid...">
+        <button id="btn-search">Go</button>
+      </div>
+    </div>
+
+    <details class="p-details">
+      <summary class="p-label p-label-toggle">AI Analysis</summary>
       <div class="ai-section">
         <label class="ai-toggle"><input type="checkbox" id="ai-enabled" checked> Detect layout</label>
         <div class="ai-key-row">
@@ -72,16 +72,9 @@
           <button class="btn-sm" id="btn-clear-cache" style="flex:1">Clear cache</button>
           <button class="btn-sm" id="btn-export-rules" style="flex:1">Export rules</button>
         </div>
+        <input class="input" id="sheet-url" type="text" placeholder="Tab name (default: OVERHEAD)" style="margin-top:6px">
       </div>
-    </div>
-
-    <div class="p-section">
-      <div class="p-label">Search</div>
-      <div class="search-bar">
-        <input id="search-input" type="text" placeholder="Rack, type, grid...">
-        <button id="btn-search">Go</button>
-      </div>
-    </div>
+    </details>
 
     <div class="p-section" id="parse-section" style="display:none">
       <div class="p-label">Structure</div>
@@ -102,7 +95,14 @@
   <main class="canvas" id="map-container">
     <div class="map-canvas" id="map-canvas">
       <div class="empty-state" id="empty-state">
-        <span class="empty-text">Drop a CSV file anywhere</span>
+        <div class="welcome">
+          <div class="welcome-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="22" x2="42" y2="22" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="6" y1="30" x2="42" y2="30" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="18" y1="10" x2="18" y2="38" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="30" y1="10" x2="30" y2="38" stroke="currentColor" stroke-width="1" opacity=".3"/><circle cx="24" cy="26" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M24 23v6M21 26h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="welcome-title">Loading your floor plan...</div>
+          <div class="welcome-sub">Connecting to the live sheet</div>
+          <div class="welcome-dots" id="welcome-dots"><span></span><span></span><span></span></div>
+        </div>
       </div>
     </div>
     <div class="title-block" id="title-block" style="display:none">
@@ -122,6 +122,11 @@
     </div>
   </main>
 </div>
+
+<!-- hidden elements for backward compat -->
+<select id="hall-select" style="display:none"><option value="__all">All halls</option></select>
+<span id="hall-sep" style="display:none"></span>
+<button id="btn-fetch-sheet" style="display:none"></button>
 
 <div class="toast" id="toast"></div>
 
