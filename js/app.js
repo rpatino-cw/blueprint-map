@@ -219,6 +219,18 @@ function detectFormat(grid) {
   return { ok: true };
 }
 
+// ── TIME AGO ──
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h';
+  const d = Math.floor(h / 24);
+  return d + 'd';
+}
+
 // ── INGEST ──
 async function ingest(csvText) {
   const isLarge = csvText.length > LARGE_FILE_THRESHOLD;
@@ -251,13 +263,17 @@ async function ingest(csvText) {
     hints = await AI.analyze(state.grid);
     // Cache hints for future runs without AI
     if (hints) {
-      try { localStorage.setItem(cachedKey, JSON.stringify(hints)); } catch(e) {}
+      try { localStorage.setItem(cachedKey, JSON.stringify({ ts: Date.now(), data: hints })); } catch(e) {}
       console.log('%c[Blueprint Map] AI hints cached for this site', 'color:#34a853');
     }
   } else if (cached) {
-    try { hints = JSON.parse(cached); } catch(e) { hints = null; }
+    try {
+      const parsed = JSON.parse(cached);
+      hints = parsed.data || parsed;
+      var age = parsed.ts ? timeAgo(parsed.ts) : 'unknown';
+    } catch(e) { hints = null; }
     statusEl.className = 'ai-status active';
-    statusEl.innerHTML = '<strong style="color:#34a853">LEARNED</strong> — using cached AI hints from previous analysis';
+    statusEl.innerHTML = `<strong style="color:#34a853">LEARNED</strong> — cached ${age || ''} ago`;
     console.log('%c[Blueprint Map] Using cached AI hints (no API call)', 'color:#34a853;font-weight:bold');
   } else {
     statusEl.className = 'ai-status active';
