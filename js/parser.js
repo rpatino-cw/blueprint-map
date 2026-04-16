@@ -1086,13 +1086,14 @@ class LayoutParser {
     if (this.halls.length === 0 && this.sections.length > 1) {
       const sorted = [...this.sections].sort((a, b) => a.startCol - b.startCol);
       const clusters = [[sorted[0]]];
+      let clusterMaxCol = sorted[0].endCol; // O(1) running max — no recompute
       for (let i = 1; i < sorted.length; i++) {
-        const prev = clusters[clusters.length - 1];
-        const prevMaxCol = Math.max(...prev.map(s => s.endCol));
-        if (sorted[i].startCol - prevMaxCol >= HALL_COL_GAP) {
+        if (sorted[i].startCol - clusterMaxCol >= HALL_COL_GAP) {
           clusters.push([sorted[i]]);
+          clusterMaxCol = sorted[i].endCol;
         } else {
-          prev.push(sorted[i]);
+          clusters[clusters.length - 1].push(sorted[i]);
+          if (sorted[i].endCol > clusterMaxCol) clusterMaxCol = sorted[i].endCol;
         }
       }
       if (clusters.length >= 2) {
