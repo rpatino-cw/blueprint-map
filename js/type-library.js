@@ -1,7 +1,11 @@
 // ════════════════════════════════════════════════════════════════
-// TYPE LIBRARY
-// Data-driven rack type matching via prefix patterns.
+// TYPE LIBRARY — FROZEN v1.0 (tag: parser-v1.0-frozen)
+// 38 rack type categories with bucket-indexed prefix matching.
 // New hardware (HD-GB4c, T0-E-v11a) matches automatically.
+//
+// PROTECTED: Adding new prefixes is SAFE (extend categories array).
+// Changing match() or _bucketMatch() logic requires `npm test`.
+// To restore: git checkout parser-v1.0-frozen -- js/type-library.js
 // ════════════════════════════════════════════════════════════════
 
 const TypeLibrary = {

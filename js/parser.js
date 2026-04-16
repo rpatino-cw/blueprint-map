@@ -1,7 +1,11 @@
 // ════════════════════════════════════════════════════════════════
-// LAYOUT PARSER
-// 6-pass structural analysis of the raw CSV grid.
+// LAYOUT PARSER — FROZEN v1.0 (tag: parser-v1.0-frozen)
+// 7-pass structural analysis of the raw CSV grid.
 // Pure function: grid in → ParseResult out.
+//
+// PROTECTED: 100% rack capture verified across 37 CW sites.
+// Do NOT modify without running `npm test` (47 tests).
+// To restore: git checkout parser-v1.0-frozen -- js/parser.js
 // ════════════════════════════════════════════════════════════════
 // TABLE OF CONTENTS
 //   Line  27  LayoutParser class + constructor
