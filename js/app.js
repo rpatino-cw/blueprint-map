@@ -532,6 +532,18 @@ function arrayToCSV(arr) {
   }).join(',')).join('\n');
 }
 
+// ── SHEET LOADING OVERLAY ──
+function showSheetLoading(text) {
+  const el = document.getElementById('sheet-loading');
+  const txt = document.getElementById('sheet-loading-text');
+  if (txt) txt.textContent = text || 'Loading site...';
+  if (el) el.classList.add('active');
+}
+function hideSheetLoading() {
+  const el = document.getElementById('sheet-loading');
+  if (el) el.classList.remove('active');
+}
+
 // ── LOADING PROGRESS ──
 function setLoadingProgress(pct, label) {
   const fill = document.getElementById('loading-bar-fill');
@@ -590,6 +602,9 @@ function fetchSheetRaw(tab, sheetId) {
 async function loadFromSheets(tab, sheetId) {
   const refreshBtn = document.getElementById('btn-refresh');
   refreshBtn.classList.add('spinning');
+  const sel = document.getElementById('sheet-site');
+  const siteName = sel.options[sel.selectedIndex]?.textContent || 'site';
+  showSheetLoading('Loading ' + siteName + '...');
 
   const cached = getCachedSheet(sheetId, tab);
   const isStale = cached && (Date.now() - cached.ts > SHEET_CACHE_MAX_AGE);
@@ -625,6 +640,7 @@ async function loadFromSheets(tab, sheetId) {
         toast('Using cached data (live fetch failed)', true);
       }
     }
+    hideSheetLoading();
     refreshBtn.classList.remove('spinning');
     return;
   }
@@ -644,6 +660,7 @@ async function loadFromSheets(tab, sheetId) {
     toast('Sheet error: ' + e.message, true);
     setLoadingProgress(0, 'Failed to load');
   }
+  hideSheetLoading();
   refreshBtn.classList.remove('spinning');
 }
 

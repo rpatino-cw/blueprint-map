@@ -585,6 +585,46 @@ html, body {
   to { opacity: 1; filter: blur(0); }
 }
 
+/* ── SHEET LOADING OVERLAY ── */
+
+.sheet-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 250, 248, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.sheet-loading.active {
+  display: flex;
+}
+
+.sheet-loading-inner {
+  text-align: center;
+  animation: welcomeIn 0.3s var(--ease-expo) both;
+}
+
+.sheet-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid var(--border2);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  animation: spin 0.7s linear infinite;
+}
+
+.sheet-loading-text {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  letter-spacing: 0.02em;
+}
+
 /* ── STALE BADGE ── */
 
 .stale-badge {

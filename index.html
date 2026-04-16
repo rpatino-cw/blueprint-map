@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script>window.BP_VERSION = '2026.04.16-fc04762';</script>
+<script>window.BP_VERSION = '2026.04.16-2f4e2e2';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -219,6 +219,12 @@
 <button id="btn-grid-view" style="display:none"></button>
 <button id="btn-struct-view" style="display:none"></button>
 
+<div class="sheet-loading" id="sheet-loading">
+  <div class="sheet-loading-inner">
+    <div class="sheet-loading-spinner"></div>
+    <div class="sheet-loading-text" id="sheet-loading-text">Loading site...</div>
+  </div>
+</div>
 <div class="stale-badge" id="stale-badge">Updating from live sheet...</div>
 <div class="toast" id="toast"></div>
 <a class="version-badge" id="version-badge" href="https://github.com/rpatino-cw/blueprint-map/commits/main" target="_blank" rel="noopener"></a>
