@@ -163,7 +163,7 @@ function renderGrid() {
   const cx = c => PAD + (c - minC) * CELL_W;
   const cy = r => PAD + (r - minR) * CH;
 
-  // Hall labels — minimal, just the name
+  // Hall boundaries + titles
   state.hallBounds = [];
   const filteredHalls = state.hallFilter === '__all' ? pr.halls : pr.halls.filter(h => h.name === state.hallFilter);
   for (const hall of filteredHalls) {
@@ -174,14 +174,21 @@ function renderGrid() {
     }
     if (hMinR > hMaxR) continue;
 
-    const hx = cx(hall.colMin);
-    const hy = cy(hMinR) - 14;
-    const hw = (hall.colMax - hall.colMin + 1) * CELL_W;
-    const hh = (hMaxR - hMinR + 1) * CH + 20;
-    state.hallBounds.push({ name: hall.name, x: hx - 4, y: hy, w: hw + 8, h: hh });
+    const PADX = 10, PADY = 14;
+    const hx = cx(hall.colMin) - PADX;
+    const hy = cy(hMinR) - PADY;
+    const hw = (hall.colMax - hall.colMin + 1) * CELL_W + PADX * 2;
+    const hh = (hMaxR - hMinR + 1) * CH + PADY * 2;
+    state.hallBounds.push({ name: hall.name, x: hx, y: hy, w: hw, h: hh });
 
-    // just the label, no box
-    const ht = mkText(hx, hy - 2, hall.name, P.dim, 11, 600, FONT_DISPLAY);
+    const box = mkRect(hx, hy, hw, hh, 'transparent', '#c7c7cc');
+    box.setAttribute('stroke-width', '1');
+    box.setAttribute('rx', '12');
+    box.setAttribute('ry', '12');
+    svg.appendChild(box);
+
+    const ht = mkText(hx + 8, hy - 8, hall.name, P.text, 16, 700, FONT_DISPLAY);
+    ht.setAttribute('letter-spacing', '0.5');
     svg.appendChild(ht);
   }
 
@@ -208,8 +215,8 @@ function renderGrid() {
         hit.setAttribute('data-rc', key);
         svg.appendChild(hit);
         const fill = isSel ? P.text : (isHL ? P.text : P.text2);
-        const weight = isSel ? 700 : 500;
-        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, fill, 10, weight, FONT_MONO);
+        const weight = isSel ? 700 : 600;
+        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, fill, 12, weight, FONT_MONO);
         t.setAttribute('text-anchor', 'middle');
         t.setAttribute('pointer-events', 'none');
         svg.appendChild(t);
@@ -229,7 +236,7 @@ function renderGrid() {
         svg.appendChild(t);
       }
       else if (cls === 'row-label') {
-        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, P.dim, 9, 500, FONT_MONO);
+        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, P.text, 12, 700, FONT_MONO);
         t.setAttribute('text-anchor', 'middle');
         svg.appendChild(t);
       }
