@@ -181,7 +181,7 @@ function renderGrid() {
     const hh = (hMaxR - hMinR + 1) * CH + PADY * 2;
     state.hallBounds.push({ name: hall.name, x: hx, y: hy, w: hw, h: hh });
 
-    const box = mkRect(hx, hy, hw, hh, 'transparent', '#c7c7cc');
+    const box = mkRect(hx, hy, hw, hh, '#fafbfc', '#c7c7cc');
     box.setAttribute('stroke-width', '1');
     box.setAttribute('rx', '12');
     box.setAttribute('ry', '12');
