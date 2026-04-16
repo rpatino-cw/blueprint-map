@@ -1045,6 +1045,34 @@ function populateSiteSelector(data) {
   }
 }
 
+// ── BACKGROUND PREFETCH ──
+// After the first site loads, warm the localStorage cache for every other
+// site in the dropdown (concurrency-limited). Users flipping between sites
+// see instant cached loads instead of a 2-5s JSONP roundtrip each time.
+async function prefetchAllSites(currentSheetId) {
+  const sel = document.getElementById('sheet-site');
+  if (!sel) return;
+  const opts = Array.from(sel.querySelectorAll('option'))
+    .map(o => o.value)
+    .filter(v => v && v !== currentSheetId && !getCachedSheet(v, 'OVERHEAD'));
+  if (!opts.length) return;
+
+  const CONCURRENCY = 3;
+  let i = 0, ok = 0, fail = 0;
+  async function worker() {
+    while (i < opts.length) {
+      const id = opts[i++];
+      try {
+        const csv = await fetchSheetRaw('OVERHEAD', id);
+        setCachedSheet(id, 'OVERHEAD', csv);
+        ok++;
+      } catch (e) { fail++; /* missing/inaccessible sheet — skip quietly */ }
+    }
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  console.log('[Blueprint Map] Prefetch done — ' + ok + ' sites cached, ' + fail + ' skipped');
+}
+
 (async function autoLoad() {
   const sel = document.getElementById('sheet-site');
   try {
@@ -1057,9 +1085,11 @@ function populateSiteSelector(data) {
   } catch (e) {
     console.warn('[Blueprint Map] sites.json not found, using HTML fallback');
   }
-  // Always load the selected sheet
+  // Load the selected sheet first, then prefetch the rest in the background
   const sheetId = sel.value;
   if (sheetId && typeof loadFromSheets === 'function') {
-    loadFromSheets('OVERHEAD', sheetId);
+    await loadFromSheets('OVERHEAD', sheetId);
+    // Kick off background prefetch — don't await so UI stays responsive
+    setTimeout(() => prefetchAllSites(sheetId), 500);
   }
 })();
