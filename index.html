@@ -208,6 +208,20 @@
   }
   next();
 })();
+
+// Service Worker — stale-while-revalidate
+// Loads cached version instantly, fetches fresh in background, reloads on update
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'UPDATE_AVAILABLE') {
+      var t = document.getElementById('toast');
+      t.textContent = 'New version available — updating...';
+      t.classList.add('show');
+      setTimeout(function(){ location.reload(); }, 1200);
+    }
+  });
+}
 </script>
 </body>
 </html>
