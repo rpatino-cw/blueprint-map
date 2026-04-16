@@ -630,6 +630,22 @@ html, body {
 .toast.show { transform: translateY(0); opacity: 1; }
 .toast.error { border-color: rgba(204,68,68,0.3); color: var(--danger); max-width: 420px; }
 
+/* ── VERSION BADGE ── */
+
+.version-badge {
+  position: fixed;
+  bottom: 8px;
+  left: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+.version-badge:hover { opacity: 1; color: var(--accent); }
+
 /* ── SCROLLBAR ── */
 
 ::-webkit-scrollbar { width: 4px; }
