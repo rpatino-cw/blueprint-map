@@ -40,11 +40,14 @@ open index.html
 ## What it does
 
 - **Visualize** overhead layout CSVs as zoomable, color-coded blueprints
-- **Auto-detect** rack types, halls, grids, pods, and serpentine numbering with a 6-pass parser
-- **Fast CSV parsing** — PapaParse with Web Worker support for large files (>500KB), auto-detects delimiters (comma, tab, pipe)
-- **Export** publication-ready SVG vectors and 2x PNG bitmaps
+- **40+ CW sites built in** — dropdown selector loads live from Google Sheets (US Central, US East, US West, Europe)
+- **Auto-detect** rack types, halls, grids, pods, and serpentine numbering with a 7-pass parser
+- **38 rack type categories** — bucket-indexed prefix matching with unsupervised discovery for unknown types
+- **Spatial hall inference** — clusters sections by column distance when sheets lack standard hall headers
+- **Fast CSV parsing** — PapaParse with Web Worker support for large files (>500KB), auto-detects delimiters
+- **Per-pass timing** — performance profiling logged to console for every parse
+- **Export** publication-ready SVG, 2x PNG, and PDF
 - **AI-assisted** (optional) — Claude Haiku identifies structure in messy spreadsheets
-- **CoreWeave-branded UI** — dark console aesthetic with seamless header/sidebar, glass-morphism panels, and animated accents
 - **Offline fallback** — built-in CSV parser activates when CDN is unavailable
 
 ---
@@ -53,17 +56,19 @@ open index.html
 
 <img src="assets/demo-flow.svg" alt="CSV to visual map pipeline" width="700">
 
-The parser takes a raw 2D grid of strings and figures out what everything means — which cells are rack numbers, which are types, where pods start and end, which halls exist. Six passes, no configuration required:
+The parser takes a raw 2D grid of strings and figures out what everything means — which cells are rack numbers, which are types, where pods start and end, which halls exist. Seven passes, no configuration required. Tested against 40 live CW sites (54 to 3,380 racks each) with 100% rack capture rate.
 
 | Pass | Name | What it does |
 |------|------|-------------|
-| 1 | **Classify** | Label every cell: rack number, rack type, hall header, grid label, annotation |
-| 1.5a | **Merge** | Combine multi-cell grid labels (e.g. "GRID-GROUP 1" spanning 3 columns) |
-| 1.5b | **Patterns** | Statistical row analysis — detect stat rows, column headers |
-| 2 | **Detect** | Find contiguous rack blocks, identify serpentine numbering pairs |
-| 2.5 | **Discover** | Unsupervised type discovery — find rack types not in the library |
-| 3 | **Group** | Cluster blocks into sections by column alignment, apply pod=20 heuristic |
-| 4 | **Assign** | Build hierarchy: sections → pods → grids → halls using header proximity |
+| 1 | **Classify** | Label every cell: rack number, rack type, hall header, grid label, SPLAT range, annotation, stat/metadata. Detects site codes (`US-`, `GB-`, `SE-`, etc.), campus naming (`NORTH CAMPUS BUILDING E`), and DH-style headers. |
+| 1.5a | **Merge** | Combine multi-cell grid labels (e.g. "GRID-GROUP 1" spanning 3 merged columns). Parse structured fields: grid letter, grid-group number, pod label. |
+| 1.5b | **Patterns** | Statistical row analysis — identify rack number rows by contiguous integer runs (3+ cells, 50%+ of row). Detect adjacent type rows by repeated text values. |
+| 2 | **Detect** | Find contiguous rack blocks, pair ascending/descending rows as serpentine partners, extract row labels. Tag 20-rack pod pairs with corner rack validation. |
+| 2.5 | **Discover** | Unsupervised type discovery — find repeated unknown values adjacent to rack blocks, register as new type categories at runtime. |
+| 3 | **Group** | Cluster blocks into sections by column alignment (±2 col tolerance). Split on 4+ empty rows, grid label boundaries, or rack number resets. Apply pod=20 heuristic. |
+| 4 | **Assign** | Build hierarchy: sections → pods → grids → halls. Three strategies (in order): **1)** Header-based — match sections to DH/BUILDING headers by column overlap. **2)** Spatial inference — cluster sections by column distance (gap ≥ 8 cols = separate hall). **3)** Layout fallback — group all sections as one. |
+
+Each pass is independently timed via `performance.now()` — timing data is included in the parse result and logged to console.
 
 ---
 
@@ -97,24 +102,31 @@ No key? No problem. The rule-based 6-pass parser handles standard overhead forma
 
 ## Rack types
 
-25+ built-in rack type categories with automatic prefix matching:
+38 built-in rack type categories with bucket-indexed prefix matching. Prefixes are grouped by first 1-3 characters into a hash map — `match()` does O(1) bucket lookup then scans ~3 candidates, not ~100+ linear.
 
-| Category | Prefixes |
-|----------|----------|
-| Compute | `HD-`, `NVL`, `GB200`, `GB300` |
-| TOR / Edge | `T0-`, `T1-`, `T2-`, `T3-`, `T4-` |
-| IB Spine | `IB `, `QM` |
-| Storage | `SC-`, `stor-` |
-| DPR | `DPR-`, `DPU-`, `dpu-` |
-| FDP | `FDP` |
-| Ring | `RING` |
-| Management | `mgmt-` |
-| Console / OOB | `con-`, `oob-` |
-| Reserved | `RES` |
-| Unallocated | `U` (with digit/space guard) |
-| ... | + 14 more categories |
+| Category | Prefixes | Notes |
+|----------|----------|-------|
+| Compute | `HD-B2`, `HD-B3`, `HD-GB`, `HD-H1`, `H1 x`, `H2 x`, `NV-CPU` | HGX, standard compute |
+| NVL72 / GB200 | `NVL72`, `NVL36`, `B200-v`, `B200-SC` | GB200 NVL72 racks |
+| GH200 | `GH2 x`, `GH200` | Grace Hopper |
+| B4 / B100 | `B4 x` | Blackwell B100 |
+| Inference | `L4 x`, `A1 x` | L4, A1 inference |
+| TOR+IB Combo | `T0+IB`, `T0+XDR`, `T1+XDR` | Combined TOR + fabric |
+| TOR / Edge | `T0-E`, `T1-E`, `T2-E`, `T3-E`, `T1 x`, `T2 x`, `T3 x` | All TOR switch variants |
+| IB Spine | `IB x`, `IB-` | InfiniBand |
+| XDR Spine | `XDR` | XDR fabric |
+| BFR / WSR | `BFR-`, `WSR-` | RoCE fabric switches |
+| Core / Spine | `CP`, `C-C`, `C-1`, `C-A`, `C-B` | Core switches |
+| Frontend | `T0-FE`, `T1-FE`, `T2-FE` | Frontend switches |
+| Storage | `V x`, `VAST`, `STRG`, `DDN` | All storage |
+| PSDR | `PSDR`, `W/PSDR`, `W/PS-DR`, `W-PSDR` | Power distribution |
+| Security | `MS-SEC`, `MS-WAN`, `CW-SEC`, `SEC` | Security appliances |
+| Management | `R-MGMT`, `BE-MGMT`, `IT-CORE`, `mgmt-core` | Management |
+| Reserved | `RES` | Reserved positions |
+| Unallocated | `U` (with digit/space guard) | Empty racks |
+| ... | + 20 more categories | FDP, DPR, PSCR, Ring, RoCE, Ethernet, Firewall, Console, etc. |
 
-Unknown types are auto-discovered via frequency analysis in Pass 2.5.
+Unknown types are auto-discovered via frequency analysis in Pass 2.5 and registered at runtime.
 
 ---
 
@@ -147,8 +159,8 @@ Tests run on Node 18, 20, and 22 via GitHub Actions on every push and PR.
 index.html              ← app shell + cache-busted script loader
 css/style.css           ← CoreWeave-branded dark theme with animations
 js/
-  type-library.js       ← 25+ rack type definitions + prefix matching
-  parser.js             ← 6-pass layout analysis engine (~930 lines)
+  type-library.js       ← 38 rack type categories + bucket-indexed prefix matching
+  parser.js             ← 7-pass layout analysis engine (~1,230 lines, per-pass timing)
   renderer.js           ← SVG grid + structured view rendering
   ai.js                 ← Claude API integration + response caching
   app.js                ← state management, PapaParse CSV parsing, UI events
