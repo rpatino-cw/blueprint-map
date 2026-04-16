@@ -6,7 +6,7 @@
 <title>Signing in — Blueprint Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='6' width='24' height='20' rx='2' fill='none' stroke='%231d1d1f' stroke-width='1.5'/><line x1='4' y1='16' x2='28' y2='16' stroke='%231d1d1f' opacity='.3'/><line x1='16' y1='6' x2='16' y2='26' stroke='%231d1d1f' opacity='.3'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script>window.BP_VERSION = '2026.04.16-862d750';</script>
+<script>window.BP_VERSION = '2026.04.16-f37f0a7';</script>
 <style>
   :root {
     --bg: #f5f5f7;
@@ -305,13 +305,22 @@
     if (!document.hidden && attemptedSignin) reprobe();
   });
 
-  // Popup posts this after auth. Redirect the main tab to the map
-  // immediately — don't wait for popup-close detection (unreliable in
-  // HtmlService sandboxed iframes).
+  // Apps Script popup fires this after successful auth.
+  //   - If we were opened as a popup from the map, relay the message up
+  //     to the map so it re-fetches and hides the auth banner, then
+  //     close ourselves.
+  //   - If we're a standalone tab (user navigated to signin.html directly),
+  //     redirect our own tab to the map.
   window.addEventListener('message', (ev) => {
-    if (ev && ev.data && ev.data.type === 'bp-auth-success') {
-      window.location.replace('index.html');
-    }
+    if (!ev || !ev.data || ev.data.type !== 'bp-auth-success') return;
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(ev.data, '*');
+        setTimeout(() => { try { window.close(); } catch (e) {} }, 300);
+        return;
+      }
+    } catch (e) { /* cross-origin opener — fall through */ }
+    window.location.replace('index.html');
   });
 
   // Entry point — probe first. If already authed, close or redirect.
