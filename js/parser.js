@@ -176,8 +176,8 @@ class LayoutParser {
       this.hallHeaders.push({ row: r, col: c, value: hallValue });
       return 'hall-header';
     }
-    // Standalone site header in first 3 rows (e.g., "ORD3-ALBATROSS" or "LGA1" alone in a row)
-    if (r < 3 && /^[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?$/i.test(v) && v.length <= 20) {
+    // Standalone site header in first 5 rows (e.g., "ORD3-ALBATROSS", "LGA1", "US-EVI01", "US-DTN01")
+    if (r < 5 && /^(?:(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+|[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?)$/i.test(v) && v.length <= 20) {
       if (!this.site) this.site = v.toUpperCase();
       return 'site-header';
     }
@@ -201,7 +201,7 @@ class LayoutParser {
       return 'superpod';
     }
 
-    if (/^ROW$/i.test(v) || /^TYPE$/i.test(v)) {
+    if (/^ROW$/i.test(v) || /^TYPE$/i.test(v) || /^PWR$/i.test(v)) {
       this.colHeaders.push({ row: r, col: c, value: v });
       return 'col-header';
     }
@@ -246,11 +246,14 @@ class LayoutParser {
     if (/^\d{1,3}$/.test(v) && +v >= 1 && +v <= 999) return 'number';
     if (/^\d+\.?\d*\s*kW/i.test(v) || /^\(\d+kW/i.test(v) || /kW\s*\(/i.test(v)) return 'annotation';
 
-    // Power capacity near racks: "27.3kW (18kW allocated)", "106kW"
-    if (/kW/i.test(v)) return 'annotation';
+    // Power capacity near racks: "27.3kW (18kW allocated)", "106kW", "8 MegaWatts"
+    if (/kW/i.test(v) || /MegaWatt/i.test(v) || /\bMW\b/i.test(v)) return 'annotation';
 
-    // Rack-adjacent labels that aren't types: "** XDR spines for DH3 & DH4"
+    // Rack-adjacent labels that aren't types: "** XDR spines for DH3 & DH4", "*** COREWEAVE RESERVED ***"
     if (/^\*\*/.test(v)) return 'annotation';
+
+    // Row/pod labels: "B1", "B2", "C1", "C2" — single letter + 1-2 digits, common in type/FDP columns
+    if (/^[A-Z]\d{1,2}$/.test(v) && v.length <= 3) return 'row-label';
 
     // "Insert DC CAD drawings below" and similar sheet instructions
     if (/^Insert\b|^Named range|^Conditional formatting|^Replace values/i.test(v)) return 'stat';

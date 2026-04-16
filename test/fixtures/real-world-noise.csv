@@ -1,0 +1,31 @@
+,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,US-TEST01,,,,,,,,,,,,,,US-TEST01,,,,,,,,,,,,
+,,NORTH CAMPUS,,,,,,,,,,,,,,SOUTH CAMPUS,,,,,,,,,,,,
+,,BUILDING E,,,,,,,,,,,,,,BUILDING A,,,,,,,,,,,,
+,,8 MegaWatts,,,,,,,,,,,,,,8 MegaWatts,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,ROW,TYPE,PWR,,,,,,,,,,,,,ROW,TYPE,PWR
+,,FDP-B1,1,2,3,4,5,6,7,8,9,10,FDP,FDP-W1,B2,1,150kW,,FDP-B1,1,2,3,4,5,6,7,8,9,10,FDP,FDP-W1,B2,1,150kW
+,B1,FDP-B2,T1-E-v3b,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,IB x16,T2-E-v4a,,,,,,FDP-B2,T1-E-v3b,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,IB x16,T2-E-v4a
+,,FDP-B1,20,19,18,17,16,15,14,13,12,11,FDP,FDP-W2,B2,2,150kW,,FDP-B1,20,19,18,17,16,15,14,13,12,11,FDP,FDP-W2,B2,2,150kW
+,B1,FDP-B2,T2-E-v4a,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,IB x16,T1-E-v3b,,,,,,FDP-B2,T2-E-v4a,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,HD-B2c,IB x16,T1-E-v3b
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,T2-PLANE-A-RAIL-1,,,,,T2-PLANE-B-RAIL-1,,,,,,,,,,,,T2-PLANE-A-RAIL-1,,,,,T2-PLANE-B-RAIL-1,,,,
+,,FDP-B1,21,22,23,24,25,26,27,28,29,30,FDP,FDP-W1,C1,3,334kW,,FDP-B1,21,22,23,24,25,26,27,28,29,30,FDP,FDP-W1,C1,3,334kW
+,C1,FDP-B2,RES,T2-R-v1a,T2-R-v1b,T2-R-v1c,T2-R-v1d,T2-R-v1a,T2-R-v1b,T2-R-v1c,T2-R-v1d,RES,T1-E-v3b,,,,,,FDP-B2,RES,T2-R-v1a,T2-R-v1b,T2-R-v1c,T2-R-v1d,T2-R-v1a,T2-R-v1b,T2-R-v1c,T2-R-v1d,RES,T1-E-v3b
+,,FDP,40,39,38,37,36,35,34,33,32,31,FDP,FDP-W2,C1,4,334kW,,FDP,40,39,38,37,36,35,34,33,32,31,FDP,FDP-W2,C1,4,334kW
+,C1,FDP-B1,RES,T2-R-v1d,T2-R-v1c,T2-R-v1b,T2-R-v1a,T2-R-v1d,T2-R-v1c,T2-R-v1b,T2-R-v1a,RES,T2-E-v4a,,,,,,FDP-B1,RES,T2-R-v1d,T2-R-v1c,T2-R-v1b,T2-R-v1a,T2-R-v1d,T2-R-v1c,T2-R-v1b,T2-R-v1a,RES,T2-E-v4a
+,,T2-PLANE-D-RAIL-1,,,,,T2-PLANE-C-RAIL-1,,,,,,,,,,,,T2-PLANE-D-RAIL-1,,,,,T2-PLANE-C-RAIL-1,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,*** COREWEAVE RESERVED ***,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,Node Count:,320,,,,,,,,,,,,,,,,,,,,,,,,,
+,,GPU Count:,2560,,,,,,,,,,,,,,,,,,,,,,,,,
+,,Total Racks:,80,,,,,,,,,,,,,,,,,,,,,,,,,
+,,kW Total:,4136kW,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,admin@coreweave.com,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,SHARING,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,Editor,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,someone@coreweave.com,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,svc-account@gserviceaccount.com,,,,,,,,,,,,,,,,,,,,,,,,,,,
