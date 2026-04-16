@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node test/parser.test.js",
     "test:regression": "node test/regression/run-offline.js",
+    "test:regression:logged": "node test/regression/run-offline.js && node scripts/regression-to-memory.mjs",
     "test:auth-gate": "node test/auth-gate.test.js",
     "apps:push": "cd appsscript && clasp push -f",
     "apps:deploy": "cd appsscript && clasp push -f && clasp deploy -i AKfycbw_DYXJFneaL7C-6xP4L2XxvlJN9wm0sIEZZWC_aDEygfj5vFUPk98iDV4oUy8r45Bt -d \"$(git log -1 --pretty=%s)\""
