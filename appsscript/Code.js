@@ -30,7 +30,17 @@ function doGet(e) {
         '.email{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#6e6e73;margin-top:10px}</style></head><body>' +
         '<div class="c"><div class="ck">&#10003;</div><h1>Signed in</h1><p>Closing automatically&hellip;</p>' +
         '<div class="email">' + email + '</div></div>' +
-        '<script>try{if(window.opener&&!window.opener.closed)window.opener.postMessage({type:"bp-auth-success",email:' + JSON.stringify(email) + '},"*")}catch(e){}setTimeout(function(){try{window.close()}catch(e){}},700)</script>' +
+        '<script>' +
+        'var MAP_URL="https://rpatino-cw.github.io/blueprint-map/index.html";' +
+        'var EMAIL=' + JSON.stringify(email) + ';' +
+        'var W=window.top||window;' +
+        'function finish(){' +
+          'try{var o=W.opener;if(o&&!o.closed){o.postMessage({type:"bp-auth-success",email:EMAIL},"*")}}catch(e){}' +
+          'try{W.close()}catch(e){}' +
+          'setTimeout(function(){try{W.location.replace(MAP_URL)}catch(e){try{location.replace(MAP_URL)}catch(e2){}}},300);' +
+        '}' +
+        'setTimeout(finish,700);' +
+        '</script>' +
         '</body></html>';
     } else {
       html =
