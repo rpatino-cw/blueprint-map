@@ -632,6 +632,33 @@ test('matchHall: null for no match', () => {
   assert.strictEqual(got, null);
 });
 
+console.log('\nNetBox Matcher — parser integration');
+
+test('parser enriches halls with NetBox slugs when locations provided', () => {
+  const grid = loadCSV('simple-dh.csv');
+  const locs = [
+    { id: 1, slug: 'data-hall-101', name: 'Data Hall 101', parent: { slug: 'us-test01', name: 'US-TEST01' } },
+    { id: 2, slug: 'data-hall-2', name: 'Data Hall 2', parent: { slug: 'us-test01', name: 'US-TEST01' } },
+  ];
+  ctx.grid = grid;
+  ctx._intLocs = locs;
+  const result = vm.runInContext('new LayoutParser(grid, null, _intLocs).parse()', ctx);
+  const dh101 = result.halls.find(h => h.name === 'DH101');
+  assert.ok(dh101, 'Should find DH101 hall');
+  assert.ok(dh101.netbox, 'DH101 should have netbox property');
+  assert.strictEqual(dh101.netbox.slug, 'data-hall-101');
+  assert.strictEqual(dh101.netbox.parentSlug, 'us-test01');
+});
+
+test('parser works without locations (no netbox property)', () => {
+  const grid = loadCSV('simple-dh.csv');
+  ctx.grid = grid;
+  const result = vm.runInContext('new LayoutParser(grid).parse()', ctx);
+  const dh101 = result.halls.find(h => h.name === 'DH101');
+  assert.ok(dh101, 'Should find DH101 hall');
+  assert.strictEqual(dh101.netbox, undefined, 'Should not have netbox without locations');
+});
+
 // ════════════════════════════════════════════════════════════════
 // SUMMARY
 // ════════════════════════════════════════════════════════════════

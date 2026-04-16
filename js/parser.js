@@ -92,9 +92,10 @@ const RE_INSERT_ETC     = /^Insert\b|^Named range|^Conditional formatting|^Repla
 const RE_LARGE_NUM      = /^\d{4,}$/;
 
 class LayoutParser {
-  constructor(grid, hints) {
+  constructor(grid, hints, locations) {
     this.grid = grid;
     this.hints = hints || null;
+    this._locations = locations || null; // NetBox locations for slug matching
     this.rows = grid.length;
     this.cols = Math.max(...grid.map(r => r?.length || 0), 0);
     this.classified = [];
@@ -1302,6 +1303,21 @@ class LayoutParser {
     const hasGB200 = this.blocks.some(b => b.rackTypes.some(t => /GB200|GB300|NVL/i.test(t)));
     if (hasGB200 && !hasGG2) gridVersion = 'v2.0';
     else if (hasGG2) gridVersion = 'v0.5-v1.5';
+
+    // Enrich halls with NetBox location slugs when matchHall is available
+    if (this._locations && typeof matchHall === 'function') {
+      for (const hall of this.halls) {
+        const loc = matchHall(hall.name, this._locations);
+        if (loc) {
+          hall.netbox = {
+            slug: loc.slug,
+            name: loc.name,
+            parentSlug: loc.parent?.slug || null,
+            parentName: loc.parent?.name || null,
+          };
+        }
+      }
+    }
 
     return {
       site: this.site,
