@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script>window.BP_VERSION = '2026.04.16-8c3670f';</script>
+<script>window.BP_VERSION = '2026.04.16-8962b92';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -185,11 +185,12 @@
           </div>
           <div class="welcome-title" id="welcome-title">Loading your floor plan...</div>
           <div class="welcome-sub" id="welcome-sub">Connecting to the live sheet</div>
-          <div class="loading-bar" id="loading-bar">
-            <div class="loading-bar-track">
-              <div class="loading-bar-fill" id="loading-bar-fill"></div>
-            </div>
-            <div class="loading-bar-label" id="loading-bar-label">Fetching sheet data...</div>
+          <div class="loading-circle" id="loading-bar">
+            <svg class="loading-circle-svg" viewBox="0 0 80 80">
+              <circle class="loading-circle-track" cx="40" cy="40" r="34"/>
+              <circle class="loading-circle-fill" id="loading-circle-fill" cx="40" cy="40" r="34"/>
+            </svg>
+            <span class="loading-circle-pct" id="loading-bar-label">0%</span>
           </div>
         </div>
       </div>

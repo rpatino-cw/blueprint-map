@@ -574,21 +574,24 @@ function hideSheetLoading() {
 }
 
 // ── LOADING PROGRESS ──
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 34; // ~213.628
+
 function setLoadingProgress(pct, label) {
-  const fill = document.getElementById('loading-bar-fill');
+  const fill = document.getElementById('loading-circle-fill');
   const lbl = document.getElementById('loading-bar-label');
   if (fill) {
     fill.classList.remove('indeterminate');
-    fill.style.width = pct + '%';
+    const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * Math.min(pct, 100) / 100);
+    fill.style.strokeDashoffset = offset;
   }
-  if (lbl && label) lbl.textContent = label;
+  if (lbl) lbl.textContent = Math.round(pct) + '%';
 }
 
 function setLoadingIndeterminate(label) {
-  const fill = document.getElementById('loading-bar-fill');
+  const fill = document.getElementById('loading-circle-fill');
   const lbl = document.getElementById('loading-bar-label');
-  if (fill) { fill.style.width = ''; fill.classList.add('indeterminate'); }
-  if (lbl && label) lbl.textContent = label;
+  if (fill) { fill.style.strokeDashoffset = ''; fill.classList.add('indeterminate'); }
+  if (lbl) lbl.textContent = label || '...';
 }
 
 // ── SHEET CACHE ──
