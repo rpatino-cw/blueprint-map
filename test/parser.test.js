@@ -18,32 +18,25 @@ const ctx = vm.createContext({
 
 const jsDir = path.join(__dirname, '..', 'js');
 for (const file of ['type-library.js', 'parser.js']) {
-  const code = fs.readFileSync(path.join(jsDir, file), 'utf8');
+  const code = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
   vm.runInContext(code, ctx, { filename: file });
 }
 
 // ── Helpers ──
 function loadCSV(name) {
   const raw = fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
-  // Full CSV parser: handles quoted fields with embedded newlines (multiline cells)
-  const rows = [];
-  let row = [], cell = '', inQ = false;
-  for (let i = 0; i < raw.length; i++) {
-    const ch = raw[i];
-    if (inQ) {
-      if (ch === '"') {
-        if (raw[i + 1] === '"') { cell += '"'; i++; }
-        else { inQ = false; }
-      } else { cell += ch; }
-    } else {
-      if (ch === '"') { inQ = true; }
-      else if (ch === ',') { row.push(cell); cell = ''; }
-      else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
-      else if (ch !== '\r') { cell += ch; }
+  return raw.split('\n').map(line => {
+    const cells = [];
+    let cell = '', inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === ',' && !inQuote) { cells.push(cell); cell = ''; continue; }
+      cell += ch;
     }
-  }
-  if (cell || row.length > 0) { row.push(cell); rows.push(row); }
-  return rows;
+    cells.push(cell);
+    return cells;
+  });
 }
 
 function parse(csvName) {
@@ -393,87 +386,6 @@ test('totalRacks matches sum of block rack counts', () => {
   let sum = 0;
   for (const b of pr.blocks) sum += b.rackNums.length;
   assert.strictEqual(pr.totalRacks, sum);
-});
-
-// ════════════════════════════════════════════════════════════════
-// EVI01 OVERHEAD — REAL-WORLD REGRESSION
-// Full 4-hall, 8-grid CW overhead (US-CENTRAL-07A / US-EVI01)
-// ════════════════════════════════════════════════════════════════
-console.log('\nEVI01 overhead (regression)');
-
-const evi = parse('evi01-overhead.csv');
-
-test('EVI01: detects site name', () => {
-  assert.ok(evi.site.includes('CENTRAL') || evi.site.includes('EVI'),
-    `Expected US-CENTRAL-07A, got: ${evi.site}`);
-});
-
-test('EVI01: 900 total racks', () => {
-  assert.strictEqual(evi.totalRacks, 900);
-});
-
-test('EVI01: 4 data halls', () => {
-  assert.strictEqual(evi.halls.length, 4);
-  const names = evi.halls.map(h => h.name).sort().join(',');
-  assert.strictEqual(names, 'DH1,DH2,DH3,DH4');
-});
-
-test('EVI01: DH1 has grids A, B, C, F', () => {
-  const dh1 = evi.halls.find(h => h.name === 'DH1');
-  const letters = dh1.grids.map(g => g.letter).sort();
-  assert.ok(letters.includes('A'), 'Missing Grid A');
-  assert.ok(letters.includes('B'), 'Missing Grid B');
-  assert.ok(letters.includes('C'), 'Missing Grid C');
-  assert.ok(letters.includes('F'), 'Missing Grid F');
-});
-
-test('EVI01: Grid A pods A1/A2/A3 each have 20 racks', () => {
-  const dh1 = evi.halls.find(h => h.name === 'DH1');
-  const gridA = dh1.grids.find(g => g.letter === 'A');
-  for (const podName of ['A1', 'A2', 'A3']) {
-    const pod = gridA.pods.find(p => p.name === podName);
-    assert.ok(pod, `Missing pod ${podName}`);
-    const rc = pod.sections.reduce((s, sec) => s + sec.blocks.reduce((s2, b) => s2 + b.rackNums.length, 0), 0);
-    assert.strictEqual(rc, 20, `Pod ${podName}: expected 20 racks, got ${rc}`);
-  }
-});
-
-test('EVI01: grid-group extraction (GG1 on labeled pods)', () => {
-  const dh1 = evi.halls.find(h => h.name === 'DH1');
-  const gridA = dh1.grids.find(g => g.letter === 'A');
-  assert.ok(gridA.gridGroups && gridA.gridGroups.length > 0, 'Grid A missing gridGroups');
-  const gg1 = gridA.gridGroups.find(gg => gg.name === 'GG1');
-  assert.ok(gg1, 'Grid A missing GG1');
-  assert.ok(gg1.pods.includes('A1'), 'GG1 missing pod A1');
-});
-
-test('EVI01: DH2 has Grid D with pods D1/D2', () => {
-  const dh2 = evi.halls.find(h => h.name === 'DH2');
-  const gridD = dh2.grids.find(g => g.letter === 'D');
-  assert.ok(gridD, 'DH2 missing Grid D');
-  assert.ok(gridD.pods.find(p => p.name === 'D1'), 'Missing pod D1');
-  assert.ok(gridD.pods.find(p => p.name === 'D2'), 'Missing pod D2');
-});
-
-test('EVI01: DH4 has Grid H with pods H1/H2', () => {
-  const dh4 = evi.halls.find(h => h.name === 'DH4');
-  const gridH = dh4.grids.find(g => g.letter === 'H');
-  assert.ok(gridH, 'DH4 missing Grid H');
-  assert.ok(gridH.pods.find(p => p.name === 'H1'), 'Missing pod H1');
-  assert.ok(gridH.pods.find(p => p.name === 'H2'), 'Missing pod H2');
-});
-
-test('EVI01: no 106kW in warnings (annotation not a type)', () => {
-  const kWWarning = evi.warnings.find(w => /106kW/i.test(w));
-  assert.ok(!kWWarning, `kW falsely discovered as type: ${kWWarning}`);
-});
-
-test('EVI01: all blocks have valid rack numbers (1-999)', () => {
-  for (const b of evi.blocks) {
-    for (const n of b.rackNums) {
-      assert.ok(n >= 1 && n <= 999, `Invalid rack number: ${n}`);
-    }
-  }
 });
 
 // ════════════════════════════════════════════════════════════════

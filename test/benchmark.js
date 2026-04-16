@@ -13,7 +13,8 @@ const ctx = vm.createContext({
 
 const jsDir = path.join(__dirname, '..', 'js');
 for (const file of ['type-library.js', 'parser.js']) {
-  vm.runInContext(fs.readFileSync(path.join(jsDir, file), 'utf8'), ctx, { filename: file });
+  const code = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
+  vm.runInContext(code, ctx, { filename: file });
 }
 
 function loadCSV(name) {
@@ -35,7 +36,6 @@ function loadCSV(name) {
 function generateGrid(halls, podsPerHall) {
   const types = ['HD-B2c', 'HD-B2c', 'HD-B2c', 'HD-B2c', 'HD-B2c', 'HD-B2c', 'HD-B2c', 'HD-B2c', 'IB x16', 'T1-E-v3b'];
   const grid = [];
-  let rackStart = 1;
   for (let h = 0; h < halls; h++) {
     // Hall header row
     const headerRow = new Array(halls * 25).fill('');
@@ -45,9 +45,10 @@ function generateGrid(halls, podsPerHall) {
     grid.push(new Array(headerRow.length).fill('')); // blank row
 
     for (let p = 0; p < podsPerHall; p++) {
-      // Row 1: numbers ascending
+      // Per-pod numbering 1-20 (realistic: CW pods reset per pod)
+      // Row 1: numbers ascending 1-10
       const numRow1 = new Array(headerRow.length).fill('');
-      for (let r = 0; r < 10; r++) numRow1[colBase + r] = String(rackStart + r);
+      for (let r = 0; r < 10; r++) numRow1[colBase + r] = String(r + 1);
       grid.push(numRow1);
 
       // Row 2: types
@@ -55,9 +56,9 @@ function generateGrid(halls, podsPerHall) {
       for (let r = 0; r < 10; r++) typeRow1[colBase + r] = types[r];
       grid.push(typeRow1);
 
-      // Row 3: numbers descending (serpentine)
+      // Row 3: numbers descending 20-11 (serpentine)
       const numRow2 = new Array(headerRow.length).fill('');
-      for (let r = 0; r < 10; r++) numRow2[colBase + r] = String(rackStart + 19 - r);
+      for (let r = 0; r < 10; r++) numRow2[colBase + r] = String(20 - r);
       grid.push(numRow2);
 
       // Row 4: types
@@ -66,7 +67,6 @@ function generateGrid(halls, podsPerHall) {
       grid.push(typeRow2);
 
       grid.push(new Array(headerRow.length).fill('')); // gap
-      rackStart += 20;
     }
   }
   return grid;

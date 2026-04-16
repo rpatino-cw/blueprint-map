@@ -42,6 +42,54 @@ function parseSPLAT(value) {
 // Minimum column gap between section clusters to infer separate halls
 const HALL_COL_GAP = 8;
 
+// ── Pre-compiled regex patterns for _classifyOne() ──
+// Hot path: called once per cell. Module-level constants avoid inline regex object churn.
+const RE_COUNTRY_SITE   = /(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+/i;
+const RE_DH_NUM         = /DH\d/i;
+const RE_DATA_HALL      = /DATA\s*HALL/i;
+const RE_CAMPUS_BLDG    = /\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i;
+const RE_BLDG_FULL      = /((?:NORTH|SOUTH|EAST|WEST)?\s*CAMPUS\s+BUILDING\s+[A-Z\d]+)/i;
+const RE_BLDG_SHORT     = /((?:BUILDING|BLDG)\s+[A-Z\d]+)/i;
+const RE_SITE_LONG      = /((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+-[\w]+)/i;
+const RE_SITE_SHORT     = /((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+)/i;
+const RE_DH_LINE        = /^DH\s*\d+$/i;
+const RE_DATA_HALL_LINE = /^DATA\s*HALL\s*\d+$/i;
+const RE_DATA_HALL_MID  = /DATA\s*HALL\s*\d+/i;
+const RE_HALL_LINE      = /^Hall\s*\d+$/i;
+const RE_STANDALONE_SITE = /^(?:(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+|[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?)$/i;
+const RE_GRID_LETTER    = /GRID[-\s]?[A-Z]/i;
+const RE_GRID_POD       = /GRID-POD/i;
+const RE_GRID_GROUP     = /GRID-GROUP/i;
+const RE_ROWS_LABEL     = /^ROWS?\s+[\d,\s-]+$/i;
+const RE_ROW_TYPE_HDR   = /^ROW\b.*\bTYPE\b/i;
+const RE_SP_NUM         = /^SP\s*\d/i;
+const RE_ROW_EXACT      = /^ROW$/i;
+const RE_TYPE_EXACT     = /^TYPE$/i;
+const RE_PWR_EXACT      = /^PWR$/i;
+const RE_RESERVED       = /^RESERVED$/i;
+const RE_SPLAT_PREFIX   = /^SPLAT[_-]/i;
+const RE_STAT_KEYWORDS  = /node count|gpu count|superpods|spine.*count|core count|total switch|leaf count|rack count|cabinet count|total racks|total nodes|total gpus|row count|kW total|power total|capacity/i;
+const RE_TOTALS         = /^Totals?$/i;
+const RE_KV_STAT        = /^[A-Z][\w\s]+:\s*\d/i;
+const RE_EMAIL          = /@[\w.-]+\.\w{2,}/;
+const RE_SHARING        = /^SHARING\b/i;
+const RE_PERM_ROLES     = /^(Editor|Viewer|Commenter)s?$/i;
+const RE_GCP_SA         = /\.iam\.gserviceaccount\.com/;
+const RE_SHEET_ADMIN    = /^(Insert|Named range|Conditional formatting|Replace)/i;
+const RE_HOSTNAME_PFX   = /^(t[0-4][a-d]?|con|net|oob-fw|mgmt-core|dss|dpu|comp-dist|comp-agg|net-dist|net-agg|grid-agg|pod-dist|infra-dist|infra-sw|br|tlr|dsr|dclr|fbs)-/i;
+const RE_HOSTNAME_RACK  = /r\d{2,3}/i;
+const RE_LOCODE         = /^[A-Z]{2}-[A-Z]{3}\d{2}$/i;
+const RE_RACK_NUM       = /^\d{1,3}$/;
+const RE_KW_START       = /^\d+\.?\d*\s*kW/i;
+const RE_KW_PAREN       = /^\(\d+kW/i;
+const RE_KW_MID         = /kW\s*\(/i;
+const RE_KW_ANY         = /kW/i;
+const RE_MEGAWATT       = /MegaWatt/i;
+const RE_MW             = /\bMW\b/i;
+const RE_ASTERISK       = /^\*\*/;
+const RE_ROW_LABEL_PAT  = /^[A-Z]\d{1,2}$/;
+const RE_INSERT_ETC     = /^Insert\b|^Named range|^Conditional formatting|^Replace values/i;
+
 class LayoutParser {
   constructor(grid, hints) {
     this.grid = grid;
@@ -88,7 +136,9 @@ class LayoutParser {
   }
 
   cell(r, c) {
-    return (this.grid[r]?.[c] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+    const raw = this.grid[r]?.[c];
+    if (!raw) return '';
+    return raw.replace(/\s+/g, ' ').trim();
   }
 
   cellRaw(r, c) {
@@ -151,63 +201,62 @@ class LayoutParser {
   _classifyOne(v, r, c) {
     if (!v) return 'empty';
 
+    // ── Fast path: pure numbers (most common non-empty cell in overheads) ──
+    if (RE_RACK_NUM.test(v) && +v >= 1 && +v <= 999) return 'number';
+
+    // ── Fast path: known rack type (bucket lookup is O(1)) ──
+    if (TypeLibrary.isType(v)) return 'rack-type';
+
     // Site + hall header: "US-DTN01 NORTH CAMPUS BUILDING E 8 MegaWatts", "US-EAST-03A DH201", etc.
-    if (/(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+/i.test(v) &&
-        (/DH\d/i.test(v) || /DATA\s*HALL/i.test(v) || /APPROVED/i.test(v) || /\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i.test(v))) {
-      // Extract building/hall name: "US-DTN01 NORTH CAMPUS BUILDING E 8 MegaWatts" → "NORTH CAMPUS BUILDING E"
-      const bm = v.match(/((?:NORTH|SOUTH|EAST|WEST)?\s*CAMPUS\s+BUILDING\s+[A-Z\d]+)/i) ||
-                 v.match(/((?:BUILDING|BLDG)\s+[A-Z\d]+)/i);
+    if (RE_COUNTRY_SITE.test(v) &&
+        (RE_DH_NUM.test(v) || RE_DATA_HALL.test(v) || /APPROVED/i.test(v) || RE_CAMPUS_BLDG.test(v))) {
+      const bm = v.match(RE_BLDG_FULL) || v.match(RE_BLDG_SHORT);
       const hallValue = bm ? bm[1].trim() : v;
       this.hallHeaders.push({ row: r, col: c, value: hallValue });
-      const sm = v.match(/((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+-[\w]+)/i) ||
-                 v.match(/((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+)/i);
+      const sm = v.match(RE_SITE_LONG) || v.match(RE_SITE_SHORT);
       if (sm && !this.site) this.site = sm[1];
       return 'hall-header';
     }
-    if (/^DH\s*\d+$/i.test(v) || /^DATA\s*HALL\s*\d+$/i.test(v) || /DATA\s*HALL\s*\d+/i.test(v) || /^Hall\s*\d+$/i.test(v)) {
+    if (RE_DH_LINE.test(v) || RE_DATA_HALL_LINE.test(v) || RE_DATA_HALL_MID.test(v) || RE_HALL_LINE.test(v)) {
       this.hallHeaders.push({ row: r, col: c, value: v });
       return 'hall-header';
     }
-    // Campus/Building naming without site prefix: "NORTH CAMPUS BUILDING E", "BUILDING A", etc.
-    if (/\b(?:CAMPUS|BUILDING|BLDG|WING|SUITE)\b/i.test(v) && v.length >= 8) {
-      const bm = v.match(/((?:NORTH|SOUTH|EAST|WEST)?\s*CAMPUS\s+BUILDING\s+[A-Z\d]+)/i) ||
+    // Campus/Building naming without site prefix
+    if (RE_CAMPUS_BLDG.test(v) && v.length >= 8) {
+      const bm = v.match(RE_BLDG_FULL) ||
                  v.match(/((?:BUILDING|BLDG|WING|SUITE)\s+[A-Z\d]+)/i);
       const hallValue = bm ? bm[1].trim() : v.replace(/\d+\.?\d*\s*(?:MW|MegaWatts?|kW).*$/i, '').trim();
       this.hallHeaders.push({ row: r, col: c, value: hallValue });
       return 'hall-header';
     }
-    // Standalone site header in first 5 rows (e.g., "ORD3-ALBATROSS", "LGA1", "US-EVI01", "US-DTN01")
-    if (r < 5 && /^(?:(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+|[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?)$/i.test(v) && v.length <= 20) {
+    // Standalone site header in first 5 rows
+    if (r < 5 && RE_STANDALONE_SITE.test(v) && v.length <= 20) {
       if (!this.site) this.site = v.toUpperCase();
       return 'site-header';
     }
 
-    if (/GRID[-\s]?[A-Z]/i.test(v) || /GRID-POD/i.test(v) || /GRID-GROUP/i.test(v)) {
+    if (RE_GRID_LETTER.test(v) || RE_GRID_POD.test(v) || RE_GRID_GROUP.test(v)) {
       this.gridLabels.push({ row: r, col: c, value: v });
       return 'grid-label';
     }
-    // Row grouping labels: "ROWS 5,6,7,8,9,10,11" or "ROWS 1-10"
-    if (/^ROWS?\s+[\d,\s-]+$/i.test(v) && v.length >= 6) {
+    if (RE_ROWS_LABEL.test(v) && v.length >= 6) {
       this.gridLabels.push({ row: r, col: c, value: v });
       return 'grid-label';
     }
-    // Column headers: "ROW | TYPE | PWR" or "ROW  TYPE  PWR"
-    if (/^ROW\b.*\bTYPE\b/i.test(v)) {
-      return 'col-header';
-    }
+    if (RE_ROW_TYPE_HDR.test(v)) return 'col-header';
 
-    if (/^SP\s*\d/i.test(v)) {
+    if (RE_SP_NUM.test(v)) {
       this.superpods.push({ row: r, col: c, value: v });
       return 'superpod';
     }
 
-    if (/^ROW$/i.test(v) || /^TYPE$/i.test(v) || /^PWR$/i.test(v)) {
+    if (RE_ROW_EXACT.test(v) || RE_TYPE_EXACT.test(v) || RE_PWR_EXACT.test(v)) {
       this.colHeaders.push({ row: r, col: c, value: v });
       return 'col-header';
     }
-    if (/^RESERVED$/i.test(v)) return 'reserved';
+    if (RE_RESERVED.test(v)) return 'reserved';
 
-    if (/^SPLAT[_-]/i.test(v)) {
+    if (RE_SPLAT_PREFIX.test(v)) {
       const parsed = parseSPLAT(v);
       if (parsed) {
         this.splatRanges.push({ row: r, col: c, value: v, parsed });
@@ -216,47 +265,32 @@ class LayoutParser {
       return 'splat';
     }
 
-    if (/node count|gpu count|superpods|spine.*count|core count|total switch|leaf count|rack count|cabinet count|total racks|total nodes|total gpus|row count|kW total|power total|capacity/i.test(v)) {
-      return 'stat';
-    }
-    if (/^Totals?$/i.test(v)) return 'stat';
-    if (/^[A-Z][\w\s]+:\s*\d/i.test(v) && v.length < 50) return 'stat';
+    if (RE_STAT_KEYWORDS.test(v)) return 'stat';
+    if (RE_TOTALS.test(v)) return 'stat';
+    if (RE_KV_STAT.test(v) && v.length < 50) return 'stat';
 
-    // Metadata rows: emails, service accounts, sharing permissions, names, admin notes
-    if (/@[\w.-]+\.\w{2,}/.test(v)) return 'stat'; // email addresses
-    if (/^SHARING\b/i.test(v)) return 'stat'; // sharing headers
-    if (/^(Editor|Viewer|Commenter)s?$/i.test(v)) return 'stat'; // permission roles
-    if (/\.iam\.gserviceaccount\.com/.test(v)) return 'stat'; // GCP service accounts
-    if (/^(Insert|Named range|Conditional formatting|Replace)/i.test(v) && v.length > 15) return 'stat'; // sheet admin notes
+    // Metadata rows
+    if (RE_EMAIL.test(v)) return 'stat';
+    if (RE_SHARING.test(v)) return 'stat';
+    if (RE_PERM_ROLES.test(v)) return 'stat';
+    if (RE_GCP_SA.test(v)) return 'stat';
+    if (RE_SHEET_ADMIN.test(v) && v.length > 15) return 'stat';
 
-    // Hostname detection: t0-gg1-a1-01-r001-..., con-01-dh1-r001-..., mgmt-core-01a-r001-...
-    // These appear in some overheads as device names within rack cells
-    if (/^(t[0-4][a-d]?|con|net|oob-fw|mgmt-core|dss|dpu|comp-dist|comp-agg|net-dist|net-agg|grid-agg|pod-dist|infra-dist|infra-sw|br|tlr|dsr|dclr|fbs)-/i.test(v) && /r\d{2,3}/i.test(v)) {
-      return 'rack-type';
-    }
+    // Hostname detection
+    if (RE_HOSTNAME_PFX.test(v) && RE_HOSTNAME_RACK.test(v)) return 'rack-type';
 
-    // Location code as site identifier: XX-XXXXX (GB-PPL01, SE-SKH01, NO-OVO01)
-    if (/^[A-Z]{2}-[A-Z]{3}\d{2}$/i.test(v)) {
+    // Location code as site identifier
+    if (RE_LOCODE.test(v)) {
       if (!this.site) this.site = v.toUpperCase();
       this.hallHeaders.push({ row: r, col: c, value: v });
       return 'hall-header';
     }
 
-    if (TypeLibrary.isType(v)) return 'rack-type';
-    if (/^\d{1,3}$/.test(v) && +v >= 1 && +v <= 999) return 'number';
-    if (/^\d+\.?\d*\s*kW/i.test(v) || /^\(\d+kW/i.test(v) || /kW\s*\(/i.test(v)) return 'annotation';
-
-    // Power capacity near racks: "27.3kW (18kW allocated)", "106kW", "8 MegaWatts"
-    if (/kW/i.test(v) || /MegaWatt/i.test(v) || /\bMW\b/i.test(v)) return 'annotation';
-
-    // Rack-adjacent labels that aren't types: "** XDR spines for DH3 & DH4", "*** COREWEAVE RESERVED ***"
-    if (/^\*\*/.test(v)) return 'annotation';
-
-    // Row/pod labels: "B1", "B2", "C1", "C2" — single letter + 1-2 digits, common in type/FDP columns
-    if (/^[A-Z]\d{1,2}$/.test(v) && v.length <= 3) return 'row-label';
-
-    // "Insert DC CAD drawings below" and similar sheet instructions
-    if (/^Insert\b|^Named range|^Conditional formatting|^Replace values/i.test(v)) return 'stat';
+    if (RE_KW_START.test(v) || RE_KW_PAREN.test(v) || RE_KW_MID.test(v)) return 'annotation';
+    if (RE_KW_ANY.test(v) || RE_MEGAWATT.test(v) || RE_MW.test(v)) return 'annotation';
+    if (RE_ASTERISK.test(v)) return 'annotation';
+    if (RE_ROW_LABEL_PAT.test(v) && v.length <= 3) return 'row-label';
+    if (RE_INSERT_ETC.test(v)) return 'stat';
 
     return 'text';
   }
@@ -410,11 +444,10 @@ class LayoutParser {
           let totalChecked = 0;
           for (let ci = 0; ci < run.length; ci++) {
             const col = run[ci].col;
-            const tv = this.cell(tr, col);
-            if (tv) {
+            const cls = this.classified[tr]?.[col];
+            if (cls && cls.value) {
               totalChecked++;
-              const cls = this.classified[tr]?.[col]?.kind;
-              if (TypeLibrary.isType(tv) || cls === 'rack-type-candidate') typeCount++;
+              if (cls.kind === 'rack-type' || cls.kind === 'rack-type-candidate') typeCount++;
             }
           }
           if (totalChecked > 0 && typeCount / totalChecked >= 0.3) {
@@ -536,10 +569,10 @@ class LayoutParser {
         const valueCounts = {};
         let textCells = 0;
         for (let c = block.startCol; c <= block.endCol; c++) {
-          const v = this.cell(tr, c);
-          if (v && !TypeLibrary.isType(v) && !/^\d{1,3}$/.test(v) && !/kW/i.test(v)) {
+          const cls = this.classified[tr]?.[c];
+          if (cls && cls.value && cls.kind !== 'rack-type' && cls.kind !== 'number' && cls.kind !== 'annotation' && cls.kind !== 'empty' && cls.kind !== 'rack-num') {
             textCells++;
-            valueCounts[v] = (valueCounts[v] || 0) + 1;
+            valueCounts[cls.value] = (valueCounts[cls.value] || 0) + 1;
           }
         }
 
@@ -876,11 +909,19 @@ class LayoutParser {
     const statPatterns = /node count|gpu count|superpods|spine.*count|core count|total switch|leaf count|spine.*racks|HD-B2|rack count|cabinet count|total racks|total nodes|total gpus|row count|kW|power|capacity|@[\w.-]+\.\w{2,}|\.iam\.gserviceaccount|^SHARING\b|^(Editor|Viewer)s?$/i;
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < (this.grid[r]?.length || 0); c++) {
-        const v = this.cell(r, c);
-        const cls = this.classified[r]?.[c]?.kind;
-        if (cls === 'stat' || statPatterns.test(v)) {
+        const cellCls = this.classified[r]?.[c];
+        if (!cellCls) continue;
+        const ck = cellCls.kind;
+        // Fast skip: most cells are empty, rack-num, rack-type, number, or grid labels
+        if (ck === 'empty' || ck === 'rack-num' || ck === 'rack-type' || ck === 'number' ||
+            ck === 'grid-label' || ck === 'grid-label-cont' || ck === 'rack-type-candidate' ||
+            ck === 'hall-header' || ck === 'site-header' || ck === 'splat' || ck === 'superpod' ||
+            ck === 'reserved' || ck === 'row-label') continue;
+        const v = cellCls.value;
+        if (!v) continue;
+        if (ck === 'stat' || statPatterns.test(v)) {
           for (let cc = c + 1; cc <= c + 5 && cc < this.cols; cc++) {
-            const nv = this.cell(r, cc);
+            const nv = this.classified[r]?.[cc]?.value;
             if (nv && /^\d/.test(nv)) {
               this.stats[v.replace(/:/g,'').trim()] = nv.trim();
               break;
@@ -1236,3 +1277,7 @@ class LayoutParser {
     };
   }
 }
+
+// Module export (for Worker/Node — browser ignores this)
+if (typeof module !== 'undefined') module.exports = { LayoutParser, decodeDH, parseSPLAT, HALL_COL_GAP };
+export { LayoutParser, decodeDH, parseSPLAT, HALL_COL_GAP };
