@@ -233,14 +233,22 @@
     }, 900);
   }
 
+  let signinPopup = null;
+  let attemptedSignin = false;
+
   function showSignin(errMsg) {
     show('signin');
     const btn = document.getElementById('btn-signin');
-    const continueUrl = window.location.origin + window.location.pathname + '?c=1';
-    const chooserUrl = 'https://accounts.google.com/AccountChooser'
-      + '?hd=coreweave.com'
-      + '&continue=' + encodeURIComponent(continueUrl);
-    btn.href = chooserUrl;
+    btn.href = SHEETS_ENDPOINT;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+    btn.onclick = (ev) => {
+      ev.preventDefault();
+      attemptedSignin = true;
+      signinPopup = window.open(SHEETS_ENDPOINT, 'bp-signin', 'width=520,height=640');
+      const hint = btn.parentElement.querySelector('.hint');
+      if (hint) hint.textContent = 'After signing in, close that tab and return here.';
+    };
     if (errMsg) {
       const err = document.getElementById('err-detail');
       err.textContent = errMsg;
@@ -248,20 +256,27 @@
     }
   }
 
+  async function reprobe() {
+    try {
+      await probe();
+      notifyOpenerAndClose();
+    } catch (e) { /* still not signed in — stay on signin step */ }
+  }
+
+  window.addEventListener('focus', () => {
+    if (attemptedSignin) reprobe();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && attemptedSignin) reprobe();
+  });
+
   // Entry point — probe first. If already authed, close immediately.
   async function run() {
     try {
       await probe();
       notifyOpenerAndClose();
     } catch (e) {
-      // If we already came back from AccountChooser (c=1) and still fail,
-      // show a clearer error — the account they picked isn't CW.
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('c')) {
-        showSignin('Signed in, but that account doesn\'t have access. Make sure you picked your @coreweave.com account.');
-      } else {
-        showSignin(null);
-      }
+      showSignin(null);
     }
   }
 
