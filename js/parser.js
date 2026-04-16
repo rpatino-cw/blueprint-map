@@ -1344,6 +1344,5 @@ class LayoutParser {
   }
 }
 
-// Module export (for Worker/Node — browser ignores this)
+// Module export (for Worker/Node)
 if (typeof module !== 'undefined') module.exports = { LayoutParser, decodeDH, parseSPLAT, PARSER_CONFIG, HALL_COL_GAP };
-export { LayoutParser, decodeDH, parseSPLAT, PARSER_CONFIG, HALL_COL_GAP };

@@ -167,6 +167,5 @@ function matchHall(hallName, locations) {
   return null;
 }
 
-// Module export (for Worker/Node — browser ignores this)
+// Module export (for Worker/Node)
 if (typeof module !== 'undefined') module.exports = { buildCandidates, containsSegment, containsWord, segmentMatches, matchLocation, matchHall };
-export { buildCandidates, containsSegment, containsWord, segmentMatches, matchLocation, matchHall };
