@@ -145,6 +145,20 @@
     display: none;
   }
   .err.show { display: block; }
+  .notice {
+    background: #fffaed;
+    border: 1px solid #f3e3b8;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #6b5616;
+    margin-top: 18px;
+    line-height: 1.5;
+    text-align: left;
+    display: none;
+  }
+  .notice.show { display: block; }
+  .notice strong { color: #3d300a; }
   .step { display: none; }
   .step.active { display: block; }
 </style>
@@ -166,7 +180,11 @@
       <p>This tool only loads data for signed-in <strong>@coreweave.com</strong> Google accounts. Click below to pick your CoreWeave account.</p>
       <a class="btn" id="btn-signin">Continue with Google</a>
       <a class="btn btn-secondary" href="/" target="_blank" rel="noopener">Back to map</a>
-      <div class="hint">Opens Google's account chooser</div>
+      <div class="hint" id="signin-hint">Opens Google's account chooser</div>
+      <div class="notice" id="signin-notice">
+        <strong>Heads up:</strong> after signing in, you'll briefly see a page of raw data —
+        that's expected and means sign-in worked. Close that window and come back here.
+      </div>
       <div class="err" id="err-detail"></div>
     </div>
 
@@ -245,15 +263,31 @@
     btn.onclick = (ev) => {
       ev.preventDefault();
       attemptedSignin = true;
-      signinPopup = window.open(SHEETS_ENDPOINT, 'bp-signin', 'width=520,height=640');
-      const hint = btn.parentElement.querySelector('.hint');
+      signinPopup = window.open(SHEETS_ENDPOINT + '?mode=signin', 'bp-signin', 'width=520,height=640');
+      const hint = document.getElementById('signin-hint');
       if (hint) hint.textContent = 'After signing in, close that tab and return here.';
+      const notice = document.getElementById('signin-notice');
+      if (notice) notice.classList.add('show');
+      watchPopupClose();
     };
     if (errMsg) {
       const err = document.getElementById('err-detail');
       err.textContent = errMsg;
       err.classList.add('show');
     }
+  }
+
+  function watchPopupClose() {
+    if (!signinPopup) return;
+    const t = setInterval(() => {
+      if (!signinPopup || signinPopup.closed) {
+        clearInterval(t);
+        // Trust the sign-in attempt. Incognito/3rd-party-cookie browsers
+        // block JSONP reprobe from seeing the auth cookie, so don't gate
+        // on it — if auth actually failed, the map shows its own banner.
+        notifyOpenerAndClose();
+      }
+    }, 500);
   }
 
   async function reprobe() {

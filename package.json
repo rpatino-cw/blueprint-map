@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test": "node test/parser.test.js",
-    "test:regression": "node test/regression/run-offline.js"
+    "test:regression": "node test/regression/run-offline.js",
+    "test:auth-gate": "node test/auth-gate.test.js"
   }
 }
