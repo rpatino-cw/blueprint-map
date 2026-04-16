@@ -54,7 +54,10 @@ function mkSVG(w, h) {
 function insertSVG(svg, canvas) {
   const old = canvas.querySelector('svg');
   if (old) old.remove();
+  svg.classList.add('map-enter');
   canvas.appendChild(svg);
+  // Remove entrance class after animation so transitions work normally
+  svg.addEventListener('animationend', () => svg.classList.remove('map-enter'), { once: true });
 
   const pr = state.parseResult;
   document.getElementById('title-block').style.display = '';

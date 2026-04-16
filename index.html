@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script>window.BP_VERSION = '2026.04.16-22ee0f0';</script>
+<script>window.BP_VERSION = '2026.04.16-08f7330';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -158,9 +158,14 @@
           <div class="welcome-icon">
             <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="22" x2="42" y2="22" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="6" y1="30" x2="42" y2="30" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="18" y1="10" x2="18" y2="38" stroke="currentColor" stroke-width="1" opacity=".3"/><line x1="30" y1="10" x2="30" y2="38" stroke="currentColor" stroke-width="1" opacity=".3"/><circle cx="24" cy="26" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M24 23v6M21 26h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
           </div>
-          <div class="welcome-title">Loading your floor plan...</div>
-          <div class="welcome-sub">Connecting to the live sheet</div>
-          <div class="welcome-dots" id="welcome-dots"><span></span><span></span><span></span></div>
+          <div class="welcome-title" id="welcome-title">Loading your floor plan...</div>
+          <div class="welcome-sub" id="welcome-sub">Connecting to the live sheet</div>
+          <div class="loading-bar" id="loading-bar">
+            <div class="loading-bar-track">
+              <div class="loading-bar-fill" id="loading-bar-fill"></div>
+            </div>
+            <div class="loading-bar-label" id="loading-bar-label">Fetching sheet data...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -189,6 +194,7 @@
 <button id="btn-grid-view" style="display:none"></button>
 <button id="btn-struct-view" style="display:none"></button>
 
+<div class="stale-badge" id="stale-badge">Updating from live sheet...</div>
 <div class="toast" id="toast"></div>
 <a class="version-badge" id="version-badge" href="https://github.com/rpatino-cw/blueprint-map/commits/main" target="_blank" rel="noopener"></a>
 

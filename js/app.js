@@ -254,6 +254,7 @@ async function ingest(csvText) {
   }
 
   const maxCols = state.grid.reduce((mx, r) => Math.max(mx, r?.length || 0), 0);
+  setLoadingProgress(30, `Parsed ${state.grid.length} rows, detecting structure...`);
   console.log(`%c[Blueprint Map] CSV parsed${isLarge?' (worker)':''}: ${state.grid.length} rows, max ${maxCols} cols`, 'color:#7ec8e3');
 
   let hints = null;
@@ -285,6 +286,7 @@ async function ingest(csvText) {
     console.log('%c[Blueprint Map] AI disabled, no cache — pure rule-based parsing', 'color:#a68a3a;font-weight:bold');
   }
 
+  setLoadingProgress(50, 'Running 7-pass parser...');
   const _parseStart = performance.now();
 
   if (PARSER_API && typeof LayoutParser === 'undefined') {
@@ -306,6 +308,7 @@ async function ingest(csvText) {
 
   const _parseMs = (performance.now() - _parseStart).toFixed(1);
   const pr = state.parseResult;
+  setLoadingProgress(80, `Found ${pr.totalRacks} racks in ${pr.halls.length} halls`);
   console.log(`%c[Blueprint] Parse: ${_parseMs}ms | ${pr.totalRacks} racks | ${pr.halls.length} halls`, 'color:#3ab87a;font-weight:bold');
   if (pr.timing) console.table(pr.timing);
 
@@ -392,8 +395,10 @@ async function ingest(csvText) {
 
   console.groupEnd();
 
+  setLoadingProgress(90, 'Rendering floor plan...');
   toast(`Parsed: ${pr.totalRacks} racks, ${pr.halls.length} halls, ${pr.blocks.length} blocks`);
   renderAll();
+  setLoadingProgress(100, 'Done');
   document.getElementById('btn-prettify').disabled = false;
   populateHallSelect(pr);
 }
@@ -514,8 +519,10 @@ function loadFile(file) {
   reader.readAsText(file);
 }
 
-// ── LIVE SHEETS (JSONP) ──
+// ── LIVE SHEETS (JSONP) with CACHING ──
 const SHEETS_ENDPOINT = 'https://script.google.com/a/macros/coreweave.com/s/AKfycbw_DYXJFneaL7C-6xP4L2XxvlJN9wm0sIEZZWC_aDEygfj5vFUPk98iDV4oUy8r45Bt/exec';
+const SHEET_CACHE_PREFIX = 'bp_sheet_';
+const SHEET_CACHE_MAX_AGE = 30 * 60 * 1000; // 30 min — stale after this, still usable
 
 function arrayToCSV(arr) {
   return arr.map(row => (row || []).map(cell => {
@@ -525,31 +532,148 @@ function arrayToCSV(arr) {
   }).join(',')).join('\n');
 }
 
-function loadFromSheets(tab, sheetId) {
-  toast('Fetching live sheet...');
-  const cbName = '_bpSheet' + Date.now();
-  window[cbName] = async function(data) {
-    delete window[cbName];
-    if (data.error) { toast('Sheet error: ' + data.error, true); return; }
-    await ingest(arrayToCSV(data));
-  };
-  const s = document.createElement('script');
-  const params = '?tab=' + encodeURIComponent(tab || 'OVERHEAD')
-    + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
-    + '&callback=' + cbName;
-  s.src = SHEETS_ENDPOINT + params;
-  s.onerror = () => { delete window[cbName]; toast('Failed to reach Apps Script endpoint', true); };
-  document.body.appendChild(s);
+// ── LOADING PROGRESS ──
+function setLoadingProgress(pct, label) {
+  const fill = document.getElementById('loading-bar-fill');
+  const lbl = document.getElementById('loading-bar-label');
+  if (fill) {
+    fill.classList.remove('indeterminate');
+    fill.style.width = pct + '%';
+  }
+  if (lbl && label) lbl.textContent = label;
 }
 
-// Google Sheets — JSONP fetch
+function setLoadingIndeterminate(label) {
+  const fill = document.getElementById('loading-bar-fill');
+  const lbl = document.getElementById('loading-bar-label');
+  if (fill) { fill.style.width = ''; fill.classList.add('indeterminate'); }
+  if (lbl && label) lbl.textContent = label;
+}
+
+// ── SHEET CACHE ──
+function getCachedSheet(sheetId, tab) {
+  try {
+    const raw = localStorage.getItem(SHEET_CACHE_PREFIX + sheetId + '_' + (tab || 'OVERHEAD'));
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    return cached; // { csv, ts }
+  } catch(e) { return null; }
+}
+
+function setCachedSheet(sheetId, tab, csv) {
+  try {
+    localStorage.setItem(SHEET_CACHE_PREFIX + sheetId + '_' + (tab || 'OVERHEAD'),
+      JSON.stringify({ csv, ts: Date.now() }));
+  } catch(e) { /* quota exceeded — ok to skip */ }
+}
+
+// ── JSONP FETCH (raw) ──
+function fetchSheetRaw(tab, sheetId) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_bpSheet' + Date.now();
+    window[cbName] = function(data) {
+      delete window[cbName];
+      if (data.error) { reject(new Error(data.error)); return; }
+      resolve(arrayToCSV(data));
+    };
+    const s = document.createElement('script');
+    const params = '?tab=' + encodeURIComponent(tab || 'OVERHEAD')
+      + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
+      + '&callback=' + cbName;
+    s.src = SHEETS_ENDPOINT + params;
+    s.onerror = () => { delete window[cbName]; reject(new Error('Failed to reach Apps Script endpoint')); };
+    document.body.appendChild(s);
+  });
+}
+
+// ── MAIN LOAD: cache-first, background revalidate ──
+async function loadFromSheets(tab, sheetId) {
+  const refreshBtn = document.getElementById('btn-refresh');
+  refreshBtn.classList.add('spinning');
+
+  const cached = getCachedSheet(sheetId, tab);
+  const isStale = cached && (Date.now() - cached.ts > SHEET_CACHE_MAX_AGE);
+
+  if (cached) {
+    // Show cached data immediately
+    setLoadingProgress(60, 'Loading cached layout...');
+    await ingest(cached.csv);
+    setLoadingProgress(100, 'Loaded from cache');
+
+    // Auto-focus first hall on initial load
+    autoFocusFirstHall();
+
+    if (isStale) {
+      // Background revalidate — show subtle badge
+      const badge = document.getElementById('stale-badge');
+      badge.classList.add('show');
+      try {
+        const freshCSV = await fetchSheetRaw(tab, sheetId);
+        badge.classList.remove('show');
+        if (freshCSV !== cached.csv) {
+          setCachedSheet(sheetId, tab, freshCSV);
+          // Preserve user's current hall selection during background update
+          const prevHall = state.hallFilter;
+          await ingest(freshCSV);
+          state.hallFilter = prevHall;
+          renderAll();
+          fitView();
+          toast('Updated with live data');
+        }
+      } catch(e) {
+        badge.classList.remove('show');
+        toast('Using cached data (live fetch failed)', true);
+      }
+    }
+    refreshBtn.classList.remove('spinning');
+    return;
+  }
+
+  // No cache — full fetch with progress bar
+  setLoadingIndeterminate('Fetching live sheet...');
+  try {
+    const csv = await fetchSheetRaw(tab, sheetId);
+    setLoadingProgress(50, 'Parsing layout...');
+    setCachedSheet(sheetId, tab, csv);
+    await ingest(csv);
+    setLoadingProgress(100, 'Done');
+
+    // Auto-focus first hall on initial load
+    autoFocusFirstHall();
+  } catch(e) {
+    toast('Sheet error: ' + e.message, true);
+    setLoadingProgress(0, 'Failed to load');
+  }
+  refreshBtn.classList.remove('spinning');
+}
+
+// ── AUTO-FOCUS FIRST HALL ──
+// Only auto-focuses if user hasn't manually selected a hall (hallFilter is still __all)
+function autoFocusFirstHall() {
+  if (state.hallFilter !== '__all') return; // user already picked a hall
+  const pr = state.parseResult;
+  if (!pr) return;
+  const realHalls = pr.halls.filter(h => h.name !== 'Layout');
+  if (realHalls.length >= 2) {
+    const firstHall = realHalls[0].name;
+    state.hallFilter = firstHall;
+    document.getElementById('hall-select').value = firstHall;
+    const pills = document.querySelectorAll('.hall-pill');
+    pills.forEach(p => {
+      p.classList.toggle('active', p.dataset.hall === firstHall);
+    });
+    renderAll();
+    fitView();
+  }
+}
+
+// Google Sheets — fetch via cache-first strategy
 function fetchSelectedSheet() {
   const tab = document.getElementById('sheet-url').value.trim() || 'OVERHEAD';
   const sheetId = document.getElementById('sheet-site').value;
   loadFromSheets(tab, sheetId);
 }
 document.getElementById('btn-fetch-sheet').addEventListener('click', fetchSelectedSheet);
-document.getElementById('sheet-site').addEventListener('change', fetchSelectedSheet);
 
 // Export helpers
 function getExportName() { return state.parseResult?.site || 'blueprint'; }
@@ -678,11 +802,13 @@ Return JSON only:
   });
 })();
 
-// Clear learned data
+// Clear learned data + sheet cache
 document.getElementById('btn-clear-cache').addEventListener('click', () => {
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('bp_hints_'));
-  keys.forEach(k => localStorage.removeItem(k));
-  toast(keys.length ? `Cleared ${keys.length} cached analysis${keys.length > 1 ? 'es' : ''}` : 'No cached data to clear');
+  const hintKeys = Object.keys(localStorage).filter(k => k.startsWith('bp_hints_'));
+  const sheetKeys = Object.keys(localStorage).filter(k => k.startsWith(SHEET_CACHE_PREFIX));
+  [...hintKeys, ...sheetKeys].forEach(k => localStorage.removeItem(k));
+  const total = hintKeys.length + sheetKeys.length;
+  toast(total ? `Cleared ${hintKeys.length} analysis + ${sheetKeys.length} sheet cache${sheetKeys.length !== 1 ? 's' : ''}` : 'No cached data to clear');
 });
 
 // Export rules — generates code patch for type-library.js
@@ -711,10 +837,23 @@ document.getElementById('btn-export-rules').addEventListener('click', () => {
   });
 });
 
-// Refresh button — re-fetches live data
-document.getElementById('btn-refresh').addEventListener('click', () => {
+// Refresh button — force-fetch from live sheet (bypass cache)
+document.getElementById('btn-refresh').addEventListener('click', async () => {
   const sheetId = document.getElementById('sheet-site').value;
-  loadFromSheets('OVERHEAD', sheetId);
+  const tab = document.getElementById('sheet-url')?.value.trim() || 'OVERHEAD';
+  const refreshBtn = document.getElementById('btn-refresh');
+  refreshBtn.classList.add('spinning');
+  toast('Refreshing from live sheet...');
+  try {
+    const csv = await fetchSheetRaw(tab, sheetId);
+    setCachedSheet(sheetId, tab, csv);
+    await ingest(csv);
+    autoFocusFirstHall();
+    toast('Refreshed with live data');
+  } catch(e) {
+    toast('Refresh failed: ' + e.message, true);
+  }
+  refreshBtn.classList.remove('spinning');
 });
 
 // Allow dropping CSV anywhere on the canvas (not just the panel drop zone)
@@ -724,12 +863,10 @@ mc.addEventListener('drop', e => {
   if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
 });
 
-// Site selector — reload when changed
+// Site selector — reload when changed (uses fetchSelectedSheet which calls loadFromSheets)
 document.getElementById('sheet-site').addEventListener('change', () => {
-  const sheetId = document.getElementById('sheet-site').value;
-  const tab = document.getElementById('sheet-url')?.value.trim() || 'OVERHEAD';
   state.hallFilter = '__all';
-  loadFromSheets(tab, sheetId);
+  fetchSelectedSheet();
 });
 
 // ═══════════════════════════════════════════════════════════════
