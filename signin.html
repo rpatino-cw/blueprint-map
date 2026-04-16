@@ -304,15 +304,28 @@
     if (!document.hidden && attemptedSignin) reprobe();
   });
 
-  // Entry point — probe first. If already authed, close immediately.
+  // Entry point — probe first. If already authed, close or redirect.
   async function run() {
     try {
       await probe();
-      notifyOpenerAndClose();
+      if (window.opener && !window.opener.closed) {
+        notifyOpenerAndClose();
+      } else {
+        // Same-tab flow (popup blocked, or user navigated back) —
+        // skip the success UI and go straight to the map.
+        window.location.replace('index.html');
+      }
     } catch (e) {
       showSignin(null);
     }
   }
+
+  // Re-run probe when page is restored from bfcache (back/forward nav).
+  // Without this, signin.html shows its cached "Sign in required" state
+  // even after the user has successfully authed in another tab.
+  window.addEventListener('pageshow', (ev) => {
+    if (ev.persisted) run();
+  });
 
   // Small delay so the spinner is visible, not a jarring flash
   setTimeout(run, 400);
