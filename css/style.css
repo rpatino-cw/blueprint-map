@@ -110,7 +110,7 @@ html, body {
 .prettify-btn:not(:disabled):hover { color: #b45309; }
 .prettify-btn.loading { opacity: 0.5; pointer-events: none; animation: pulse 1.2s ease infinite; }
 @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } }
-.prettify-card rect { filter: drop-shadow(0 2px 8px rgba(0,0,0,0.06)); }
+.prettify-card rect { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 
 /* ── EXPORT DROPDOWN ── */
 
@@ -573,16 +573,26 @@ html, body {
 /* ── MAP ENTRANCE ── */
 
 #blueprint-svg {
-  transition: transform 0.12s linear;
+  transition: transform 0.1s cubic-bezier(0,0,0.2,1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  image-rendering: optimizeQuality;
+}
+#blueprint-svg [data-rc] { cursor: pointer; }
+
+.map-canvas {
+  contain: layout style paint;
+  overflow: hidden;
+  touch-action: none;
 }
 
 #blueprint-svg.map-enter {
-  animation: mapReveal 0.5s var(--ease-expo) both;
+  animation: mapReveal 0.4s var(--ease-expo) both;
 }
 
 @keyframes mapReveal {
-  from { opacity: 0; filter: blur(4px); }
-  to { opacity: 1; filter: blur(0); }
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: none; }
 }
 
 /* ── SHEET LOADING OVERLAY ── */

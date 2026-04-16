@@ -169,13 +169,19 @@ function doSearch() {
   }
 }
 
-// ── PAN & ZOOM ──
+// ── PAN & ZOOM (rAF-throttled) ──
+let _rafPending = false;
 function applyTransform() {
-  const svg=document.getElementById('blueprint-svg');
-  if(!svg)return;
-  svg.style.transform=`translate(${state.panX}px,${state.panY}px) scale(${state.zoom})`;
-  svg.style.transformOrigin='0 0';
-  document.getElementById('zoom-level').textContent=Math.round(state.zoom*100)+'%';
+  if (_rafPending) return;
+  _rafPending = true;
+  requestAnimationFrame(() => {
+    _rafPending = false;
+    const svg = document.getElementById('blueprint-svg');
+    if (!svg) return;
+    svg.style.transform = `translate(${state.panX}px,${state.panY}px) scale(${state.zoom})`;
+    svg.style.transformOrigin = '0 0';
+    document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+  });
 }
 
 function fitView() {
@@ -475,19 +481,42 @@ state.viewMode = 'grid';
   });
 })();
 
-// Pan & zoom
+// Pan & zoom — pointer events for mouse+touch, rAF-throttled
 const mc=document.getElementById('map-canvas');
-mc.addEventListener('mousedown',e=>{
+mc.addEventListener('pointerdown',e=>{
   if(e.target.closest('.zoom-controls,.title-block'))return;
-  state.dragging=true;state.dragStart={x:e.clientX,y:e.clientY};state.panStart={x:state.panX,y:state.panY};
+  state.dragging=true;
+  state.dragStart={x:e.clientX,y:e.clientY};
+  state.panStart={x:state.panX,y:state.panY};
+  mc.setPointerCapture(e.pointerId);
+  // Kill CSS transition during drag for instant response
+  const svg=document.getElementById('blueprint-svg');
+  if(svg) svg.style.transition='none';
 });
-window.addEventListener('mousemove',e=>{if(!state.dragging)return;state.panX=state.panStart.x+(e.clientX-state.dragStart.x);state.panY=state.panStart.y+(e.clientY-state.dragStart.y);applyTransform()});
-window.addEventListener('mouseup',()=>{state.dragging=false});
+window.addEventListener('pointermove',e=>{
+  if(!state.dragging)return;
+  state.panX=state.panStart.x+(e.clientX-state.dragStart.x);
+  state.panY=state.panStart.y+(e.clientY-state.dragStart.y);
+  applyTransform();
+});
+window.addEventListener('pointerup',()=>{
+  if(!state.dragging)return;
+  state.dragging=false;
+  // Restore CSS transition after drag ends
+  const svg=document.getElementById('blueprint-svg');
+  if(svg) svg.style.transition='';
+});
 mc.addEventListener('wheel',e=>{
   e.preventDefault();
-  const d=e.deltaY>0?.9:1.1;const r=mc.getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;
-  const nz=Math.max(.02,Math.min(10,state.zoom*d));const s=nz/state.zoom;
-  state.panX=mx-s*(mx-state.panX);state.panY=my-s*(my-state.panY);state.zoom=nz;applyTransform();
+  const d=e.deltaY>0?.92:1.08;
+  const r=mc.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const nz=Math.max(.02,Math.min(10,state.zoom*d));
+  const s=nz/state.zoom;
+  state.panX=mx-s*(mx-state.panX);
+  state.panY=my-s*(my-state.panY);
+  state.zoom=nz;
+  applyTransform();
 },{passive:false});
 document.getElementById('zoom-in').addEventListener('click',()=>{state.zoom=Math.min(10,state.zoom*1.3);applyTransform()});
 document.getElementById('zoom-out').addEventListener('click',()=>{state.zoom=Math.max(.02,state.zoom*.75);applyTransform()});

@@ -38,6 +38,9 @@ function mkSVG(w, h) {
   svg.setAttribute('xmlns', NS);
   svg.id = 'blueprint-svg';
   svg.style.willChange = 'transform';
+  svg.style.contain = 'layout style paint';
+  svg.setAttribute('shape-rendering', 'geometricPrecision');
+  svg.setAttribute('text-rendering', 'optimizeLegibility');
 
   // clean background — no grid pattern
   svg.appendChild(mkRect(0, 0, w, h, P.bg, 'none'));
@@ -56,8 +59,15 @@ function insertSVG(svg, canvas) {
   if (old) old.remove();
   svg.classList.add('map-enter');
   canvas.appendChild(svg);
-  // Remove entrance class after animation so transitions work normally
   svg.addEventListener('animationend', () => svg.classList.remove('map-enter'), { once: true });
+
+  // Single delegated click handler — replaces 240+ per-cell listeners
+  svg.addEventListener('click', e => {
+    const el = e.target.closest('[data-rc]');
+    if (!el) return;
+    const [r, c] = el.getAttribute('data-rc').split(',').map(Number);
+    selectCell(r, c);
+  });
 
   const pr = state.parseResult;
   document.getElementById('title-block').style.display = '';
@@ -198,8 +208,6 @@ function renderGrid() {
         bg.setAttribute('stroke-width', isSel ? '1.5' : '.5');
         bg.setAttribute('rx', RX);
         bg.setAttribute('data-rc', key);
-        bg.style.cursor = 'pointer';
-        bg.addEventListener('click', () => selectCell(r,c));
         svg.appendChild(bg);
         const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, P.text, 10, 500, FONT_MONO);
         t.setAttribute('text-anchor', 'middle');
@@ -213,8 +221,6 @@ function renderGrid() {
         bg.setAttribute('stroke-width', isHL ? '1' : '.5');
         bg.setAttribute('rx', RX);
         bg.setAttribute('data-rc', key);
-        bg.style.cursor = 'pointer';
-        bg.addEventListener('click', () => selectCell(r,c));
         svg.appendChild(bg);
         let label = v.length > 9 ? v.substring(0,8)+'\u2026' : v;
         const t = mkText(x + CELL_W/2, y + CH/2 + 3, label, style.stroke, 7.5, 500, FONT);
