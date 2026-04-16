@@ -9,7 +9,7 @@
 
   <br>
 
-  <a href="https://rpatino-cw.github.io/blueprint-map/showcase.html"><img src="https://img.shields.io/badge/%E2%96%B6_SEE_THE_PARSER-7--pass_engine_showcase-d44a26?style=for-the-badge&labelColor=1a1a2e" alt="See the Parser Showcase"></a>
+  <a href="https://rpatino-cw.github.io/blueprint-map/"><img src="https://img.shields.io/badge/%E2%96%B6_LAUNCH_APP-drop_a_CSV,_get_a_blueprint-2a4a7f?style=for-the-badge&labelColor=1a1a2e" alt="Launch Blueprint Map"></a>&nbsp;&nbsp;<a href="https://rpatino-cw.github.io/blueprint-map/showcase.html"><img src="https://img.shields.io/badge/%E2%97%86_PARSER_SHOWCASE-7--pass_engine_deep_dive-d44a26?style=for-the-badge&labelColor=1a1a2e" alt="Parser Showcase"></a>
 
   <br>
 
