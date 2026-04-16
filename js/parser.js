@@ -456,7 +456,7 @@ class LayoutParser {
         let typeRowIdx = -1;
         for (const offset of [1, -1]) {
           const tr = r + offset;
-          if (tr < 0 || tr >= this.rows || usedRows.has(tr)) continue;
+          if (tr < 0 || tr >= this.rows) continue;
 
           let typeCount = 0;
           let totalChecked = 0;
