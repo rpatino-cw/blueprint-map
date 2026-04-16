@@ -60,9 +60,9 @@ const RE_BLDG_FULL      = /((?:NORTH|SOUTH|EAST|WEST)?\s*CAMPUS\s+BUILDING\s+[A-
 const RE_BLDG_SHORT     = /((?:BUILDING|BLDG)\s+[A-Z\d]+)/i;
 const RE_SITE_LONG      = /((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+-[\w]+)/i;
 const RE_SITE_SHORT     = /((?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w]+)/i;
-const RE_DH_LINE        = /^DH\s*\d+$/i;
-const RE_DATA_HALL_LINE = /^DATA\s*HALL\s*\d+$/i;
-const RE_DATA_HALL_MID  = /DATA\s*HALL\s*\d+/i;
+const RE_DH_LINE        = /^DH\s*[A-Z]*\d+$/i;
+const RE_DATA_HALL_LINE = /^DATA\s*HALL\s*[A-Z]*\d+$/i;
+const RE_DATA_HALL_MID  = /DATA\s*HALL\s*[A-Z]*\d+/i;
 const RE_HALL_LINE      = /^Hall\s*\d+$/i;
 const RE_STANDALONE_SITE = /^(?:(?:US|GB|SE|NO|DE|FR|NL|IE|JP|SG|AU|CA)-[\w-]+|[A-Z]{2,4}\d{1,2}(?:-[A-Z]+)?)$/i;
 const RE_GRID_LETTER    = /GRID[-\s]?[A-Z]/i;
@@ -955,8 +955,8 @@ class LayoutParser {
 
     const hallMap = new Map();
     for (const hh of this.hallHeaders) {
-      const dhm = hh.value.match(/DH(\d+)|DATA\s*HALL\s*(\d+)|^Hall\s*(\d+)$/i);
-      const hallName = dhm ? 'DH' + (dhm[1] || dhm[2] || dhm[3]) : hh.value.trim().substring(0, 40);
+      const dhm = hh.value.match(/DH([A-Z]*\d+)|DATA\s*HALL\s*([A-Z]*\d+)|^Hall\s*(\d+)$/i);
+      const hallName = dhm ? 'DH' + (dhm[1] || dhm[2] || dhm[3]).toUpperCase() : hh.value.trim().substring(0, 40);
 
       let span = 1;
       for (let cc = hh.col + 1; cc < this.cols; cc++) {
