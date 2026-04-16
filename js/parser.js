@@ -150,17 +150,28 @@ class LayoutParser {
     const marks = {};
     const mark = (label) => { marks[label] = _t(); };
 
+    const passes = [
+      ['pass1',   () => this.pass1_classify()],
+      ['pass1.5a',() => this.pass1_5_mergeGridLabels()],
+      ['pass1.5b',() => this.pass1_5_rowPatterns()],
+      ['pass2',   () => this.pass2_detectBlocks()],
+      ['pass2.5', () => this.pass2_5_discoverTypes()],
+      ['pass3',   () => this.pass3_groupSections()],
+      ['pass4',   () => this.pass4_assignHierarchy()],
+    ];
+
     mark('start');
-    this.pass1_classify();           mark('pass1');
-    this.pass1_5_mergeGridLabels();  mark('pass1.5a');
-    this.pass1_5_rowPatterns();      mark('pass1.5b');
-    this.pass2_detectBlocks();       mark('pass2');
-    this.pass2_5_discoverTypes();    mark('pass2.5');
-    this.pass3_groupSections();      mark('pass3');
-    this.pass4_assignHierarchy();    mark('pass4');
+    for (const [label, fn] of passes) {
+      try {
+        fn();
+      } catch (err) {
+        this.warnings.push(`${label} failed: ${err.message}`);
+      }
+      mark(label);
+    }
 
     const timing = {};
-    const labels = ['pass1','pass1.5a','pass1.5b','pass2','pass2.5','pass3','pass4'];
+    const labels = passes.map(p => p[0]);
     let prev = marks.start;
     for (const l of labels) { timing[l] = +(marks[l] - prev).toFixed(2); prev = marks[l]; }
     timing.total = +(prev - marks.start).toFixed(2);
@@ -954,30 +965,31 @@ class LayoutParser {
       }
     }
 
+    // Detect layout: stacked (halls in same columns, different rows) vs
+    // side-by-side (halls in different columns). Stacked halls need row-based
+    // assignment; side-by-side needs column-based boundary refinement.
+    const hallValues = [...hallMap.values()];
+    const colMinSpread = hallValues.length >= 2
+      ? Math.max(...hallValues.map(h => h.colMin)) - Math.min(...hallValues.map(h => h.colMin))
+      : 0;
+    const isStacked = hallValues.length >= 2 && colMinSpread <= 5;
+
     // Refine hall boundaries using inter-header distances and ROW/TYPE signals.
-    // CW overheads often have halls spanning wide column ranges (left + right sections
-    // separated by ROW/TYPE columns). The span-based calculation is the primary source,
-    // but we resolve overlaps and extend ranges using ROW/TYPE column header positions.
-    if (hallMap.size >= 2) {
+    // Only for side-by-side layouts — stacked layouts use row-based assignment.
+    if (hallMap.size >= 2 && !isStacked) {
       const sorted = [...hallMap.values()].sort((a, b) => a.colMin - b.colMin);
       for (let i = 0; i < sorted.length; i++) {
         const hall = sorted[i];
         const nextMin = i < sorted.length - 1 ? sorted[i + 1].colMin : this.cols;
 
-        // Use ROW/TYPE column headers to extend hall range:
-        // The last ROW header before the next hall's header marks where this hall's
-        // rack sections actually end.
         const rowTypeInRange = this.colHeaders.filter(ch =>
-          /^ROW$/i.test(ch.value) && ch.col > hall.colMin && ch.col < nextMin
+          RE_ROW_EXACT.test(ch.value) && ch.col > hall.colMin && ch.col < nextMin
         );
         if (rowTypeInRange.length > 0) {
           const lastRT = Math.max(...rowTypeInRange.map(ch => ch.col));
-          // Extend to cover columns up to ~3 past the last ROW header
           hall.colMax = Math.max(hall.colMax, lastRT + 3);
         }
 
-        // Resolve overlaps: if this hall's colMax exceeds next hall's colMin,
-        // split at the midpoint between the last ROW header and next hall header
         if (i < sorted.length - 1 && hall.colMax >= sorted[i + 1].colMin) {
           const midpoint = Math.floor((hall.colMax + sorted[i + 1].colMin) / 2);
           hall.colMax = midpoint;
@@ -985,34 +997,62 @@ class LayoutParser {
       }
     }
 
-    for (const section of this.sections) {
-      const secMid = (section.startCol + section.endCol) / 2;
-      let bestHall = null;
-      let bestDist = Infinity;
-
-      // Primary: match by column overlap (tight)
-      for (const [, hall] of hallMap) {
-        if (secMid >= hall.colMin - 3 && secMid <= hall.colMax + 3) {
-          const dist = Math.abs(secMid - (hall.colMin + hall.colMax) / 2);
-          if (dist < bestDist) { bestDist = dist; bestHall = hall; }
-        }
-      }
-      // Fallback: nearest hall header ABOVE section by row distance
-      if (!bestHall) {
-        let bestRowDist = Infinity;
-        for (const [, hall] of hallMap) {
-          const rowDist = section.minRow - hall.header.row;
-          if (rowDist > 0 && rowDist < bestRowDist) {
-            bestRowDist = rowDist;
-            bestHall = hall;
+    if (isStacked) {
+      // Stacked layout: assign sections to the nearest hall header ABOVE them.
+      // Sort halls by header row so we can band-assign sections.
+      const sortedHalls = hallValues.sort((a, b) => a.header.row - b.header.row);
+      for (const section of this.sections) {
+        let bestHall = null;
+        for (let i = sortedHalls.length - 1; i >= 0; i--) {
+          if (section.minRow >= sortedHalls[i].header.row) {
+            bestHall = sortedHalls[i];
+            break;
           }
         }
+        if (bestHall) {
+          bestHall.sections.push(section);
+          section.hall = bestHall.name;
+        } else {
+          section.hall = null;
+        }
       }
-      if (bestHall) {
-        bestHall.sections.push(section);
-        section.hall = bestHall.name;
-      } else {
-        section.hall = null;
+    } else {
+      // Side-by-side layout: match by column overlap + row proximity tiebreaker.
+      for (const section of this.sections) {
+        const secMid = (section.startCol + section.endCol) / 2;
+        let bestHall = null;
+        let bestDist = Infinity;
+        let bestRowDist = Infinity;
+
+        for (const [, hall] of hallMap) {
+          if (secMid >= hall.colMin - 3 && secMid <= hall.colMax + 3) {
+            const colDist = Math.abs(secMid - (hall.colMin + hall.colMax) / 2);
+            const rowDist = section.minRow - hall.header.row;
+            if (rowDist < 0) continue;
+            if (colDist < bestDist || (colDist === bestDist && rowDist < bestRowDist)) {
+              bestDist = colDist;
+              bestRowDist = rowDist;
+              bestHall = hall;
+            }
+          }
+        }
+        // Fallback: nearest hall header ABOVE section by row distance
+        if (!bestHall) {
+          bestRowDist = Infinity;
+          for (const [, hall] of hallMap) {
+            const rowDist = section.minRow - hall.header.row;
+            if (rowDist > 0 && rowDist < bestRowDist) {
+              bestRowDist = rowDist;
+              bestHall = hall;
+            }
+          }
+        }
+        if (bestHall) {
+          bestHall.sections.push(section);
+          section.hall = bestHall.name;
+        } else {
+          section.hall = null;
+        }
       }
     }
 
@@ -1090,11 +1130,15 @@ class LayoutParser {
       }
       for (const section of this.sections) {
         const secMid = (section.startCol + section.endCol) / 2;
-        let bestHall = null, bestDist = Infinity;
+        let bestHall = null, bestDist = Infinity, bestRowDist2 = Infinity;
         for (const [, hall] of hallMap) {
           if (secMid >= hall.colMin - 3 && secMid <= hall.colMax + 3) {
-            const dist = Math.abs(secMid - (hall.colMin + hall.colMax) / 2);
-            if (dist < bestDist) { bestDist = dist; bestHall = hall; }
+            const colDist = Math.abs(secMid - (hall.colMin + hall.colMax) / 2);
+            const rowDist = section.minRow - hall.header.row;
+            if (rowDist < 0) continue;
+            if (colDist < bestDist || (colDist === bestDist && rowDist < bestRowDist2)) {
+              bestDist = colDist; bestRowDist2 = rowDist; bestHall = hall;
+            }
           }
         }
         if (bestHall) { bestHall.sections.push(section); section.hall = bestHall.name; }

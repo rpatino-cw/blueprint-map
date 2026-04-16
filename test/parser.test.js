@@ -389,6 +389,94 @@ test('totalRacks matches sum of block rack counts', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// EDGE CASE TESTS
+// ════════════════════════════════════════════════════════════════
+console.log('\nEdge cases — Merged cells');
+
+test('merged-cells: detects 40 racks across 2 sections', () => {
+  const pr = parse('edge-merged-cells.csv');
+  assert.strictEqual(pr.totalRacks, 40);
+  assert.strictEqual(pr.sections.length, 2);
+});
+
+test('merged-cells: parses space-separated grid label (GRID-A GRID-GROUP-1 GRID-POD A1)', () => {
+  const pr = parse('edge-merged-cells.csv');
+  const sec = pr.sections[0];
+  assert.strictEqual(sec.gridLetter, 'A');
+  assert.strictEqual(sec.podLabel, 'A1');
+});
+
+test('merged-cells: parses pipe-delimited grid label (GRID-A || GRID-GROUP-1 || GRID-POD A2)', () => {
+  const pr = parse('edge-merged-cells.csv');
+  const sec = pr.sections[1];
+  assert.strictEqual(sec.gridLetter, 'A');
+  assert.strictEqual(sec.podLabel, 'A2');
+});
+
+console.log('\nEdge cases — Empty halls');
+
+test('empty-hall: detects 3 halls (DH1, DH2, DH3)', () => {
+  const pr = parse('edge-empty-hall.csv');
+  assert.strictEqual(pr.halls.length, 3);
+  const names = pr.halls.map(h => h.name).sort().join(',');
+  assert.strictEqual(names, 'DH1,DH2,DH3');
+});
+
+test('empty-hall: DH2 has 0 racks (empty hall)', () => {
+  const pr = parse('edge-empty-hall.csv');
+  const dh2 = pr.halls.find(h => h.name === 'DH2');
+  const dh2Racks = dh2.grids.flatMap(g => g.pods.flatMap(p =>
+    p.sections.flatMap(s => s.blocks.reduce((sum, b) => sum + b.rackNums.length, 0))
+  )).reduce((a, b) => a + b, 0);
+  assert.strictEqual(dh2Racks, 0);
+});
+
+test('empty-hall: DH3 section assigned correctly (not to DH1)', () => {
+  const pr = parse('edge-empty-hall.csv');
+  const dh3 = pr.halls.find(h => h.name === 'DH3');
+  const dh3Racks = dh3.grids.flatMap(g => g.pods.flatMap(p =>
+    p.sections.flatMap(s => s.blocks.reduce((sum, b) => sum + b.rackNums.length, 0))
+  )).reduce((a, b) => a + b, 0);
+  assert.strictEqual(dh3Racks, 10);
+});
+
+console.log('\nEdge cases — Short rack rows');
+
+test('single-rack: 2-rack row is skipped (below min run of 3)', () => {
+  const pr = parse('edge-single-rack.csv');
+  // 10 + 10 + 10 = 30 (the 2-rack row should be skipped)
+  assert.strictEqual(pr.totalRacks, 30);
+});
+
+console.log('\nEdge cases — Malformed data');
+
+test('malformed: handles variable-length rows without crashing', () => {
+  const pr = parse('edge-malformed.csv');
+  assert.ok(pr.totalRacks > 0, 'Should detect some racks');
+  assert.strictEqual(pr.warnings.filter(w => w.includes('failed')).length, 0, 'No pass failures');
+});
+
+test('malformed: handles rows with extra columns', () => {
+  const pr = parse('edge-malformed.csv');
+  assert.strictEqual(pr.totalRacks, 25); // 10 + 10 + 5
+});
+
+console.log('\nEdge cases — Error boundary');
+
+test('error boundary: returns result with warnings on bad grid', () => {
+  // Pass completely invalid data — should not throw
+  const grid = [null, undefined, [null, undefined], ['', '']];
+  let result;
+  try {
+    result = vm.runInContext('new LayoutParser(grid).parse()', Object.assign(ctx, { grid }));
+  } catch (e) {
+    assert.fail('Parser should not throw on bad input: ' + e.message);
+  }
+  assert.ok(result, 'Should return a result object');
+  assert.ok(Array.isArray(result.warnings), 'Should have warnings array');
+});
+
+// ════════════════════════════════════════════════════════════════
 // SUMMARY
 // ════════════════════════════════════════════════════════════════
 console.log(`\n${'═'.repeat(50)}`);
