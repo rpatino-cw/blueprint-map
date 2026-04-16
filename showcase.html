@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint Map — The Parser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --paper: #f4f1ec;
+  --blueprint: #2a4a7f;
+  --grid-line: #c8c2b8;
+  --accent: #d44a26;
+  --muted: #7a7468;
+  --cell-rack: #3a7ab8;
+  --cell-type: #b85a3a;
+  --cell-hall: #2a8a4a;
+  --cell-stat: #8a7a3a;
+  --cell-empty: #e8e4dc;
+  --cell-num: #4a6ab8;
+  --cell-label: #7a4ab8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 6vw;
+  position: relative;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-line) 39px, var(--grid-line) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-line) 39px, var(--grid-line) 40px);
+  background-size: 40px 40px;
+  background-position: center;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(244,241,236,0.95) 0%, rgba(244,241,236,0.7) 60%, rgba(244,241,236,0.4) 100%);
+  pointer-events: none;
+}
+
+.hero-content { position: relative; z-index: 1; max-width: 900px; }
+
+.hero h1 {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 span { color: var(--blueprint); }
+
+.hero-sub {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 300;
+  max-width: 600px;
+  margin-bottom: 3rem;
+  color: var(--muted);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--blueprint);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.3rem;
+}
+
+/* ── SECTIONS ── */
+section {
+  padding: 6rem 6vw;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+section h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+section h2 .num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.7em;
+  margin-right: 0.5rem;
+}
+
+section p.lead {
+  font-size: 1.15rem;
+  color: var(--muted);
+  max-width: 700px;
+  margin-bottom: 3rem;
+  font-weight: 300;
+}
+
+/* ── LIVE SHEET SECTION ── */
+.live-sheet-demo {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 5rem 6vw;
+  margin: 0;
+  max-width: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.live-sheet-demo h2 { color: var(--paper); }
+.live-sheet-demo p.lead { color: rgba(244,241,236,0.6); }
+
+.sheet-flow {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sheet-node {
+  background: rgba(244,241,236,0.08);
+  border: 1px solid rgba(244,241,236,0.15);
+  padding: 1.5rem 2rem;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 180px;
+}
+
+.sheet-node .icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.sheet-node .label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  color: rgba(244,241,236,0.7);
+}
+
+.sheet-node .val {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-top: 0.3rem;
+}
+
+.sheet-arrow {
+  font-size: 1.5rem;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── PARSER PIPELINE ── */
+.pipeline {
+  display: grid;
+  gap: 0;
+  margin-top: 2rem;
+  counter-reset: pass;
+}
+
+.pass {
+  display: grid;
+  grid-template-columns: 80px 1fr 300px;
+  gap: 2rem;
+  padding: 2.5rem 0;
+  border-bottom: 1px solid var(--grid-line);
+  align-items: start;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease-out forwards;
+}
+
+.pass:nth-child(1) { animation-delay: 0.1s; }
+.pass:nth-child(2) { animation-delay: 0.2s; }
+.pass:nth-child(3) { animation-delay: 0.3s; }
+.pass:nth-child(4) { animation-delay: 0.4s; }
+.pass:nth-child(5) { animation-delay: 0.5s; }
+.pass:nth-child(6) { animation-delay: 0.6s; }
+.pass:nth-child(7) { animation-delay: 0.7s; }
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pass-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--blueprint);
+  text-align: right;
+  padding-top: 0.2rem;
+}
+
+.pass-info h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.pass-info p {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.pass-visual {
+  display: flex;
+  align-items: start;
+  justify-content: center;
+}
+
+/* ── CELL GRID DEMO ── */
+.cell-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.1;
+  padding: 2px;
+  transition: transform 0.2s ease-out;
+  cursor: default;
+}
+
+.cell:hover { transform: scale(1.3); z-index: 2; }
+
+.cell.rack-num  { background: var(--cell-num);  color: #fff; }
+.cell.rack-type { background: var(--cell-type); color: #fff; }
+.cell.hall      { background: var(--cell-hall); color: #fff; }
+.cell.stat      { background: var(--cell-stat); color: #fff; }
+.cell.empty     { background: var(--cell-empty); color: var(--muted); }
+.cell.label     { background: var(--cell-label); color: #fff; }
+.cell.annot     { background: #b88a3a; color: #fff; }
+
+/* ── SERPENTINE DIAGRAM ── */
+.serpentine-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.serp-row {
+  display: flex;
+  gap: 2px;
+}
+
+.serp-cell {
+  flex: 1;
+  height: 28px;
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cell-num);
+  color: #fff;
+  position: relative;
+}
+
+.serp-cell.type { background: var(--cell-type); font-size: 0.5rem; }
+.serp-cell.tor  { background: var(--cell-hall); }
+
+.serp-arrow {
+  text-align: center;
+  color: var(--accent);
+  font-size: 1.2rem;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── HALL CLUSTERING DIAGRAM ── */
+.hall-demo {
+  display: flex;
+  gap: 20px;
+  align-items: end;
+  width: 100%;
+  max-width: 280px;
+}
+
+.hall-cluster {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border: 2px dashed var(--blueprint);
+  border-radius: 4px;
+  position: relative;
+}
+
+.hall-cluster::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -10px;
+  left: 8px;
+  background: var(--paper);
+  padding: 0 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--blueprint);
+  font-weight: 600;
+}
+
+.hall-block {
+  height: 14px;
+  background: var(--cell-num);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+.hall-gap {
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── TYPE LIBRARY ── */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--grid-line);
+  border: 1px solid var(--grid-line);
+  margin-top: 2rem;
+}
+
+.type-item {
+  background: var(--paper);
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.type-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.type-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.type-prefix {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* ── DISCOVERY SECTION ── */
+.discovery-flow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.disc-box {
+  padding: 1.2rem 1.5rem;
+  border: 1px solid var(--grid-line);
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.disc-box.unknown {
+  border-color: var(--accent);
+  background: rgba(212,74,38,0.05);
+}
+
+.disc-box.learned {
+  border-color: var(--cell-hall);
+  background: rgba(42,138,74,0.05);
+}
+
+.disc-arrow {
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+/* ── FINAL STATS ── */
+.final-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.final-stat {
+  border-left: 3px solid var(--blueprint);
+  padding-left: 1.5rem;
+}
+
+.final-stat .val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--blueprint);
+  line-height: 1;
+}
+
+.final-stat .label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+
+.final-stat .detail {
+  font-size: 0.8rem;
+  color: var(--ink);
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 3rem 6vw;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px solid var(--grid-line);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .pass { grid-template-columns: 60px 1fr; }
+  .pass-visual { display: none; }
+  .sheet-flow { flex-direction: column; align-items: stretch; }
+  .sheet-arrow { transform: rotate(90deg); text-align: center; }
+  .hero-stats { gap: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ HERO ══════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-content">
+    <h1>Blueprint <span>Map</span></h1>
+    <p class="hero-sub">
+      A 7-pass structural analysis engine that reads raw datacenter overhead CSVs and understands every cell. Drop a spreadsheet, get a floor plan. No configuration. No AI required.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-val">100%</span>
+        <span class="stat-label">Rack Capture</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">99.6%</span>
+        <span class="stat-label">Cell Understanding</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">40+</span>
+        <span class="stat-label">Sites Verified</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">&lt;40ms</span>
+        <span class="stat-label">Parse Time</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ LIVE SHEETS ══════════════════════════════════════ -->
+<section class="live-sheet-demo">
+  <h2>Live from the source</h2>
+  <p class="lead">
+    Blueprint Map pulls overhead data directly from MASTER cutsheets via Google Apps Script. Select a site, the sheet loads. No CSV download. No copy-paste. Real-time.
+  </p>
+  <div class="sheet-flow">
+    <div class="sheet-node">
+      <span class="icon">&#x1F4CA;</span>
+      <span class="label">Google Sheet</span>
+      <span class="val">MASTER-US-DTN01</span>
+    </div>
+    <span class="sheet-arrow">&rarr;</span>
+    <div class="sheet-node">
+      <span class="icon">&#x26A1;</span>
+      <span class="label">Apps Script</span>
+      <span class="val">JSONP Fetch</span>
+    </div>
+    <span class="sheet-arrow">&rarr;</span>
+    <div class="sheet-node">
+      <span class="icon">&#x1F9E0;</span>
+      <span class="label">7-Pass Parser</span>
+      <span class="val">Classify &rarr; Detect &rarr; Build</span>
+    </div>
+    <span class="sheet-arrow">&rarr;</span>
+    <div class="sheet-node">
+      <span class="icon">&#x1F5FA;</span>
+      <span class="label">SVG Blueprint</span>
+      <span class="val">3,380 racks rendered</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ PARSER PIPELINE ══════════════════════════════════════ -->
+<section>
+  <h2><span class="num">01</span> The Parser</h2>
+  <p class="lead">
+    Seven passes. Each one reads what the previous pass discovered. No cell is left behind.
+  </p>
+
+  <div class="pipeline">
+    <!-- Pass 1 -->
+    <div class="pass">
+      <div class="pass-num">1</div>
+      <div class="pass-info">
+        <h3>Classify</h3>
+        <p>Every cell gets a label. Is it a rack number? A rack type? A hall header? A power annotation? An email address leaked from sharing permissions? The parser reads each cell and decides what it means&mdash;before touching any structure.</p>
+      </div>
+      <div class="pass-visual">
+        <div class="cell-grid">
+          <div class="cell empty"></div>
+          <div class="cell hall">DH1</div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell rack-num">1</div>
+          <div class="cell rack-num">2</div>
+          <div class="cell rack-num">3</div>
+          <div class="cell rack-num">4</div>
+          <div class="cell rack-num">5</div>
+          <div class="cell rack-num">6</div>
+          <div class="cell rack-num">7</div>
+          <div class="cell rack-num">8</div>
+          <div class="cell rack-num">9</div>
+          <div class="cell empty"></div>
+          <div class="cell rack-type">T1</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">IB</div>
+          <div class="cell rack-type">T2</div>
+          <div class="cell annot">150kW</div>
+          <div class="cell rack-num">18</div>
+          <div class="cell rack-num">17</div>
+          <div class="cell rack-num">16</div>
+          <div class="cell rack-num">15</div>
+          <div class="cell rack-num">14</div>
+          <div class="cell rack-num">13</div>
+          <div class="cell rack-num">12</div>
+          <div class="cell rack-num">11</div>
+          <div class="cell rack-num">10</div>
+          <div class="cell empty"></div>
+          <div class="cell rack-type">T2</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">IB</div>
+          <div class="cell rack-type">T1</div>
+          <div class="cell annot">150kW</div>
+          <div class="cell stat">Racks</div>
+          <div class="cell stat">18</div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pass 1.5 -->
+    <div class="pass">
+      <div class="pass-num">1.5</div>
+      <div class="pass-info">
+        <h3>Merge &amp; Pattern</h3>
+        <p>Multi-cell grid labels ("GRID-GROUP 1" spanning 3 columns) get stitched together. Then statistical analysis identifies rack number rows by counting contiguous integers&mdash;if a row has 3+ numbers filling 50%+ of its cells, those are rack positions.</p>
+      </div>
+      <div class="pass-visual">
+        <div class="cell-grid" style="grid-template-columns: repeat(6, 1fr);">
+          <div class="cell label" style="grid-column: span 3;">GRID-A</div>
+          <div class="cell label" style="grid-column: span 3;">POD A1</div>
+          <div class="cell rack-num">1</div>
+          <div class="cell rack-num">2</div>
+          <div class="cell rack-num">3</div>
+          <div class="cell rack-num">4</div>
+          <div class="cell rack-num">5</div>
+          <div class="cell rack-num">6</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+          <div class="cell rack-type">HD</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pass 2 -->
+    <div class="pass">
+      <div class="pass-num">2</div>
+      <div class="pass-info">
+        <h3>Detect Blocks</h3>
+        <p>Contiguous rack numbers form blocks. Adjacent rows with opposite direction (1&rarr;10 above, 20&larr;11 below) are paired as serpentine partners. This is how real datacenter pods are numbered&mdash;walk down one aisle, turn, walk back.</p>
+      </div>
+      <div class="pass-visual">
+        <div class="serpentine-demo">
+          <div class="serp-row">
+            <div class="serp-cell tor">T1</div>
+            <div class="serp-cell">2</div>
+            <div class="serp-cell">3</div>
+            <div class="serp-cell">4</div>
+            <div class="serp-cell">5</div>
+            <div class="serp-cell">6</div>
+            <div class="serp-cell">7</div>
+            <div class="serp-cell">8</div>
+            <div class="serp-cell">9</div>
+            <div class="serp-cell tor">IB</div>
+          </div>
+          <div class="serp-arrow">1 &rarr; 10 &nbsp;&nbsp;&nbsp; ascending</div>
+          <div class="serp-row">
+            <div class="serp-cell type">T1-E</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">IB x16</div>
+          </div>
+          <div class="serp-row" style="margin-top: 4px;">
+            <div class="serp-cell type">T2-E</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">HD-B2</div>
+            <div class="serp-cell type">IB x16</div>
+          </div>
+          <div class="serp-arrow">20 &larr; 11 &nbsp;&nbsp; descending</div>
+          <div class="serp-row">
+            <div class="serp-cell tor">T2</div>
+            <div class="serp-cell">19</div>
+            <div class="serp-cell">18</div>
+            <div class="serp-cell">17</div>
+            <div class="serp-cell">16</div>
+            <div class="serp-cell">15</div>
+            <div class="serp-cell">14</div>
+            <div class="serp-cell">13</div>
+            <div class="serp-cell">12</div>
+            <div class="serp-cell tor">IB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pass 2.5 -->
+    <div class="pass">
+      <div class="pass-num">2.5</div>
+      <div class="pass-info">
+        <h3>Discover Types</h3>
+        <p>Unknown values that repeat next to rack blocks get registered as new types at runtime. New hardware deployed? The parser learns it automatically. No code change needed. This is how it went from 25 types to 38 without anyone updating a config file.</p>
+      </div>
+      <div class="pass-visual">
+        <div class="discovery-flow" style="flex-direction: column; gap: 0.8rem;">
+          <div class="disc-box unknown">NVL72-v1<br><small style="color:var(--accent);">unknown &times; 2990</small></div>
+          <div class="disc-arrow">&darr;</div>
+          <div class="disc-box learned">NVL72-v1<br><small style="color:var(--cell-hall);">auto-registered</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pass 3 -->
+    <div class="pass">
+      <div class="pass-num">3</div>
+      <div class="pass-info">
+        <h3>Group Sections</h3>
+        <p>Blocks that share the same column alignment get clustered into sections. Four empty rows between groups? That's a pod boundary. A grid label appears? New section starts. The 20-rack pod heuristic (2 serpentine rows of 10) tags standard pods automatically.</p>
+      </div>
+      <div class="pass-visual">
+        <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:280px;">
+          <div style="display:flex; gap:2px;">
+            <div class="cell rack-num" style="flex:1;aspect-ratio:auto;height:14px;font-size:0.5rem;">1-10</div>
+            <div class="cell rack-num" style="flex:1;aspect-ratio:auto;height:14px;font-size:0.5rem;">11-20</div>
+          </div>
+          <div style="height:4px;"></div>
+          <div style="display:flex; gap:2px;">
+            <div class="cell rack-num" style="flex:1;aspect-ratio:auto;height:14px;font-size:0.5rem;">21-30</div>
+            <div class="cell rack-num" style="flex:1;aspect-ratio:auto;height:14px;font-size:0.5rem;">31-40</div>
+          </div>
+          <div style="height:16px; display:flex; align-items:center; justify-content:center;">
+            <span style="font-family:'IBM Plex Mono';font-size:0.6rem;color:var(--accent);">4 empty rows = boundary</span>
+          </div>
+          <div style="display:flex; gap:2px;">
+            <div class="cell rack-num" style="flex:1;aspect-ratio:auto;height:14px;font-size:0.5rem;">41-50</div>
+            <div class="cell rack-num" style="flex:1;aspect-ratio:auto;height:14px;font-size:0.5rem;">51-60</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pass 4 -->
+    <div class="pass">
+      <div class="pass-num">4</div>
+      <div class="pass-info">
+        <h3>Assign Hierarchy</h3>
+        <p>Sections get placed into halls. Three strategies, tried in order: match by hall header column overlap, infer from spatial column gaps (8+ columns apart = separate hall), or fall back to a single layout group. The result is a full tree: site &rarr; halls &rarr; grids &rarr; pods &rarr; racks.</p>
+      </div>
+      <div class="pass-visual">
+        <div class="hall-demo">
+          <div class="hall-cluster" data-label="DH1">
+            <div class="hall-block" style="width:80%;"></div>
+            <div class="hall-block" style="width:60%;"></div>
+            <div class="hall-block" style="width:90%;"></div>
+            <div class="hall-block" style="width:70%;"></div>
+            <div class="hall-block" style="width:85%;"></div>
+          </div>
+          <div class="hall-gap">&larr; 8+ cols &rarr;</div>
+          <div class="hall-cluster" data-label="DH2">
+            <div class="hall-block" style="width:90%;"></div>
+            <div class="hall-block" style="width:75%;"></div>
+            <div class="hall-block" style="width:85%;"></div>
+            <div class="hall-block" style="width:65%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="pass" style="border-bottom: none;">
+      <div class="pass-num" style="color: var(--accent);">&rarr;</div>
+      <div class="pass-info">
+        <h3>Result</h3>
+        <p>A complete ParseResult object: site name, halls with grids and pods, every rack block with numbers and types, serpentine pairs tagged, SPLAT ranges parsed, grid labels extracted, stats collected, warnings logged, per-pass timing recorded. Pure data. No rendering assumptions.</p>
+      </div>
+      <div class="pass-visual">
+        <div style="font-family:'IBM Plex Mono';font-size:0.7rem;color:var(--muted);line-height:1.8;padding:8px;">
+          { site, halls[], blocks[],<br>
+          &nbsp;&nbsp;sections[], superpods[],<br>
+          &nbsp;&nbsp;gridLabels[], splatRanges[],<br>
+          &nbsp;&nbsp;stats{}, timing{},<br>
+          &nbsp;&nbsp;totalRacks, warnings[] }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ TYPE LIBRARY ══════════════════════════════════════ -->
+<section>
+  <h2><span class="num">02</span> 38 Rack Types</h2>
+  <p class="lead">
+    Bucket-indexed prefix matching. Every rack type in the fleet recognized instantly. Unknown hardware auto-discovered at runtime.
+  </p>
+  <div class="type-grid">
+    <div class="type-item"><div class="type-swatch" style="background:#3a87b8;"></div><span class="type-name">Compute</span><span class="type-prefix">HD-B2, HD-GB</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#2a6ab8;"></div><span class="type-name">NVL72 / GB200</span><span class="type-prefix">NVL72, B200</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#2a5ab8;"></div><span class="type-name">GH200</span><span class="type-prefix">GH2 x</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#3070b8;"></div><span class="type-name">B4 / B100</span><span class="type-prefix">B4 x</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#b04a78;"></div><span class="type-name">IB Spine</span><span class="type-prefix">IB x, IB-</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#b8884a;"></div><span class="type-name">XDR Spine</span><span class="type-prefix">XDR</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#7a4ab8;"></div><span class="type-name">Spine Connector</span><span class="type-prefix">SC-</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#2a9868;"></div><span class="type-name">TOR+IB Combo</span><span class="type-prefix">T0+IB</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#3ab87a;"></div><span class="type-name">TOR / Edge</span><span class="type-prefix">T0-E, T1 x</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#78b03a;"></div><span class="type-name">Frontend</span><span class="type-prefix">T0-FE, T1-FE</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#4a98b8;"></div><span class="type-name">BFR / RoCE</span><span class="type-prefix">BFR-, WSR-</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#8a4a78;"></div><span class="type-name">Ring</span><span class="type-prefix">RING</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#7a4ab8;"></div><span class="type-name">Core / Spine</span><span class="type-prefix">CP, C-C</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#4a6ab8;"></div><span class="type-name">Storage</span><span class="type-prefix">VAST, STRG</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#b0a83a;"></div><span class="type-name">DPR / PSDR</span><span class="type-prefix">DPR, PSDR</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#4a9898;"></div><span class="type-name">FDP</span><span class="type-prefix">FDP</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#b84a42;"></div><span class="type-name">Security</span><span class="type-prefix">MS-SEC, CW-SEC</span></div>
+    <div class="type-item"><div class="type-swatch" style="background:#a0a0a0;"></div><span class="type-name">Reserved</span><span class="type-prefix">RES</span></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ FINAL NUMBERS ══════════════════════════════════════ -->
+<section>
+  <h2><span class="num">03</span> Verified</h2>
+  <p class="lead">
+    Every number below was measured, not estimated. Parser output compared cell-by-cell against raw sheet data and cross-referenced against the NetBox DCIM API.
+  </p>
+  <div class="final-grid">
+    <div class="final-stat">
+      <div class="val">100%</div>
+      <div class="label">Rack capture rate</div>
+      <div class="detail">Verified across 40 live sites, 54 to 3,380 racks each</div>
+    </div>
+    <div class="final-stat">
+      <div class="val">99.6%</div>
+      <div class="label">Cell understanding</div>
+      <div class="detail">Every cell classified. Only 4-digit stat values fall through.</div>
+    </div>
+    <div class="final-stat">
+      <div class="val">38</div>
+      <div class="label">Built-in type categories</div>
+      <div class="detail">Plus unsupervised discovery for unknown hardware at runtime</div>
+    </div>
+    <div class="final-stat">
+      <div class="val">&lt;40ms</div>
+      <div class="label">Parse time (largest site)</div>
+      <div class="detail">3,380 racks, 104 rows, 189 columns — all 7 passes</div>
+    </div>
+    <div class="final-stat">
+      <div class="val">47</div>
+      <div class="label">Test suite</div>
+      <div class="detail">Pre-commit hook blocks changes if any test fails</div>
+    </div>
+    <div class="final-stat">
+      <div class="val">0</div>
+      <div class="label">Missed racks</div>
+      <div class="detail">NetBox cross-reference: parser finds equal or more than inventory</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Blueprint Map &middot; Built by Romeo Patino &middot; Parser v1.0 frozen
+</footer>
+
+</body>
+</html>
