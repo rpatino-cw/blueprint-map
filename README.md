@@ -45,8 +45,8 @@ open index.html
 
 ## What it does
 
-- **Visualize** overhead layout CSVs as zoomable, color-coded blueprints
-- **40+ CW sites built in** — dropdown selector loads live from Google Sheets (US Central, US East, US West, Europe)
+- **Visualize** datacenter overhead CSVs as zoomable, color-coded blueprints
+- **40+ sites built in** — dropdown selector loads live from Google Sheets
 - **Auto-detect** rack types, halls, grids, pods, and serpentine numbering with a 7-pass parser
 - **38 rack type categories** — bucket-indexed prefix matching with unsupervised discovery for unknown types
 - **Spatial hall inference** — clusters sections by column distance when sheets lack standard hall headers
@@ -68,11 +68,11 @@ A 7-pass structural analysis engine that reads raw CSV overhead grids and unders
 
 | Metric | Value |
 |--------|-------|
-| **Rack capture** | 100% — verified across 40 live sites (54 to 3,380 racks each) |
+| **Rack capture** | 100% — verified across 40+ live sites |
 | **Cell understanding** | 99.6% — every cell classified; only 4-digit stat values fall through |
 | **Type recognition** | 38 built-in categories + unsupervised discovery for unknown hardware |
-| **Parse speed** | <40ms for the largest site (3,380 racks, 104 rows, 189 columns) |
-| **Sheet formats** | Old (Albatross flat), new (v2.0 campus/SPLAT), EU, legacy — all handled |
+| **Parse speed** | <40ms for the largest site |
+| **Sheet formats** | Legacy flat, campus/SPLAT v2.0, EU, and custom — all handled |
 | **Hall detection** | 3 strategies: header-based, spatial inference, layout fallback |
 | **Serpentine** | Auto-pairs ascending/descending rows, validates 20-rack pod structure |
 | **Self-healing** | Pass 2.5 discovers unknown rack types at runtime by frequency analysis |
@@ -85,26 +85,26 @@ Every non-empty cell gets one of these classifications:
 |----------------|----------|
 | `rack-num` | `1`, `20`, `150`, `440` |
 | `rack-type` | `HD-B2c`, `NVL72-v1`, `T1-E-v3b`, `IB x16`, `XDR x8a` |
-| `hall-header` | `US-DTN01 NORTH CAMPUS BUILDING E`, `DH1`, `DH201` |
-| `site-header` | `US-EVI01`, `ORD3-ALBATROSS`, `GB-PPL01` |
+| `hall-header` | `US-SITE01 NORTH CAMPUS BUILDING A`, `DH1`, `DH2` |
+| `site-header` | `US-SITE01`, `SITE03-LEGACY`, `EU-SITE01` |
 | `grid-label` | `GRID-A POD A1`, `GRID-GROUP 1`, `ROWS 1-10` |
-| `splat` | `SPLAT_US_LZL01_DH201_GG1_A_A1_1_SP1` |
+| `splat` | `SPLAT_US_SITE01_DH1_GG1_A_A1_1_SP1` |
 | `col-header` | `ROW`, `TYPE`, `PWR` |
 | `row-label` | `B1`, `B2`, `C1` |
-| `annotation` | `150kW`, `334kW`, `8 MegaWatts`, `*** COREWEAVE RESERVED ***` |
+| `annotation` | `150kW`, `334kW`, `8 MegaWatts`, `*** RESERVED ***` |
 | `stat` | `Node Count: 320`, `GPU Count: 2560`, `Total Racks: 80` |
 | `superpod` | `SP1`, `SP2` |
 | `rack-type` (FDP) | `FDP-B1`, `FDP-W2`, `FDP-B2` |
 
-### Validated against NetBox
+### Validated against DCIM
 
-Parser output was compared against the NetBox DCIM API for 13 sites. The parser finds equal or more racks than NetBox in every case — because overhead sheets include planned and reserved capacity that NetBox doesn't track until hardware arrives. **Zero missed racks.**
+Parser output was compared against a DCIM inventory system for 13 sites. The parser finds equal or more racks in every case — because overhead sheets include planned and reserved capacity that inventory systems don't track until hardware arrives. **Zero missed racks.**
 
 ### The 7 passes
 
 | Pass | Name | What it does |
 |------|------|-------------|
-| 1 | **Classify** | Label every cell: rack number, rack type, hall header, grid label, SPLAT range, annotation, stat/metadata. Detects site codes (`US-`, `GB-`, `SE-`, etc.), campus naming (`NORTH CAMPUS BUILDING E`), DH-style headers, power annotations, email/sharing metadata. |
+| 1 | **Classify** | Label every cell: rack number, rack type, hall header, grid label, SPLAT range, annotation, stat/metadata. Detects site codes, campus naming, DH-style headers, power annotations, and sharing metadata. |
 | 1.5a | **Merge** | Combine multi-cell grid labels (e.g. "GRID-GROUP 1" spanning 3 merged columns). Parse structured fields: grid letter, grid-group number, pod label. |
 | 1.5b | **Patterns** | Statistical row analysis — identify rack number rows by contiguous integer runs (3+ cells, 50%+ of row). Detect adjacent type rows by repeated text values. |
 | 2 | **Detect** | Find contiguous rack blocks, pair ascending/descending rows as serpentine partners, extract row labels. Tag 20-rack pod pairs with corner rack validation. |
@@ -148,7 +148,7 @@ git checkout parser-v1.0-frozen -- js/parser.js js/type-library.js
 
 Paste your Anthropic API key in the sidebar. Blueprint Map sends a small sample of your CSV to Claude Haiku to detect halls, rack rows, and custom device types. Results are cached by CSV hash — same file never hits the API twice.
 
-No key? No problem. The rule-based 6-pass parser handles standard overhead formats on its own.
+No key? No problem. The rule-based 7-pass parser handles standard overhead formats on its own.
 
 ---
 
@@ -209,7 +209,7 @@ Tests run on Node 18, 20, and 22 via GitHub Actions on every push and PR.
 
 ```
 index.html              ← app shell + cache-busted script loader
-css/style.css           ← CoreWeave-branded dark theme with animations
+css/style.css           ← dark theme with animations
 js/
   type-library.js       ← 38 rack type categories + bucket-indexed prefix matching
   parser.js             ← 7-pass layout analysis engine (~1,230 lines, per-pass timing)
