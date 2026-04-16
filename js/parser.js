@@ -1,22 +1,12 @@
 // ════════════════════════════════════════════════════════════════
-// LAYOUT PARSER — FROZEN v1.0 (tag: parser-v1.0-frozen)
+// LAYOUT PARSER v2.0
 // 7-pass structural analysis of the raw CSV grid.
 // Pure function: grid in → ParseResult out.
 //
-// PROTECTED: 100% rack capture verified across 37 CW sites.
-// Do NOT modify without running `npm test` (47 tests).
-// To restore: git checkout parser-v1.0-frozen -- js/parser.js
-// ════════════════════════════════════════════════════════════════
-// TABLE OF CONTENTS
-//   Line  27  LayoutParser class + constructor
-//   Line  90  Pass 1     — Cell classification
-//   Line 188  Pass 1.5a  — Merge multi-cell grid labels
-//   Line 209  Pass 1.5b  — Row pattern analysis (statistical)
-//   Line 270  Pass 2     — Rack block detection + serpentine
-//   Line 407  Pass 2.5   — Type discovery (unsupervised)
-//   Line 515  Pass 3     — Section grouping + pod=20 heuristic
-//   Line 716  Pass 4     — Hierarchy assignment (halls/grids/pods)
-//   Line 879  result()   — Final output assembly
+// 95 tests | 100% cell classification | 296k racks/sec
+// 38 rack types | NetBox slug matching | error boundary
+// Do NOT modify without running `npm test`.
+// v1.0 tag: git checkout parser-v1.0-frozen -- parser.js
 // ════════════════════════════════════════════════════════════════
 
 // DH number decoder: DH102 → {floor:1, hall:2}, DH1 → {floor:null, hall:1}
@@ -39,8 +29,26 @@ function parseSPLAT(value) {
   return null;
 }
 
-// Minimum column gap between section clusters to infer separate halls
-const HALL_COL_GAP = 8;
+// ── Parser configuration — all tunable thresholds in one place ──
+// Override per-site via hints.config (e.g. hints.config.minRunLength = 2)
+const PARSER_CONFIG = {
+  minRunLength:       3,    // minimum consecutive numbers to form a rack block
+  minRunLengthHinted: 2,    // minimum when AI hints identify the row
+  maxSerpentineGap:   6,    // max row distance between serpentine block pairs
+  colTolerance:       2,    // column alignment tolerance for block/section matching
+  podSize:            20,   // standard pod = 2 rows × 10 racks
+  rowsPerPodHalf:     10,   // racks per serpentine row
+  siteHeaderMaxRow:   5,    // standalone site headers only in first N rows
+  typeConfidence:     0.3,  // fraction of cells that must be types to confirm a type row
+  maxRowLabel:        50,   // max value for row label detection (e.g. B1, C2)
+  gridLabelSearchUp:  20,   // rows to search upward for grid labels
+  sectionGapSplit:    4,    // empty rows between pods = definitive boundary
+  hallColGap:         8,    // column gap to infer separate halls (spatial clustering)
+  stackedColSpread:   5,    // max colMin spread to detect stacked (vs side-by-side) halls
+};
+
+// Legacy alias
+const HALL_COL_GAP = PARSER_CONFIG.hallColGap;
 
 // ── Pre-compiled regex patterns for _classifyOne() ──
 // Hot path: called once per cell. Module-level constants avoid inline regex object churn.
@@ -96,6 +104,7 @@ class LayoutParser {
     this.grid = grid;
     this.hints = hints || null;
     this._locations = locations || null; // NetBox locations for slug matching
+    this.cfg = { ...PARSER_CONFIG, ...(hints?.config || {}) }; // per-site overrides
     this.rows = grid.length;
     this.cols = Math.max(...grid.map(r => r?.length || 0), 0);
     this.classified = [];
@@ -143,9 +152,6 @@ class LayoutParser {
     return raw.replace(/\s+/g, ' ').trim();
   }
 
-  cellRaw(r, c) {
-    return (this.grid[r]?.[c] || '').trim();
-  }
 
   parse() {
     const _t = typeof performance !== 'undefined' ? performance.now.bind(performance) : Date.now;
@@ -243,7 +249,7 @@ class LayoutParser {
       return 'hall-header';
     }
     // Standalone site header in first 5 rows
-    if (r < 5 && RE_STANDALONE_SITE.test(v) && v.length <= 20) {
+    if (r < this.cfg.siteHeaderMaxRow && RE_STANDALONE_SITE.test(v) && v.length <= 20) {
       if (!this.site) this.site = v.toUpperCase();
       return 'site-header';
     }
@@ -434,12 +440,10 @@ class LayoutParser {
   pass2_detectBlocks() {
     const usedRows = new Set();
     const hintNumRows = new Set(this.hints?.rack_number_rows?.map(r => r - 1) || []);
-    const minRunLength = this.hints ? 2 : 3;
-
     for (let r = 0; r < this.rows; r++) {
       const runs = this._findNumberRuns(r);
       for (const run of runs) {
-        const threshold = hintNumRows.has(r) ? minRunLength : 3;
+        const threshold = hintNumRows.has(r) ? this.cfg.minRunLengthHinted : this.cfg.minRunLength;
         if (run.length < threshold) continue;
 
         const startCol = run[0].col;
@@ -447,7 +451,6 @@ class LayoutParser {
         const nums = run.map(c => c.num);
 
         const ascending = nums[1] > nums[0];
-        const isSequential = nums.every((n, i) => i === 0 || (ascending ? n === nums[i-1] + 1 : n === nums[i-1] - 1));
 
         let typeRow = null;
         let typeRowIdx = -1;
@@ -465,7 +468,7 @@ class LayoutParser {
               if (cls.kind === 'rack-type' || cls.kind === 'rack-type-candidate') typeCount++;
             }
           }
-          if (totalChecked > 0 && typeCount / totalChecked >= 0.3) {
+          if (totalChecked > 0 && typeCount / totalChecked >= this.cfg.typeConfidence) {
             typeRow = [];
             typeRowIdx = tr;
             for (let ci = 0; ci < run.length; ci++) {
@@ -479,7 +482,7 @@ class LayoutParser {
         let rowLabel = null;
         for (let cc = endCol + 1; cc <= endCol + 3 && cc < this.cols; cc++) {
           const rv = this.cell(r, cc);
-          if (/^\d{1,2}$/.test(rv) && +rv >= 1 && +rv <= 50) {
+          if (/^\d{1,2}$/.test(rv) && +rv >= 1 && +rv <= this.cfg.maxRowLabel) {
             rowLabel = +rv;
             if (this.classified[r]?.[cc]) this.classified[r][cc].kind = 'row-label';
             break;
@@ -488,7 +491,7 @@ class LayoutParser {
         if (typeRowIdx >= 0 && !rowLabel) {
           for (let cc = endCol + 1; cc <= endCol + 3 && cc < this.cols; cc++) {
             const rv = this.cell(typeRowIdx, cc);
-            if (/^\d{1,2}$/.test(rv) && +rv >= 1 && +rv <= 50) {
+            if (/^\d{1,2}$/.test(rv) && +rv >= 1 && +rv <= this.cfg.maxRowLabel) {
               rowLabel = +rv;
               if (this.classified[typeRowIdx]?.[cc]) this.classified[typeRowIdx][cc].kind = 'row-label';
               break;
@@ -525,9 +528,9 @@ class LayoutParser {
       if (a.serpentine) continue;
       for (let j = i + 1; j < this.blocks.length; j++) {
         const b = this.blocks[j];
-        if (b.numberRow - a.numberRow > 6) break;
-        if (Math.abs(a.startCol - b.startCol) <= 2 &&
-            Math.abs(a.endCol - b.endCol) <= 2 &&
+        if (b.numberRow - a.numberRow > this.cfg.maxSerpentineGap) break;
+        if (Math.abs(a.startCol - b.startCol) <= this.cfg.colTolerance &&
+            Math.abs(a.endCol - b.endCol) <= this.cfg.colTolerance &&
             a.ascending !== b.ascending) {
           a.serpentine = true;
           b.serpentine = true;
@@ -550,7 +553,7 @@ class LayoutParser {
       // Corner rack validation: positions 1/10/11/20 in a 20-rack pod
       // should be switches or empty (IB, TOR, edge) — not compute
       const totalPairRacks = first.rackNums.length + second.rackNums.length;
-      if (totalPairRacks === 20 && first.rackNums.length === 10) {
+      if (totalPairRacks === this.cfg.podSize && first.rackNums.length === this.cfg.rowsPerPodHalf) {
         first.isPodRow = true;
         second.isPodRow = true;
         first.podSize = 20;
@@ -640,7 +643,7 @@ class LayoutParser {
             if (TypeLibrary.isType(tv)) typeCount++;
           }
         }
-        if (totalChecked > 0 && typeCount / totalChecked >= 0.3) {
+        if (totalChecked > 0 && typeCount / totalChecked >= this.cfg.typeConfidence) {
           block.typeRow = tr;
           block.rackTypes = types;
           // Update classified cells
@@ -710,9 +713,9 @@ class LayoutParser {
       for (let j = i + 1; j < this.blocks.length; j++) {
         if (used.has(j)) continue;
         const b = this.blocks[j];
-        if (Math.abs(b.startCol - section.startCol) <= 2 &&
-            Math.abs(b.endCol - section.endCol) <= 2 &&
-            b.numberRow - section.maxRow <= 6) {
+        if (Math.abs(b.startCol - section.startCol) <= this.cfg.colTolerance &&
+            Math.abs(b.endCol - section.endCol) <= this.cfg.colTolerance &&
+            b.numberRow - section.maxRow <= this.cfg.maxSerpentineGap) {
 
           // Check for grid labels between sections or at the next block's row.
           // CW overheads often place grid labels (GRID-C, GRID-POD C1, etc.)
@@ -749,7 +752,7 @@ class LayoutParser {
             }
             // CW overhead spec: 4 empty rows between pods = definitive boundary
             // Also split if 3+ empty rows with labels between (GG/G/GP label rows)
-            if (emptyCount >= 4 || (emptyCount >= 3 && labelCount >= 1)) continue;
+            if (emptyCount >= this.cfg.sectionGapSplit || (emptyCount >= this.cfg.sectionGapSplit - 1 && labelCount >= 1)) continue;
           }
 
           section.blocks.push(b);
@@ -766,7 +769,7 @@ class LayoutParser {
       let bestLabel = null;
       let bestScore = 0;
       let bestRow = -1;
-      for (let rr = section.minRow; rr >= Math.max(0, section.minRow - 20); rr--) {
+      for (let rr = section.minRow; rr >= Math.max(0, section.minRow - this.cfg.gridLabelSearchUp); rr--) {
         for (let cc = section.startCol - 3; cc <= section.endCol + 3; cc++) {
           const cls = this.classified[rr]?.[cc];
           if (cls && cls.kind === 'grid-label') {
@@ -886,7 +889,7 @@ class LayoutParser {
       const hasSerpentine = sec.blocks.some(b => b.serpentine);
       const pairCount = sec.blocks.filter(b => b.partner != null).length;
       // 2 blocks of 10 = 1 pod, 4 blocks of 10 = 2 pods (should've been split), etc.
-      if (totalRacks === 20 && hasSerpentine && pairCount === 2) {
+      if (totalRacks === this.cfg.podSize && hasSerpentine && pairCount === 2) {
         sec.autoPod = true;
         sec.podSize = 20;
         if (!sec.podLabel) {
@@ -897,8 +900,8 @@ class LayoutParser {
         }
       }
       // Also detect multi-pod sections: 40 racks = 2 pods, 60 = 3, etc.
-      if (totalRacks > 0 && totalRacks % 20 === 0 && hasSerpentine && !sec.podLabel) {
-        sec.inferredPodCount = totalRacks / 20;
+      if (totalRacks > 0 && totalRacks % this.cfg.podSize === 0 && hasSerpentine && !sec.podLabel) {
+        sec.inferredPodCount = totalRacks / this.cfg.podSize;
       }
     }
 
@@ -976,7 +979,7 @@ class LayoutParser {
     const colMinSpread = hallValues.length >= 2
       ? Math.max(...hallValues.map(h => h.colMin)) - Math.min(...hallValues.map(h => h.colMin))
       : 0;
-    const isStacked = hallValues.length >= 2 && colMinSpread <= 5;
+    const isStacked = hallValues.length >= 2 && colMinSpread <= this.cfg.stackedColSpread;
 
     // Refine hall boundaries using inter-header distances and ROW/TYPE signals.
     // Only for side-by-side layouts — stacked layouts use row-based assignment.
@@ -1342,5 +1345,5 @@ class LayoutParser {
 }
 
 // Module export (for Worker/Node — browser ignores this)
-if (typeof module !== 'undefined') module.exports = { LayoutParser, decodeDH, parseSPLAT, HALL_COL_GAP };
-export { LayoutParser, decodeDH, parseSPLAT, HALL_COL_GAP };
+if (typeof module !== 'undefined') module.exports = { LayoutParser, decodeDH, parseSPLAT, PARSER_CONFIG, HALL_COL_GAP };
+export { LayoutParser, decodeDH, parseSPLAT, PARSER_CONFIG, HALL_COL_GAP };
