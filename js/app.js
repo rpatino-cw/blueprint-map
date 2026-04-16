@@ -584,11 +584,31 @@ function hideAuthBanner() {
   const el = document.getElementById('auth-banner');
   if (el) el.classList.remove('show');
 }
+let _signinWin = null;
+function openSigninFlow(e) {
+  if (e) e.preventDefault();
+  // Popup first (cleanest UX); fall back to same-tab if blocked.
+  _signinWin = window.open('signin.html', 'bp-signin', 'width=480,height=620,menubar=no,toolbar=no,location=no');
+  if (!_signinWin) window.location.href = 'signin.html';
+}
 document.addEventListener('DOMContentLoaded', () => {
   const close = document.getElementById('auth-banner-close');
   const retry = document.getElementById('auth-banner-retry');
+  const signin = document.getElementById('auth-banner-signin');
   if (close) close.addEventListener('click', hideAuthBanner);
   if (retry) retry.addEventListener('click', () => location.reload());
+  if (signin) signin.addEventListener('click', openSigninFlow);
+});
+
+// Auto-retry when the signin popup reports success
+window.addEventListener('message', (ev) => {
+  if (!ev.data || ev.data.type !== 'bp-auth-success') return;
+  hideAuthBanner();
+  try { if (_signinWin && !_signinWin.closed) _signinWin.close(); } catch (e) {}
+  const sel = document.getElementById('sheet-site');
+  if (sel && typeof loadFromSheets === 'function') {
+    loadFromSheets('OVERHEAD', sel.value);
+  }
 });
 
 // ── SHEET LOADING OVERLAY ──
@@ -740,9 +760,9 @@ async function loadFromSheets(tab, sheetId) {
       const wt = document.getElementById('welcome-title');
       const ws = document.getElementById('welcome-sub');
       if (wt) wt.textContent = 'CoreWeave sign-in required';
-      if (ws) ws.innerHTML = 'This tool connects to internal Google Sheets.<br>Sign in to your <strong>@coreweave.com</strong> Google account in this browser, then reload.'
+      if (ws) ws.innerHTML = 'This tool connects to internal Google Sheets.<br>Sign in with your <strong>@coreweave.com</strong> Google account to continue.'
         + '<div style="margin-top:20px;display:flex;gap:10px;justify-content:center">'
-        + '<a href="https://accounts.google.com" target="_blank" rel="noopener" style="display:inline-block;padding:10px 20px;background:#1d1d1f;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500">Sign in to Google</a>'
+        + '<a href="signin.html" target="bp-signin" rel="noopener" onclick="openSigninFlow(event)" style="display:inline-block;padding:10px 20px;background:#1d1d1f;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500">Sign in with CoreWeave</a>'
         + '<button onclick="location.reload()" style="padding:10px 20px;background:#fff;color:#1d1d1f;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">Retry</button>'
         + '</div>';
       if (es) es.style.display = '';

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing in — Blueprint Map</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='6' width='24' height='20' rx='2' fill='none' stroke='%231d1d1f' stroke-width='1.5'/><line x1='4' y1='16' x2='28' y2='16' stroke='%231d1d1f' opacity='.3'/><line x1='16' y1='6' x2='16' y2='26' stroke='%231d1d1f' opacity='.3'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --text: #1d1d1f;
+    --text2: #6e6e73;
+    --border: #d2d2d7;
+    --border2: #e8e8ed;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --cw-primary: #1d1d1f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    padding: 40px 32px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    animation: cardIn 0.5s var(--ease);
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .logo {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 32px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  p strong { color: var(--text); font-weight: 600; }
+  .spinner {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 24px;
+    border: 3px solid var(--border2);
+    border-top-color: var(--cw-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .check {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    background: #ebf9ef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pop 0.4s var(--ease);
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  .check svg { color: #22a556; }
+  .btn {
+    display: inline-block;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: var(--cw-primary);
+    color: #fff;
+    transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease);
+    font-family: inherit;
+    margin-top: 4px;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .btn:active { transform: none; }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+    margin-left: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--text2); }
+  .hint {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .err {
+    background: #fff5f5;
+    border: 1px solid #fbdada;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #c44;
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    text-align: left;
+    display: none;
+  }
+  .err.show { display: block; }
+  .step { display: none; }
+  .step.active { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo">Blueprint Map</div>
+    <div class="subtitle">CoreWeave · Authentication</div>
+
+    <div class="step active" id="step-probe">
+      <div class="spinner"></div>
+      <h1>Checking your sign-in…</h1>
+      <p>Confirming access to the live floor-plan data.</p>
+    </div>
+
+    <div class="step" id="step-signin">
+      <h1>Sign in required</h1>
+      <p>This tool only loads data for signed-in <strong>@coreweave.com</strong> Google accounts. Click below to pick your CoreWeave account.</p>
+      <a class="btn" id="btn-signin">Continue with Google</a>
+      <a class="btn btn-secondary" href="/" target="_blank" rel="noopener">Back to map</a>
+      <div class="hint">Opens Google's account chooser</div>
+      <div class="err" id="err-detail"></div>
+    </div>
+
+    <div class="step" id="step-success">
+      <div class="check" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h1>You're signed in</h1>
+      <p>Redirecting you back to the floor plan…</p>
+      <div class="hint" id="success-hint">This tab will close automatically.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SHEETS_ENDPOINT = 'https://script.google.com/a/macros/coreweave.com/s/AKfycbw_DYXJFneaL7C-6xP4L2XxvlJN9wm0sIEZZWC_aDEygfj5vFUPk98iDV4oUy8r45Bt/exec';
+  const PROBE_TIMEOUT = 8000;
+
+  const steps = {
+    probe: document.getElementById('step-probe'),
+    signin: document.getElementById('step-signin'),
+    success: document.getElementById('step-success'),
+  };
+  function show(name) {
+    Object.keys(steps).forEach(k => steps[k].classList.toggle('active', k === name));
+  }
+
+  function probe() {
+    return new Promise((resolve, reject) => {
+      const cb = '_signinProbe' + Date.now();
+      const timer = setTimeout(() => {
+        delete window[cb];
+        reject(new Error('AUTH'));
+      }, PROBE_TIMEOUT);
+      window[cb] = function () {
+        clearTimeout(timer);
+        delete window[cb];
+        resolve();
+      };
+      const s = document.createElement('script');
+      s.src = SHEETS_ENDPOINT + '?tab=OVERHEAD&callback=' + cb;
+      s.onerror = () => { clearTimeout(timer); delete window[cb]; reject(new Error('AUTH')); };
+      document.body.appendChild(s);
+    });
+  }
+
+  function notifyOpenerAndClose() {
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'bp-auth-success' }, '*');
+      }
+    } catch (e) { /* cross-origin — ignore */ }
+    show('success');
+    setTimeout(() => {
+      try { window.close(); } catch (e) { /* blocked — leave hint visible */ }
+      // If close is blocked (not opened via script), redirect to map
+      setTimeout(() => {
+        const hint = document.getElementById('success-hint');
+        if (hint) hint.innerHTML = 'You can close this tab. <a href="/">Return to the map</a>';
+      }, 600);
+    }, 900);
+  }
+
+  function showSignin(errMsg) {
+    show('signin');
+    const btn = document.getElementById('btn-signin');
+    const continueUrl = window.location.origin + window.location.pathname + '?c=1';
+    const chooserUrl = 'https://accounts.google.com/AccountChooser'
+      + '?hd=coreweave.com'
+      + '&continue=' + encodeURIComponent(continueUrl);
+    btn.href = chooserUrl;
+    if (errMsg) {
+      const err = document.getElementById('err-detail');
+      err.textContent = errMsg;
+      err.classList.add('show');
+    }
+  }
+
+  // Entry point — probe first. If already authed, close immediately.
+  async function run() {
+    try {
+      await probe();
+      notifyOpenerAndClose();
+    } catch (e) {
+      // If we already came back from AccountChooser (c=1) and still fail,
+      // show a clearer error — the account they picked isn't CW.
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('c')) {
+        showSignin('Signed in, but that account doesn\'t have access. Make sure you picked your @coreweave.com account.');
+      } else {
+        showSignin(null);
+      }
+    }
+  }
+
+  // Small delay so the spinner is visible, not a jarring flash
+  setTimeout(run, 400);
+})();
+</script>
+</body>
+</html>
