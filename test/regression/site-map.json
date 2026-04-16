@@ -516,26 +516,46 @@
       "sheetId": "1W4AN4vQa0elz1lf3SoLucUCE0b4TzKhfR8eMkgVHZ4I",
       "label": "NKQ01 — Newark (US-WEST-08A)",
       "halls": []
+    },
+    {
+      "locode": "US-CVY01",
+      "sheetId": "149BNLylQ9g580h1txmVDVH8L82s4iy5IwXWsMRg1GUg",
+      "label": "CVY01 — Clarksville / RDU1",
+      "halls": []
+    },
+    {
+      "locode": "US-CVG01",
+      "sheetId": "1X2tNBihZjYb4CkvA6ggTroekD2IxXKesLvRWrbKC_OU",
+      "label": "CVG01 — Cincinnati (US-EAST-06A)",
+      "halls": []
+    },
+    {
+      "locode": "US-LHS01",
+      "sheetId": "1PBr7hsr-UWJ5GPVl1tZO930_renG6DjKFo6_XSOUm_w",
+      "label": "LHS01 — Lithia Springs (US-LAB-01A)",
+      "halls": []
+    },
+    {
+      "locode": "US-MSC01",
+      "sheetId": "1JNRKf3Uc9x9XNpafNfqvrwntNf0Q2R_kqyhBwJMxUo0",
+      "label": "MSC01 — Mesa (US-WEST-04A)",
+      "halls": []
     }
   ],
   "unmatched_ref": [
     "CA-GAL01",
     "SE-SKH01",
     "DK-SVL01",
-    "US-CVY01",
     "US-RRX01",
     "US-LZL01",
     "US-LBB01",
     "US-MKO01",
     "US-SKY01",
     "US-CSZ02",
-    "US-CVG01",
     "US-DNN01",
     "US-PPY01",
     "US-CYL01",
-    "US-LHS01",
     "US-DEVTEST01",
-    "US-MSC01",
     "US-QNC01",
     "US-SPK03"
   ],
