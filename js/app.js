@@ -2,6 +2,10 @@
 // APP — State, event listeners, UI wiring
 // ════════════════════════════════════════════════════════════════
 
+// Parser API — when set, CSV is sent to this endpoint instead of parsed locally.
+// Deploy your own: https://github.com/rpatino-cw/blueprint-parser
+const PARSER_API = null; // e.g. 'https://blueprint-parser.your-worker.workers.dev/parse'
+
 const state = {
   grid: [],
   parseResult: null,
@@ -282,8 +286,24 @@ async function ingest(csvText) {
   }
 
   const _parseStart = performance.now();
-  const parser = new LayoutParser(state.grid, hints);
-  state.parseResult = parser.parse();
+
+  if (PARSER_API && typeof LayoutParser === 'undefined') {
+    // Remote API mode — parser code not loaded, send CSV to private API
+    try {
+      toast('Parsing via API...');
+      const resp = await fetch(PARSER_API, { method: 'POST', body: csvText, headers: { 'Content-Type': 'text/plain' } });
+      if (!resp.ok) throw new Error(`API ${resp.status}: ${await resp.text()}`);
+      state.parseResult = await resp.json();
+    } catch (err) {
+      toast('Parser API error: ' + err.message, true);
+      return;
+    }
+  } else {
+    // Local mode — parser.js loaded in browser
+    const parser = new LayoutParser(state.grid, hints);
+    state.parseResult = parser.parse();
+  }
+
   const _parseMs = (performance.now() - _parseStart).toFixed(1);
   const pr = state.parseResult;
   console.log(`%c[Blueprint] Parse: ${_parseMs}ms | ${pr.totalRacks} racks | ${pr.halls.length} halls`, 'color:#3ab87a;font-weight:bold');
