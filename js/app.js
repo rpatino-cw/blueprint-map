@@ -708,6 +708,8 @@ async function loadFromSheets(tab, sheetId) {
     // Auto-focus first hall on initial load
     autoFocusFirstHall();
     hideSheetLoading();
+    // Data is rendering — clear any stale banner from a prior visit/fetch
+    hideAuthBanner();
 
     if (isStale) {
       // Background revalidate — show subtle badge
