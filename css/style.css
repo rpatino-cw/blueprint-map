@@ -107,6 +107,10 @@ html, body {
 .bar-btn:hover { color: var(--text); border-color: var(--border); background: var(--bg); }
 .bar-btn:disabled { opacity: 0.25; pointer-events: none; }
 .bar-btn svg { flex-shrink: 0; }
+.prettify-btn:not(:disabled):hover { color: #b45309; }
+.prettify-btn.loading { opacity: 0.5; pointer-events: none; animation: pulse 1.2s ease infinite; }
+@keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } }
+.prettify-card rect { filter: drop-shadow(0 2px 8px rgba(0,0,0,0.06)); }
 
 /* ── EXPORT DROPDOWN ── */
 

@@ -238,3 +238,61 @@ function renderGrid() {
 
 // Keep structured view function stub for backward compat
 function renderStructured() { renderGrid(); }
+
+// ── AI PRETTIFY OVERLAY ──
+function renderPrettified(hints) {
+  const svg = document.getElementById('blueprint-svg');
+  if (!svg || !hints) return;
+
+  // Remove previous prettify elements
+  svg.querySelectorAll('.prettify-el').forEach(el => el.remove());
+
+  const w = parseFloat(svg.getAttribute('width'));
+
+  // Summary card — top right
+  const cardW = 220, cardH = 80, cardX = w - cardW - PAD, cardY = PAD - 10;
+  const card = document.createElementNS(NS, 'g');
+  card.setAttribute('class', 'prettify-el');
+
+  const bg = mkRect(cardX, cardY, cardW, cardH, '#ffffff', '#e2dfd9');
+  bg.setAttribute('rx', '8');
+  bg.setAttribute('opacity', '0.95');
+  card.appendChild(bg);
+
+  const title = mkText(cardX + 12, cardY + 20, hints.title || state.parseResult?.site || '', P.text, 12, 600, FONT_DISPLAY);
+  card.appendChild(title);
+
+  if (hints.summary) {
+    const lines = hints.summary.match(/.{1,35}(\s|$)/g) || [hints.summary];
+    lines.slice(0, 2).forEach((line, i) => {
+      card.appendChild(mkText(cardX + 12, cardY + 36 + i * 14, line.trim(), P.text2, 9, 400, FONT));
+    });
+  }
+
+  const rackCount = mkText(cardX + cardW - 12, cardY + 20, `${state.parseResult?.totalRacks || 0} racks`, P.dim, 10, 500, FONT_MONO);
+  rackCount.setAttribute('text-anchor', 'end');
+  card.appendChild(rackCount);
+
+  svg.appendChild(card);
+
+  // Hall notes
+  if (hints.halls && state.hallBounds) {
+    hints.halls.forEach((h, i) => {
+      if (!h.note) return;
+      const bound = state.hallBounds[i];
+      if (!bound) return;
+      const nt = mkText(bound.x, bound.y + bound.h + 14, h.note, P.dim, 8, 400, FONT);
+      nt.setAttribute('class', 'prettify-el');
+      svg.appendChild(nt);
+    });
+  }
+
+  // Highlights — small list below the card
+  if (hints.highlights?.length) {
+    hints.highlights.slice(0, 3).forEach((h, i) => {
+      const ht = mkText(cardX + 12, cardY + cardH + 16 + i * 14, '- ' + h, P.text2, 8, 400, FONT);
+      ht.setAttribute('class', 'prettify-el');
+      svg.appendChild(ht);
+    });
+  }
+}

@@ -394,6 +394,7 @@ async function ingest(csvText) {
 
   toast(`Parsed: ${pr.totalRacks} racks, ${pr.halls.length} halls, ${pr.blocks.length} blocks`);
   renderAll();
+  document.getElementById('btn-prettify').disabled = false;
   populateHallSelect(pr);
 }
 
@@ -598,6 +599,71 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 
 // Resize
 window.addEventListener('resize',()=>{if(document.getElementById('blueprint-svg'))fitView()});
+
+// ═══════════════════════════════════════════════════════════════
+// AI PRETTIFY
+// ═══════════════════════════════════════════════════════════════
+
+function buildPrettifySummary(pr) {
+  const halls = pr.halls.map(h => {
+    const racks = h.grids.reduce((sum, g) =>
+      sum + g.pods.reduce((s2, p) =>
+        s2 + p.sections.reduce((s3, sec) =>
+          s3 + sec.blocks.reduce((s4, b) => s4 + b.racksPerRow, 0), 0), 0), 0);
+    return `${h.name}: ${racks} racks`;
+  }).join('\n');
+
+  return `Site: ${pr.site || 'Unknown'}
+Total racks: ${pr.totalRacks}
+Halls:\n${halls}
+Warnings: ${pr.warnings.length > 0 ? pr.warnings.join('; ') : 'none'}`;
+}
+
+document.getElementById('btn-prettify').addEventListener('click', async () => {
+  const pr = state.parseResult;
+  if (!pr) return;
+
+  const btn = document.getElementById('btn-prettify');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  toast('Prettifying...');
+
+  try {
+    const summary = buildPrettifySummary(pr);
+    const resp = await fetch('https://ccna-tutor.rpatino-cw.workers.dev/api/blueprint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: `Given this datacenter overhead layout summary, return a JSON object with display suggestions to make the floor map cleaner and more organized:
+
+${summary}
+
+Return JSON only:
+{
+  "title": "clean site title for display",
+  "halls": [{"name": "clean hall name", "note": "short status note or empty"}],
+  "summary": "1-2 sentence plain English summary of the layout",
+  "highlights": ["any notable observations about this site"]
+}`
+      }),
+    });
+
+    if (!resp.ok) throw new Error('AI unavailable');
+    const data = await resp.json();
+    const text = data.reply || '';
+    const jsonStr = text.replace(/^```json?\s*/m, '').replace(/```\s*$/m, '').trim();
+    const hints = JSON.parse(jsonStr);
+
+    state.prettifyHints = hints;
+    renderPrettified(hints);
+    toast('Prettified');
+  } catch (err) {
+    toast('Prettify failed: ' + err.message, true);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════
 // PANEL TOGGLE & CANVAS DROP
