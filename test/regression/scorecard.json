@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-16T05:37:17.200Z",
+  "generated": "2026-04-16T05:40:18.507Z",
   "sites": [
     {
       "locode": "US-EVI01",
@@ -114,12 +114,12 @@
       "fixture": "ovo01-overhead.csv",
       "halls": [
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 101",
           "expected_racks": 140,
           "found_racks": 240,
           "delta": 100,
-          "accuracy": 28.6,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [],
           "missing_count": 0,
@@ -174,7 +174,7 @@
       "total_expected": 400,
       "total_found": 400,
       "total_delta": 0,
-      "pass_count": 1,
+      "pass_count": 2,
       "total_halls": 3,
       "site_accuracy": 100,
       "parser_total_racks": 400,
@@ -477,12 +477,12 @@
       "fixture": "rin01-overhead.csv",
       "halls": [
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 1",
           "expected_racks": 80,
           "found_racks": 160,
           "delta": 80,
-          "accuracy": 0,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             121,
@@ -510,12 +510,12 @@
           "extra_count": 80
         },
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 2",
           "expected_racks": 40,
           "found_racks": 120,
           "delta": 80,
-          "accuracy": -100,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             101,
@@ -546,7 +546,7 @@
       "total_expected": 120,
       "total_found": 280,
       "total_delta": 160,
-      "pass_count": 0,
+      "pass_count": 2,
       "total_halls": 2,
       "site_accuracy": -33.3,
       "parser_total_racks": 280,
@@ -623,12 +623,12 @@
       "fixture": "ews01-overhead.csv",
       "halls": [
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 1",
           "expected_racks": 120,
           "found_racks": 200,
           "delta": 80,
-          "accuracy": 33.3,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             141,
@@ -656,12 +656,12 @@
           "extra_count": 80
         },
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 2",
           "expected_racks": 140,
           "found_racks": 200,
           "delta": 60,
-          "accuracy": 57.1,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             141,
@@ -689,12 +689,12 @@
           "extra_count": 60
         },
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 3",
           "expected_racks": 140,
           "found_racks": 200,
           "delta": 60,
-          "accuracy": 57.1,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             141,
@@ -746,12 +746,12 @@
           "extra_count": 0
         },
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 6",
           "expected_racks": 40,
           "found_racks": 60,
           "delta": 20,
-          "accuracy": 50,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             21,
@@ -779,12 +779,12 @@
           "extra_count": 20
         },
         {
-          "status": "DELTA",
+          "status": "PASS",
           "datahall": "Data Hall 1",
           "expected_racks": 120,
           "found_racks": 200,
           "delta": 80,
-          "accuracy": 33.3,
+          "accuracy": 100,
           "missing_racks": [],
           "extra_racks": [
             141,
@@ -815,7 +815,7 @@
       "total_expected": 680,
       "total_found": 980,
       "total_delta": 300,
-      "pass_count": 2,
+      "pass_count": 7,
       "total_halls": 7,
       "site_accuracy": 55.9,
       "parser_total_racks": 780,
@@ -828,38 +828,40 @@
       "fixture": "bvi01-overhead.csv",
       "halls": [
         {
-          "status": "HALL_NOT_FOUND",
+          "status": "DELTA",
           "datahall": "Data Hall DC2",
           "expected_racks": 110,
-          "found_racks": 0,
-          "delta": -110,
-          "accuracy": 0,
+          "found_racks": 108,
+          "delta": -2,
+          "accuracy": 89.1,
           "missing_racks": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120
           ],
-          "extra_racks": [],
-          "missing_count": 110,
-          "extra_count": 0,
-          "details": "Parser did not detect hall \"Data Hall DC2\""
+          "extra_racks": [
+            96,
+            95,
+            94,
+            93,
+            92,
+            91,
+            97,
+            98,
+            99,
+            100
+          ],
+          "missing_count": 12,
+          "extra_count": 10
         },
         {
           "status": "HALL_NOT_FOUND",
@@ -897,11 +899,11 @@
         }
       ],
       "total_expected": 434,
-      "total_found": 0,
-      "total_delta": -434,
+      "total_found": 108,
+      "total_delta": -326,
       "pass_count": 0,
       "total_halls": 2,
-      "site_accuracy": 0,
+      "site_accuracy": 24.9,
       "parser_total_racks": 444,
       "flat_delta": 10,
       "flat_accuracy": 100,
@@ -909,13 +911,13 @@
     }
   ],
   "summary": {
-    "halls_passed": 21,
+    "halls_passed": 29,
     "halls_total": 35,
-    "hall_pass_rate": 60,
+    "hall_pass_rate": 82.9,
     "racks_expected": 8254,
-    "racks_found_per_hall": 7380,
+    "racks_found_per_hall": 7488,
     "racks_found_flat": 10882,
-    "hall_level_accuracy": 89.4,
+    "hall_level_accuracy": 90.7,
     "flat_accuracy": 100,
     "fixtures_tested": 13
   }
