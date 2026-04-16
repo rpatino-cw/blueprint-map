@@ -561,6 +561,36 @@ function arrayToCSV(arr) {
   }).join(',')).join('\n');
 }
 
+// ── AUTH BANNER (universal) ──
+// Shown whenever fetchSheetRaw fails with 'AUTH' — from any code path
+// (fresh load, stale revalidation, manual refresh). Stays visible until
+// a successful fetch or user dismissal.
+function showAuthBanner(opts) {
+  opts = opts || {};
+  const el = document.getElementById('auth-banner');
+  const txt = document.getElementById('auth-banner-text');
+  if (!el) return;
+  if (txt) {
+    if (opts.stale) {
+      txt.innerHTML = '<strong>Showing cached data</strong> — live refresh blocked. Sign in with your @coreweave.com Google account to update.';
+    } else {
+      txt.innerHTML = '<strong>CoreWeave sign-in required</strong> — live sheet data couldn\'t load. Sign in with your @coreweave.com Google account.';
+    }
+  }
+  el.classList.toggle('stale-mode', !!opts.stale);
+  el.classList.add('show');
+}
+function hideAuthBanner() {
+  const el = document.getElementById('auth-banner');
+  if (el) el.classList.remove('show');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const close = document.getElementById('auth-banner-close');
+  const retry = document.getElementById('auth-banner-retry');
+  if (close) close.addEventListener('click', hideAuthBanner);
+  if (retry) retry.addEventListener('click', () => location.reload());
+});
+
 // ── SHEET LOADING OVERLAY ──
 function showSheetLoading(text) {
   const el = document.getElementById('sheet-loading');
@@ -666,6 +696,7 @@ async function loadFromSheets(tab, sheetId) {
       try {
         const freshCSV = await fetchSheetRaw(tab, sheetId);
         badge.classList.remove('show');
+        hideAuthBanner();
         if (freshCSV !== cached.csv) {
           setCachedSheet(sheetId, tab, freshCSV);
           // Preserve user's current hall selection during background update
@@ -678,7 +709,11 @@ async function loadFromSheets(tab, sheetId) {
         }
       } catch(e) {
         badge.classList.remove('show');
-        toast('Using cached data (live fetch failed)', true);
+        if (e.message === 'AUTH') {
+          showAuthBanner({ stale: true });
+        } else {
+          toast('Using cached data (live fetch failed)', true);
+        }
       }
     }
     refreshBtn.classList.remove('spinning');
@@ -693,12 +728,14 @@ async function loadFromSheets(tab, sheetId) {
     setCachedSheet(sheetId, tab, csv);
     await ingest(csv);
     setLoadingProgress(100, 'Done');
+    hideAuthBanner();
 
     // Auto-focus first hall on initial load
     autoFocusFirstHall();
   } catch(e) {
     if (e.message === 'AUTH') {
       setLoadingProgress(0, '');
+      showAuthBanner({ stale: false });
       const es = document.getElementById('empty-state');
       const wt = document.getElementById('welcome-title');
       const ws = document.getElementById('welcome-sub');
@@ -922,9 +959,14 @@ document.getElementById('btn-refresh').addEventListener('click', async () => {
     setCachedSheet(sheetId, tab, csv);
     await ingest(csv);
     autoFocusFirstHall();
+    hideAuthBanner();
     toast('Refreshed with live data');
   } catch(e) {
-    toast('Refresh failed: ' + e.message, true);
+    if (e.message === 'AUTH') {
+      showAuthBanner({ stale: !!getCachedSheet(sheetId, tab) });
+    } else {
+      toast('Refresh failed: ' + e.message, true);
+    }
   }
   refreshBtn.classList.remove('spinning');
 });

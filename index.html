@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script>window.BP_VERSION = '2026.04.16-8962b92';</script>
+<script>window.BP_VERSION = '2026.04.16-26f641b';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -225,6 +225,16 @@
     <div class="sheet-loading-spinner"></div>
     <div class="sheet-loading-text" id="sheet-loading-text">Loading site...</div>
   </div>
+</div>
+<div class="auth-banner" id="auth-banner" role="alert" aria-live="polite">
+  <span class="auth-banner-text" id="auth-banner-text">
+    <strong>CoreWeave sign-in required</strong> — live sheet data couldn't load.
+  </span>
+  <span class="auth-banner-actions">
+    <a class="btn btn-primary" id="auth-banner-signin" href="https://accounts.google.com" target="_blank" rel="noopener">Sign in to Google</a>
+    <button class="btn btn-secondary" id="auth-banner-retry" type="button">Retry</button>
+    <button class="btn btn-close" id="auth-banner-close" type="button" aria-label="Dismiss">×</button>
+  </span>
 </div>
 <div class="stale-badge" id="stale-badge">Updating from live sheet...</div>
 <div class="toast" id="toast"></div>
