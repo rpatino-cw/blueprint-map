@@ -17,7 +17,7 @@ const ctx = vm.createContext({
 });
 
 const jsDir = path.join(__dirname, '..', 'js');
-for (const file of ['type-library.js', 'parser.js']) {
+for (const file of ['type-library.js', 'parser.js', 'netbox-matcher.js']) {
   const code = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
   vm.runInContext(code, ctx, { filename: file });
 }
@@ -474,6 +474,162 @@ test('error boundary: returns result with warnings on bad grid', () => {
   }
   assert.ok(result, 'Should return a result object');
   assert.ok(Array.isArray(result.warnings), 'Should have warnings array');
+});
+
+// ════════════════════════════════════════════════════════════════
+// NETBOX MATCHER TESTS (ported from coreweave/overhead2svg)
+// ════════════════════════════════════════════════════════════════
+console.log('\nNetBox Matcher — buildCandidates');
+
+const buildCandidatesTests = [
+  ['dhc', ['dhc', 'c']],
+  ['dha', ['dha', 'a']],
+  ['sa', ['sa', 'sector-a']],
+  ['s1', ['s1', 'sector-1']],
+  ['u1', ['u1', 'underground-1']],
+  ['ub', ['ub', 'underground-b']],
+  ['f1', ['f1', 'floor-1']],
+  ['fa', ['fa', 'floor-a']],
+  ['s', ['s']],           // single-char, no expansion
+  ['u', ['u']],
+  ['f', ['f']],
+  ['data-hall-g', ['data-hall-g']],  // no known prefix
+  ['dh', ['dh', '']],     // stripped result is empty
+];
+for (const [input, expected] of buildCandidatesTests) {
+  test(`buildCandidates("${input}") → [${expected.map(e => `"${e}"`).join(', ')}]`, () => {
+    const got = vm.runInContext(`buildCandidates("${input}")`, ctx);
+    assert.strictEqual(got.length, expected.length, `Length mismatch for "${input}"`);
+    for (let i = 0; i < expected.length; i++) {
+      assert.strictEqual(got[i], expected[i], `Index ${i} mismatch for "${input}"`);
+    }
+  });
+}
+
+console.log('\nNetBox Matcher — segmentMatches');
+
+const segmentMatchTests = [
+  { name: 'relSlug exact match strips parent prefix',
+    slug: 'us-dtn01-data-hall-g', parent: 'us-dtn01', locName: 'Data Hall G',
+    candidates: ['data-hall-g'], want: true },
+  { name: 'slug contains candidate',
+    slug: 'us-data-hall-g', parent: '', locName: 'anything',
+    candidates: ['data-hall-g'], want: true },
+  { name: 'candidate contains slug',
+    slug: 'dh', parent: '', locName: 'DH',
+    candidates: ['dhc'], want: true },
+  { name: 'name equals candidate (exact)',
+    slug: 'slug-no-match', parent: '', locName: 'dhc',
+    candidates: ['dhc'], want: true },
+  { name: 'candidate contains name',
+    slug: 'something', parent: '', locName: 'c',
+    candidates: ['dhc'], want: true },
+  { name: 'no match',
+    slug: 'data-hall-a', parent: 'us-dtn01', locName: 'Data Hall A',
+    candidates: ['data-hall-g', 'g'], want: false },
+  { name: 'single char h does NOT match data-hall-b via hall substring',
+    slug: 'us-central-03a-data-hall-b', parent: 'us-central-03a', locName: 'data hall b',
+    candidates: ['dhh', 'h'], want: false },
+  { name: 'single char h matches data-hall-h as trailing segment',
+    slug: 'us-central-03a-data-hall-h', parent: 'us-central-03a', locName: 'data hall h',
+    candidates: ['dhh', 'h'], want: true },
+  { name: 'single char b matches data-hall-b',
+    slug: 'us-central-03a-data-hall-b', parent: 'us-central-03a', locName: 'data hall b',
+    candidates: ['dhb', 'b'], want: true },
+];
+for (const tc of segmentMatchTests) {
+  test(`segmentMatches: ${tc.name}`, () => {
+    ctx._tc = tc;
+    const got = vm.runInContext(
+      `segmentMatches(_tc.slug, _tc.parent, _tc.locName, _tc.candidates)`, ctx
+    );
+    assert.strictEqual(got, tc.want);
+  });
+}
+
+console.log('\nNetBox Matcher — matchLocation');
+
+const flatParent = (slug, name) => ({ slug, name });
+const nestedParent = (slug, name, gpSlug, gpName) => ({ slug, name, parent: { slug: gpSlug, name: gpName } });
+
+const flatLocs = [
+  { id: 1, slug: 'data-hall-g', name: 'Data Hall G', parent: flatParent('us-dtn01', 'US-DTN01') },
+  { id: 2, slug: 'data-hall-bb', name: 'Data Hall BB', parent: flatParent('us-dtn01', 'US-DTN01') },
+];
+const dhBHLocs = [
+  { id: 10, slug: 'us-central-03a-data-hall-b', name: 'Data Hall B', parent: flatParent('us-central-03a', 'US-CENTRAL-03A') },
+  { id: 11, slug: 'us-central-03a-data-hall-h', name: 'Data Hall H', parent: flatParent('us-central-03a', 'US-CENTRAL-03A') },
+];
+const twoLevelLocs = [
+  { id: 3, slug: 'dhc', name: 'DHC', parent: nestedParent('floor-1', 'Floor 1', 'us-abc01', 'US-ABC01') },
+];
+
+const matchLocationTests = [
+  { name: 'flat match first entry',
+    range: 'US_DTN01_DATAHALL_DHG', filter: '_DATAHALL_', locs: flatLocs, wantSlug: 'data-hall-g' },
+  { name: 'flat match second entry',
+    range: 'US_DTN01_DATAHALL_DHBB', filter: '_DATAHALL_', locs: flatLocs, wantSlug: 'data-hall-bb' },
+  { name: 'two-level match F1DHC',
+    range: 'US_ABC01_DATAHALL_F1DHC', filter: '_DATAHALL_', locs: twoLevelLocs, wantSlug: 'dhc' },
+  { name: 'two-level pattern does not match flat locs',
+    range: 'US_DTN01_DATAHALL_F1DHG', filter: '_DATAHALL_', locs: flatLocs, wantSlug: '' },
+  { name: 'empty filter returns null',
+    range: 'US_DTN01_DATAHALL_DHG', filter: '', locs: flatLocs, wantSlug: '' },
+  { name: 'empty locations returns null',
+    range: 'US_DTN01_DATAHALL_DHG', filter: '_DATAHALL_', locs: [], wantSlug: '' },
+  { name: 'filter not in range name returns null',
+    range: 'US_DTN01_NOOP_DHG', filter: '_DATAHALL_', locs: flatLocs, wantSlug: '' },
+  { name: 'empty dhPart after filter returns null',
+    range: 'US_DTN01_DATAHALL_', filter: '_DATAHALL_', locs: flatLocs, wantSlug: '' },
+  { name: 'no match returns null',
+    range: 'US_DTN01_DATAHALL_DHZ', filter: '_DATAHALL_', locs: flatLocs, wantSlug: '' },
+  { name: 'DHH matches Data Hall H not Data Hall B',
+    range: 'US_CTR03A_DATAHALL_DHH', filter: '_DATAHALL_', locs: dhBHLocs, wantSlug: 'us-central-03a-data-hall-h' },
+  { name: 'DHB matches Data Hall B',
+    range: 'US_CTR03A_DATAHALL_DHB', filter: '_DATAHALL_', locs: dhBHLocs, wantSlug: 'us-central-03a-data-hall-b' },
+];
+for (const tc of matchLocationTests) {
+  test(`matchLocation: ${tc.name}`, () => {
+    ctx._mlLocs = tc.locs;
+    const got = vm.runInContext(
+      `matchLocation("${tc.range}", "${tc.filter}", _mlLocs)`, ctx
+    );
+    if (tc.wantSlug === '') {
+      assert.strictEqual(got, null, `Expected null for "${tc.name}"`);
+    } else {
+      assert.ok(got, `Expected match for "${tc.name}", got null`);
+      assert.strictEqual(got.slug, tc.wantSlug);
+    }
+  });
+}
+
+console.log('\nNetBox Matcher — matchHall (convenience)');
+
+test('matchHall: DH1 matches data-hall-1', () => {
+  const locs = [
+    { id: 1, slug: 'data-hall-1', name: 'Data Hall 1', parent: flatParent('us-evi01', 'US-EVI01') },
+    { id: 2, slug: 'data-hall-2', name: 'Data Hall 2', parent: flatParent('us-evi01', 'US-EVI01') },
+  ];
+  ctx._mhLocs = locs;
+  const got = vm.runInContext('matchHall("DH1", _mhLocs)', ctx);
+  assert.ok(got);
+  assert.strictEqual(got.slug, 'data-hall-1');
+});
+
+test('matchHall: BUILDING E matches building-e', () => {
+  const locs = [
+    { id: 1, slug: 'us-dtn01-building-e', name: 'Building E', parent: flatParent('us-dtn01', 'US-DTN01') },
+  ];
+  ctx._mhLocs2 = locs;
+  const got = vm.runInContext('matchHall("BUILDING E", _mhLocs2)', ctx);
+  assert.ok(got);
+  assert.strictEqual(got.slug, 'us-dtn01-building-e');
+});
+
+test('matchHall: null for no match', () => {
+  ctx._mhLocs3 = [{ id: 1, slug: 'data-hall-1', name: 'Data Hall 1', parent: flatParent('us-evi01', 'US-EVI01') }];
+  const got = vm.runInContext('matchHall("DH99", _mhLocs3)', ctx);
+  assert.strictEqual(got, null);
 });
 
 // ════════════════════════════════════════════════════════════════

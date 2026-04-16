@@ -89,6 +89,7 @@ const RE_MW             = /\bMW\b/i;
 const RE_ASTERISK       = /^\*\*/;
 const RE_ROW_LABEL_PAT  = /^[A-Z]\d{1,2}$/;
 const RE_INSERT_ETC     = /^Insert\b|^Named range|^Conditional formatting|^Replace values/i;
+const RE_LARGE_NUM      = /^\d{4,}$/;
 
 class LayoutParser {
   constructor(grid, hints) {
@@ -302,6 +303,8 @@ class LayoutParser {
     if (RE_ASTERISK.test(v)) return 'annotation';
     if (RE_ROW_LABEL_PAT.test(v) && v.length <= 3) return 'row-label';
     if (RE_INSERT_ETC.test(v)) return 'stat';
+    // Large standalone numbers (4+ digits): stat values like GPU counts, node totals
+    if (RE_LARGE_NUM.test(v)) return 'stat';
 
     return 'text';
   }
