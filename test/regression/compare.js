@@ -7,6 +7,13 @@ function extractHallNumber(name) {
   return m ? +m[1] : null;
 }
 
+function extractHallLetter(name) {
+  // "Data Hall B" → "B", "BUILDING E" → "E", "DHA" → "A"
+  const m = name.match(/(?:Data\s*Hall|DH|Building|BLDG)\s+([A-Z])\b/i)
+         || name.match(/\b([A-Z])\s*$/);
+  return m ? m[1].toUpperCase() : null;
+}
+
 function compareHall(parseResult, refHall) {
   const hallName = refHall.datahall;
 
@@ -28,6 +35,14 @@ function compareHall(parseResult, refHall) {
       if (h.hallNum === refNum) return true;
       const parserNum = extractHallNumber(h.name || '');
       if (parserNum === refNum) return true;
+    }
+
+    // Extract hall letter and compare
+    // "Data Hall B" ↔ "SOUTH CAMPUS BUILDING B"
+    const refLetter = extractHallLetter(hallName);
+    if (refLetter) {
+      const parserLetter = extractHallLetter(h.name || '');
+      if (parserLetter === refLetter) return true;
     }
 
     return false;
