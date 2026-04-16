@@ -105,6 +105,39 @@ body {
   margin-top: 0.3rem;
 }
 
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+  padding: 1rem 2.2rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--paper);
+  background: var(--blueprint);
+  border: 2px solid var(--blueprint);
+  transition: background 0.25s, color 0.25s, transform 0.2s;
+}
+
+.hero-cta:hover {
+  background: transparent;
+  color: var(--blueprint);
+  transform: translateY(-2px);
+}
+
+.hero-cta .cta-arrow {
+  font-size: 1.3rem;
+  transition: transform 0.2s;
+}
+
+.hero-cta:hover .cta-arrow {
+  transform: translateX(4px);
+}
+
 /* ── SECTIONS ── */
 section {
   padding: 6rem 6vw;
@@ -530,6 +563,9 @@ footer {
         <span class="stat-label">Parse Time</span>
       </div>
     </div>
+    <a href="https://rpatino-cw.github.io/blueprint-map/" class="hero-cta">
+      Launch Blueprint Map <span class="cta-arrow">&rarr;</span>
+    </a>
   </div>
 </div>
 
