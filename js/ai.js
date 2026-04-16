@@ -14,7 +14,7 @@ const AI = {
     localStorage.setItem('bp_api_key', key.trim());
   },
   isEnabled() {
-    return document.getElementById('ai-enabled')?.checked && this.getKey();
+    return document.getElementById('ai-enabled')?.checked;
   },
 
   _gridPodSummary(gridPodMap) {
@@ -155,29 +155,19 @@ Rules:
 Return ONLY the JSON object, no markdown fences, no explanation.`;
 
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('https://ccna-tutor.rpatino-cw.workers.dev/api/blueprint', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.getKey(),
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 2048,
-          temperature: 0,
-          messages: [{ role: 'user', content: prompt }],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
       });
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API error ${resp.status}`);
+        throw new Error(err.error || `API error ${resp.status}`);
       }
 
       const data = await resp.json();
-      const text = data.content?.[0]?.text || '';
+      const text = data.reply || '';
 
       const jsonStr = text.replace(/^```json?\s*/m, '').replace(/```\s*$/m, '').trim();
       const hints = JSON.parse(jsonStr);
