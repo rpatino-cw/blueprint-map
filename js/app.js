@@ -617,6 +617,7 @@ async function loadFromSheets(tab, sheetId) {
 
     // Auto-focus first hall on initial load
     autoFocusFirstHall();
+    hideSheetLoading();
 
     if (isStale) {
       // Background revalidate — show subtle badge
@@ -640,7 +641,6 @@ async function loadFromSheets(tab, sheetId) {
         toast('Using cached data (live fetch failed)', true);
       }
     }
-    hideSheetLoading();
     refreshBtn.classList.remove('spinning');
     return;
   }
