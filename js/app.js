@@ -666,10 +666,9 @@ document.getElementById('sheet-site').addEventListener('change', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// AUTO-LOAD — skip on GitHub Pages (Apps Script is CW-org-restricted)
+// AUTO-LOAD — no blank screen
 // ═══════════════════════════════════════════════════════════════
 (function autoLoad() {
-  if (location.hostname.endsWith('.github.io')) return;
   const sheetId = document.getElementById('sheet-site').value;
   if (sheetId && typeof loadFromSheets === 'function') {
     loadFromSheets('OVERHEAD', sheetId);
