@@ -7,6 +7,12 @@
 
   Browser app that turns datacenter overhead spreadsheets into zoomable visual floor maps. Drop a CSV, get a blueprint.
 
+  <br>
+
+  <a href="https://rpatino-cw.github.io/blueprint-map/showcase.html"><img src="https://img.shields.io/badge/%E2%96%B6_SEE_THE_PARSER-7--pass_engine_showcase-d44a26?style=for-the-badge&labelColor=1a1a2e" alt="See the Parser Showcase"></a>
+
+  <br>
+
   [![License](https://img.shields.io/github/license/rpatino-cw/blueprint-map?style=flat-square)](LICENSE)
   [![Issues](https://img.shields.io/github/issues/rpatino-cw/blueprint-map?style=flat-square)](https://github.com/rpatino-cw/blueprint-map/issues)
   [![Tests](https://img.shields.io/github/actions/workflow/status/rpatino-cw/blueprint-map/test.yml?style=flat-square&label=tests)](https://github.com/rpatino-cw/blueprint-map/actions)
