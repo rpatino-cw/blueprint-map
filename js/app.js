@@ -537,7 +537,7 @@ function loadFromSheets(tab, sheetId) {
     + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
     + '&callback=' + cbName;
   s.src = SHEETS_ENDPOINT + params;
-  s.onerror = () => { delete window[cbName]; toast('Sheets endpoint unreachable — upload CSV instead, or open from a CW-authenticated browser', true); };
+  s.onerror = () => { delete window[cbName]; toast('Failed to reach Apps Script endpoint', true); };
   document.body.appendChild(s);
 }
 
@@ -548,6 +548,7 @@ function fetchSelectedSheet() {
   loadFromSheets(tab, sheetId);
 }
 document.getElementById('btn-fetch-sheet').addEventListener('click', fetchSelectedSheet);
+document.getElementById('sheet-site').addEventListener('change', fetchSelectedSheet);
 
 // Export helpers
 function getExportName() { return state.parseResult?.site || 'blueprint'; }
