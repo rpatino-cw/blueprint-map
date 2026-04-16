@@ -6,7 +6,7 @@
 <title>Signing in — Blueprint Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='6' width='24' height='20' rx='2' fill='none' stroke='%231d1d1f' stroke-width='1.5'/><line x1='4' y1='16' x2='28' y2='16' stroke='%231d1d1f' opacity='.3'/><line x1='16' y1='6' x2='16' y2='26' stroke='%231d1d1f' opacity='.3'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script>window.BP_VERSION = '2026.04.16-0a7a91c';</script>
+<script>window.BP_VERSION = '2026.04.16-5d06d44';</script>
 <style>
   :root {
     --bg: #f5f5f7;
@@ -146,20 +146,6 @@
     display: none;
   }
   .err.show { display: block; }
-  .notice {
-    background: #fffaed;
-    border: 1px solid #f3e3b8;
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 12px;
-    color: #6b5616;
-    margin-top: 18px;
-    line-height: 1.5;
-    text-align: left;
-    display: none;
-  }
-  .notice.show { display: block; }
-  .notice strong { color: #3d300a; }
   .step { display: none; }
   .step.active { display: block; }
   .version-tag {
@@ -194,10 +180,6 @@
       <a class="btn" id="btn-signin">Continue with Google</a>
       <a class="btn btn-secondary" href="index.html">Back to map</a>
       <div class="hint" id="signin-hint">Opens Google's account chooser</div>
-      <div class="notice" id="signin-notice">
-        <strong>Heads up:</strong> after signing in, you'll briefly see a page of raw data —
-        that's expected and means sign-in worked. Close that window and come back here.
-      </div>
       <div class="err" id="err-detail"></div>
     </div>
 
@@ -286,9 +268,7 @@
       attemptedSignin = true;
       signinPopup = window.open(SHEETS_ENDPOINT + '?mode=signin', 'bp-signin', 'width=520,height=640');
       const hint = document.getElementById('signin-hint');
-      if (hint) hint.textContent = 'After signing in, close that tab and return here.';
-      const notice = document.getElementById('signin-notice');
-      if (notice) notice.classList.add('show');
+      if (hint) hint.textContent = 'Popup will close itself when you\'re signed in.';
       watchPopupClose();
     };
     if (errMsg) {
