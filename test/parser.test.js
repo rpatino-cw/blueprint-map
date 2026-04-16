@@ -25,13 +25,25 @@ for (const file of ['type-library.js', 'parser.js', 'netbox-matcher.js']) {
 // ── Helpers ──
 function loadCSV(name) {
   const raw = fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
-  return raw.split('\n').map(line => {
+  // Multiline-aware CSV parser: split on newlines only outside quoted cells
+  const lines = [];
+  let line = '', inQuote = false;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === '"') { inQuote = !inQuote; line += ch; continue; }
+    if (ch === '\r') continue;
+    if (ch === '\n' && !inQuote) { lines.push(line); line = ''; continue; }
+    line += ch;
+  }
+  if (line) lines.push(line);
+
+  return lines.map(row => {
     const cells = [];
-    let cell = '', inQuote = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQuote = !inQuote; continue; }
-      if (ch === ',' && !inQuote) { cells.push(cell); cell = ''; continue; }
+    let cell = '', q = false;
+    for (let i = 0; i < row.length; i++) {
+      const ch = row[i];
+      if (ch === '"') { q = !q; continue; }
+      if (ch === ',' && !q) { cells.push(cell); cell = ''; continue; }
       cell += ch;
     }
     cells.push(cell);

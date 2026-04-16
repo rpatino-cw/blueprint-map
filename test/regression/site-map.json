@@ -1,0 +1,552 @@
+{
+  "generated": "2026-04-16T04:33:54.910Z",
+  "sites": [
+    {
+      "locode": "US-DGV01",
+      "sheetId": "17Bi2G9iguYZFcqRSXGchv0Sa51pf5Sh-nCZKYPDLuV4",
+      "label": "DGV01 — Douglasville / ATL2",
+      "halls": [
+        {
+          "named_range": "US_ATL2_DATAHALL_DH1",
+          "datahall": "DH1",
+          "expected_racks": 280
+        }
+      ]
+    },
+    {
+      "locode": "US-AAI01",
+      "sheetId": "1LM_xLgMenYkHaaUn2-AMsDnnlOCLwnObH65Lhf36xfw",
+      "label": "AAI01 — Alpharetta / ATL4",
+      "halls": [
+        {
+          "named_range": "US_AAI01_DATAHALL_DH1",
+          "datahall": "DH1",
+          "expected_racks": 300
+        }
+      ]
+    },
+    {
+      "locode": "US-AUS01",
+      "sheetId": "1Uzdg8sY5Aq-pY1DhfULzsudZSFXFG1IDwxSyEOL6arw",
+      "label": "AUS01 — Austin / AUS1",
+      "halls": [
+        {
+          "named_range": "US_AUS1_DATAHALL_L1",
+          "datahall": "L1",
+          "expected_racks": 430
+        },
+        {
+          "named_range": "US_AUS1_DATAHALL_U1",
+          "datahall": "Underground 1",
+          "expected_racks": 440
+        }
+      ]
+    },
+    {
+      "locode": "NO-OVO01",
+      "sheetId": "1aiFc9wm5jLYX9Vd-TFkWEWo1d6IHysOCDotET0vgVHs",
+      "label": "OVO01 — Ovrebo (EU-NORTH-02A)",
+      "halls": [
+        {
+          "named_range": "NO_OVO01_DATAHALL_DH101",
+          "datahall": "Data Hall 101",
+          "expected_racks": 140
+        },
+        {
+          "named_range": "NO_OVO01_DATAHALL_DH102",
+          "datahall": "Data Hall 102",
+          "expected_racks": 160
+        },
+        {
+          "named_range": "NO_OVO01_DATAHALL_DH103",
+          "datahall": "Data Hall 103",
+          "expected_racks": 100
+        }
+      ]
+    },
+    {
+      "locode": "US-SPK02",
+      "sheetId": "14OSFS7VqWT3uU-tGCMXsfeabnB72saeXZvV60RR7_Qg",
+      "label": "SPK02 — Sparks / RNO1",
+      "halls": [
+        {
+          "named_range": "US_SPK02_DATAHALL_S2",
+          "datahall": "US-SPK02 Sector 2",
+          "expected_racks": 380
+        },
+        {
+          "named_range": "US_SPK02_DATAHALL_S4",
+          "datahall": "US-SPK02 Sector 4",
+          "expected_racks": 400
+        }
+      ]
+    },
+    {
+      "locode": "US-VO201",
+      "sheetId": "1Pi1I6ep6oXTR6ALNi_NTwFGoXRHGayVP1pMaXUrFBPo",
+      "label": "VO201 — Volo / ORD3",
+      "halls": [
+        {
+          "named_range": "US_VO201_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 120
+        }
+      ]
+    },
+    {
+      "locode": "US-PLZ01",
+      "sheetId": "1fdh40HYmVGvc_si1z12kPVIuW8BL0NWM55I_8BClt84",
+      "label": "PLZ01 — Plano (US-CENTRAL-02A)",
+      "halls": [
+        {
+          "named_range": "US_PLZ01_DATAHALL_DH3",
+          "datahall": "Data Hall 3",
+          "expected_racks": 396
+        }
+      ]
+    },
+    {
+      "locode": "US-DTN01",
+      "sheetId": "1dBRuMiVtym03N800A1KsB42mmNYxHR3UEsIu5S8sW5c",
+      "label": "DTN01 — Denton (US-CENTRAL-03A)",
+      "halls": [
+        {
+          "named_range": "US_DTN01_DATAHALL_DHB",
+          "datahall": "Data Hall B",
+          "expected_racks": 440
+        },
+        {
+          "named_range": "US_DTN01_DATAHALL_DHC",
+          "datahall": "Data Hall C",
+          "expected_racks": 440
+        },
+        {
+          "named_range": "US_DTN01_DATAHALL_DHD",
+          "datahall": "Data Hall D",
+          "expected_racks": 440
+        },
+        {
+          "named_range": "US_DTN01_DATAHALL_DHE",
+          "datahall": "Data Hall E",
+          "expected_racks": 300
+        },
+        {
+          "named_range": "US_DTN01_DATAHALL_DHF",
+          "datahall": "Data Hall F",
+          "expected_racks": 440
+        },
+        {
+          "named_range": "US_DTN01_DATAHALL_DHG",
+          "datahall": "Data Hall G",
+          "expected_racks": 440
+        },
+        {
+          "named_range": "US_DTN01_DATAHALL_DHH",
+          "datahall": "Data Hall H",
+          "expected_racks": 440
+        }
+      ]
+    },
+    {
+      "locode": "US-PLZ02",
+      "sheetId": "13Pkjz2q0did2EeO3y5dBGIHpdxj1vcmv1vx8TcYMUQg",
+      "label": "PLZ02 — Plano (US-CENTRAL-04A)",
+      "halls": [
+        {
+          "named_range": "US_PLZ02_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 408
+        }
+      ]
+    },
+    {
+      "locode": "US-RIN01",
+      "sheetId": "1TtIpPH5azmtVNOuTcclJlGqwWzCDL6KCXCAGos9-PAY",
+      "label": "RIN01 — Richardson (US-CENTRAL-05A)",
+      "halls": [
+        {
+          "named_range": "US_RIN01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 80
+        },
+        {
+          "named_range": "US_RIN01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 40
+        }
+      ]
+    },
+    {
+      "locode": "US-EVI01",
+      "sheetId": "1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI",
+      "label": "EVI01 — Elk Grove (US-CENTRAL-07A)",
+      "halls": [
+        {
+          "named_range": "US_EVI01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 320
+        },
+        {
+          "named_range": "US_EVI01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 260
+        },
+        {
+          "named_range": "US_EVI01_DATAHALL_DH3",
+          "datahall": "Data Hall 3",
+          "expected_racks": 200
+        }
+      ]
+    },
+    {
+      "locode": "US-OBG01",
+      "sheetId": "1D5lp_9wzSRWEEVLktRKNroTHe1K_vTllEZ47BWKpPBk",
+      "label": "OBG01 — Orangeburg (US-EAST-01A)",
+      "halls": [
+        {
+          "named_range": "US_OBG01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 240
+        },
+        {
+          "named_range": "US_OBG01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 240
+        },
+        {
+          "named_range": "US_OBG01_DATAHALL_DH3",
+          "datahall": "Data Hall 3",
+          "expected_racks": 68
+        },
+        {
+          "named_range": "US_OBG01_DATAHALL_DH4",
+          "datahall": "Data Hall 4",
+          "expected_racks": 68
+        }
+      ]
+    },
+    {
+      "locode": "US-EWS01",
+      "sheetId": "1bxVq9THKhii4y-fUGuYEuO6vy9u273Dbfu4unqD9kTw",
+      "label": "EWS01 — East Windsor (US-EAST-02B)",
+      "halls": [
+        {
+          "named_range": "US_EWS01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 120
+        },
+        {
+          "named_range": "US_EWS01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 140
+        },
+        {
+          "named_range": "US_EWS01_DATAHALL_DH3",
+          "datahall": "Data Hall 3",
+          "expected_racks": 140
+        },
+        {
+          "named_range": "US_EWS01_DATAHALL_DH4",
+          "datahall": "Data Hall 4",
+          "expected_racks": 60
+        },
+        {
+          "named_range": "US_EWS01_DATAHALL_DH5",
+          "datahall": "Data Hall 5",
+          "expected_racks": 60
+        },
+        {
+          "named_range": "US_EWS01_DATAHALL_DH6",
+          "datahall": "Data Hall 6",
+          "expected_racks": 40
+        },
+        {
+          "named_range": "US_EWS01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 120
+        }
+      ]
+    },
+    {
+      "locode": "US-BVI01",
+      "sheetId": "1JvPIyPx5M6q6rHV7kCNrS_Z_IG6alu0Zc504u6TzyFs",
+      "label": "BVI01 — Breinigsville (US-EAST-03A)",
+      "halls": [
+        {
+          "named_range": "US_BVI01_DATAHALL_DC2",
+          "datahall": "Data Hall DC2",
+          "expected_racks": 110
+        },
+        {
+          "named_range": "US_BVI01_DATAHALL_DC7",
+          "datahall": "Data Hall DC7",
+          "expected_racks": 324
+        }
+      ]
+    },
+    {
+      "locode": "US-CSZ01",
+      "sheetId": "1gOZQT-RT0saXmeWsvc77_6i2p7Lws7zZYQh1k663xok",
+      "label": "CSZ01 — Chester (US-EAST-04A)",
+      "halls": [
+        {
+          "named_range": "US_CSZ01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 200
+        },
+        {
+          "named_range": "US_CSZ01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 200
+        },
+        {
+          "named_range": "US_CSZ01_DATAHALL_DH3",
+          "datahall": "Data Hall 3",
+          "expected_racks": 180
+        }
+      ]
+    },
+    {
+      "locode": "US-CMH01",
+      "sheetId": "14Ku0dFO-7Ri5FNCKCrnpCncwOwZc56uYrbkSdp7r5Uw",
+      "label": "CMH01 — Columbus (US-EAST-08A)",
+      "halls": [
+        {
+          "named_range": "US_CMH01_DATAHALL_DH1",
+          "datahall": "DH1",
+          "expected_racks": 430
+        }
+      ]
+    },
+    {
+      "locode": "US-ARQ01",
+      "sheetId": "1FgjwFAxfr-rHTi_iYQ01BE2joFq0D50bq3Ufey6dd2U",
+      "label": "ARQ01 — Marble (US-EAST-11A)",
+      "halls": [
+        {
+          "named_range": "US_ARQ01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 140
+        },
+        {
+          "named_range": "US_ARQ01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 130
+        },
+        {
+          "named_range": "US_ARQ01_DATAHALL_DH3",
+          "datahall": "Data Hall 3",
+          "expected_racks": 100
+        },
+        {
+          "named_range": "US_ARQ01_DATAHALL_DH4",
+          "datahall": "Data Hall 4",
+          "expected_racks": 100
+        }
+      ]
+    },
+    {
+      "locode": "US-CDZ01",
+      "sheetId": "1fAbQRuqQ_0-PGao6bzivJ-hoT7AT-Nmeezp6oY-ggt8",
+      "label": "CDZ01 — Caledonia (US-EAST-13A)",
+      "halls": [
+        {
+          "named_range": "US_CDZ01_DATAHALL_S1",
+          "datahall": "Sector 1",
+          "expected_racks": 150
+        },
+        {
+          "named_range": "US_CDZ01_DATAHALL_S2",
+          "datahall": "Sector 2",
+          "expected_racks": 180
+        },
+        {
+          "named_range": "US_CDZ01_DATAHALL_S3",
+          "datahall": "Sector 3",
+          "expected_racks": 120
+        }
+      ]
+    },
+    {
+      "locode": "US-WJQ01",
+      "sheetId": "1FhEUEZhmXSexckSM7W5gOX7x2GICqwGvYBUY2PC48Ow",
+      "label": "WJQ01 — Weehawken / LGA1",
+      "halls": [
+        {
+          "named_range": "US_WJQ01_DATAHALL_DH1",
+          "datahall": "Data Hall 1",
+          "expected_racks": 200
+        }
+      ]
+    },
+    {
+      "locode": "US-LAS02",
+      "sheetId": "1Z64xV5vwrGbx8tZ3JhyG6GfY7RW5N-hDppyN6sV4dKk",
+      "label": "LAS02 — Las Vegas (US-WEST-01A)",
+      "halls": [
+        {
+          "named_range": "US_LAS01_DATAHALL_S1",
+          "datahall": "NAP12 Sector 1",
+          "expected_racks": 560
+        }
+      ]
+    },
+    {
+      "locode": "US-LAS01",
+      "sheetId": "1ZmnzvD_l9uDARpPb3ZBYG5P8i6rxnOPe-inhooTyipE",
+      "label": "LAS01 — Las Vegas / LAS1",
+      "halls": [
+        {
+          "named_range": "US_LAS01_DATAHALL_S8",
+          "datahall": "NAP7 Sector 8",
+          "expected_racks": 95
+        }
+      ]
+    },
+    {
+      "locode": "US-HIO01",
+      "sheetId": "1E79X8Yd5yJnqQtdfUWOOTFD0FarcUCcgoumpARrzVRw",
+      "label": "HIO01 — Hillsboro (US-WEST-03A)",
+      "halls": [
+        {
+          "named_range": "US_HIO01_DATAHALL_DH120",
+          "datahall": "Data Hall 120",
+          "expected_racks": 360
+        }
+      ]
+    },
+    {
+      "locode": "US-HIO03",
+      "sheetId": "1VX83MBKRLSROqwHBqIb2E0bfIa1zxbdaqr6RCtmGwnE",
+      "label": "HIO03 — Hillsboro (US-WEST-06A)",
+      "halls": [
+        {
+          "named_range": "US_HIO03_DATAHALL_DH100",
+          "datahall": "DH100",
+          "expected_racks": 660
+        }
+      ]
+    },
+    {
+      "locode": "US-NNN01",
+      "sheetId": "11wDvTwzc82yolrUgmE71kgSKW2oaCRWZJqXNZFMZHmM",
+      "label": "NNN01 — Centennial (US-WEST-07A)",
+      "halls": [
+        {
+          "named_range": "US_NNN01_DATAHALL_DH2",
+          "datahall": "Data Hall 2",
+          "expected_racks": 480
+        }
+      ]
+    },
+    {
+      "locode": "SE-FAN01",
+      "sheetId": "1fW9k-5R5LuegZlr4CLQa09_MG450b2bhHNS3QkxU5h0",
+      "label": "FAN01 — Falun (EU-NORTH-01A)",
+      "halls": []
+    },
+    {
+      "locode": "ES-BCN01",
+      "sheetId": "1xoCPT8Gzd0yP9hUd3RrBTNMFF93HlcLST_CvzWBjpY4",
+      "label": "BCN01 — Barcelona (EU-SOUTH-01A)",
+      "halls": []
+    },
+    {
+      "locode": "ES-BCN03",
+      "sheetId": "1IxGGyuraGj9qqAMsdpsBiYmPiXVAcHKl4D9pNmyoZ98",
+      "label": "BCN03 — Barcelona (EU-SOUTH-03A)",
+      "halls": []
+    },
+    {
+      "locode": "GB-CWY01",
+      "sheetId": "1Va-EBqTzMRRRRYDvx63G_lz-YUpFHDPgRgy-NqU_dCi8",
+      "label": "CWY01 — Crawley (EU-WEST-01A)",
+      "halls": []
+    },
+    {
+      "locode": "GB-PPL01",
+      "sheetId": "13LISzRY4BY0j3VZtoBEebZx1xk1lM45yepy--D33UsU",
+      "label": "PPL01 — London (EU-WEST-02A)",
+      "halls": []
+    },
+    {
+      "locode": "US-HIO02",
+      "sheetId": "1J6-KKqTj75OvZaQu1KOgjhuWUoDBiDCii3-niY1VWjc",
+      "label": "HIO02 — Hillsboro / PDX2",
+      "halls": []
+    },
+    {
+      "locode": "US-SPK01",
+      "sheetId": "1c9PYJVlf0qFfaummPSi-lweKcOvr8zaQwEkkvmkaBdc",
+      "label": "SPK01 — Sparks / RNO2",
+      "halls": []
+    },
+    {
+      "locode": "US-HMN01",
+      "sheetId": "1DiL7ktVZCk5-QEWF-rzMb_SLCXhYFaHOunNQjC83W4E",
+      "label": "HMN01 — Hammond / SBN1",
+      "halls": []
+    },
+    {
+      "locode": "US-SVG01",
+      "sheetId": "1dF2KJCSc21sCccnuzQsy1BSgy2rcbUBC-tHahkLNXrA",
+      "label": "SVG01 — Suwanee (US-EAST-09A)",
+      "halls": []
+    },
+    {
+      "locode": "US-LOE01",
+      "sheetId": "1slRVcBUlftnThSvMsQ5296qdNzYq_DSyPwEyXj9dRvk",
+      "label": "LOE01 — Lowell (US-EAST-10A)",
+      "halls": []
+    },
+    {
+      "locode": "US-PHX01",
+      "sheetId": "1PqCDUaXATd7qQX8Yiv6uihRmqyhqQDZoYcu9lUPu4Z4",
+      "label": "PHX01 — Phoenix (US-WEST-02A)",
+      "halls": []
+    },
+    {
+      "locode": "US-LYF01",
+      "sheetId": "1MqHscS2ai9Cq70U2FdyNiB9qc5x3LcAX0Su8LWpwQmQ",
+      "label": "LYF01 — Lynnwood (US-WEST-05A)",
+      "halls": []
+    },
+    {
+      "locode": "US-NKQ01",
+      "sheetId": "1W4AN4vQa0elz1lf3SoLucUCE0b4TzKhfR8eMkgVHZ4I",
+      "label": "NKQ01 — Newark (US-WEST-08A)",
+      "halls": []
+    }
+  ],
+  "unmatched_ref": [
+    "CA-GAL01",
+    "SE-SKH01",
+    "DK-SVL01",
+    "US-CVY01",
+    "US-RRX01",
+    "US-LZL01",
+    "US-LBB01",
+    "US-MKO01",
+    "US-SKY01",
+    "US-CSZ02",
+    "US-CVG01",
+    "US-DNN01",
+    "US-PPY01",
+    "US-CYL01",
+    "US-LHS01",
+    "US-DEVTEST01",
+    "US-MSC01",
+    "US-QNC01",
+    "US-SPK03"
+  ],
+  "unmatched_bp": [
+    {
+      "locode": "US-WCI01",
+      "label": "WCI01 — West Chicago / ORD1"
+    },
+    {
+      "locode": "US-LNB01",
+      "label": "LNB01 — Lebanon (US-EAST-07A)"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node test/parser.test.js"
+    "test": "node test/parser.test.js",
+    "test:regression": "node test/regression/run-offline.js"
   }
 }
