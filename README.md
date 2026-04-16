@@ -52,23 +52,69 @@ open index.html
 
 ---
 
-## How it works
+## The Parser
 
 <img src="assets/demo-flow.svg" alt="CSV to visual map pipeline" width="700">
 
-The parser takes a raw 2D grid of strings and figures out what everything means — which cells are rack numbers, which are types, where pods start and end, which halls exist. Seven passes, no configuration required. Tested against 40 live CW sites (54 to 3,380 racks each) with 100% rack capture rate.
+A 7-pass structural analysis engine that reads raw CSV overhead grids and understands every cell — rack numbers, rack types, hall boundaries, grid labels, SPLAT ranges, power annotations, stat rows, and metadata. No configuration. No AI required. Drop a CSV, it figures it out.
+
+### By the numbers
+
+| Metric | Value |
+|--------|-------|
+| **Rack capture** | 100% — verified across 40 live sites (54 to 3,380 racks each) |
+| **Cell understanding** | 99.6% — every cell classified; only 4-digit stat values fall through |
+| **Type recognition** | 38 built-in categories + unsupervised discovery for unknown hardware |
+| **Parse speed** | <40ms for the largest site (3,380 racks, 104 rows, 189 columns) |
+| **Sheet formats** | Old (Albatross flat), new (v2.0 campus/SPLAT), EU, legacy — all handled |
+| **Hall detection** | 3 strategies: header-based, spatial inference, layout fallback |
+| **Serpentine** | Auto-pairs ascending/descending rows, validates 20-rack pod structure |
+| **Self-healing** | Pass 2.5 discovers unknown rack types at runtime by frequency analysis |
+
+### What it understands
+
+Every non-empty cell gets one of these classifications:
+
+| Classification | Examples |
+|----------------|----------|
+| `rack-num` | `1`, `20`, `150`, `440` |
+| `rack-type` | `HD-B2c`, `NVL72-v1`, `T1-E-v3b`, `IB x16`, `XDR x8a` |
+| `hall-header` | `US-DTN01 NORTH CAMPUS BUILDING E`, `DH1`, `DH201` |
+| `site-header` | `US-EVI01`, `ORD3-ALBATROSS`, `GB-PPL01` |
+| `grid-label` | `GRID-A POD A1`, `GRID-GROUP 1`, `ROWS 1-10` |
+| `splat` | `SPLAT_US_LZL01_DH201_GG1_A_A1_1_SP1` |
+| `col-header` | `ROW`, `TYPE`, `PWR` |
+| `row-label` | `B1`, `B2`, `C1` |
+| `annotation` | `150kW`, `334kW`, `8 MegaWatts`, `*** COREWEAVE RESERVED ***` |
+| `stat` | `Node Count: 320`, `GPU Count: 2560`, `Total Racks: 80` |
+| `superpod` | `SP1`, `SP2` |
+| `rack-type` (FDP) | `FDP-B1`, `FDP-W2`, `FDP-B2` |
+
+### Validated against NetBox
+
+Parser output was compared against the NetBox DCIM API for 13 sites. The parser finds equal or more racks than NetBox in every case — because overhead sheets include planned and reserved capacity that NetBox doesn't track until hardware arrives. **Zero missed racks.**
+
+### The 7 passes
 
 | Pass | Name | What it does |
 |------|------|-------------|
-| 1 | **Classify** | Label every cell: rack number, rack type, hall header, grid label, SPLAT range, annotation, stat/metadata. Detects site codes (`US-`, `GB-`, `SE-`, etc.), campus naming (`NORTH CAMPUS BUILDING E`), and DH-style headers. |
+| 1 | **Classify** | Label every cell: rack number, rack type, hall header, grid label, SPLAT range, annotation, stat/metadata. Detects site codes (`US-`, `GB-`, `SE-`, etc.), campus naming (`NORTH CAMPUS BUILDING E`), DH-style headers, power annotations, email/sharing metadata. |
 | 1.5a | **Merge** | Combine multi-cell grid labels (e.g. "GRID-GROUP 1" spanning 3 merged columns). Parse structured fields: grid letter, grid-group number, pod label. |
 | 1.5b | **Patterns** | Statistical row analysis — identify rack number rows by contiguous integer runs (3+ cells, 50%+ of row). Detect adjacent type rows by repeated text values. |
 | 2 | **Detect** | Find contiguous rack blocks, pair ascending/descending rows as serpentine partners, extract row labels. Tag 20-rack pod pairs with corner rack validation. |
-| 2.5 | **Discover** | Unsupervised type discovery — find repeated unknown values adjacent to rack blocks, register as new type categories at runtime. |
+| 2.5 | **Discover** | Unsupervised type discovery — find repeated unknown values adjacent to rack blocks, register as new type categories at runtime. Self-healing: new hardware shows up in a sheet, the parser learns it automatically. |
 | 3 | **Group** | Cluster blocks into sections by column alignment (±2 col tolerance). Split on 4+ empty rows, grid label boundaries, or rack number resets. Apply pod=20 heuristic. |
-| 4 | **Assign** | Build hierarchy: sections → pods → grids → halls. Three strategies (in order): **1)** Header-based — match sections to DH/BUILDING headers by column overlap. **2)** Spatial inference — cluster sections by column distance (gap ≥ 8 cols = separate hall). **3)** Layout fallback — group all sections as one. |
+| 4 | **Assign** | Build hierarchy: sections → pods → grids → halls. Three strategies (in order): **1)** Header-based — match sections to DH/BUILDING headers by column overlap. **2)** Spatial inference — cluster sections by column distance (gap >= 8 cols = separate hall). **3)** Layout fallback — group all sections as one. |
 
-Each pass is independently timed via `performance.now()` — timing data is included in the parse result and logged to console.
+Each pass is independently timed via `performance.now()` — timing data is included in the parse result and logged to `console.table()`.
+
+### Frozen & protected
+
+The parser is locked at v1.0 (`parser-v1.0-frozen` tag). A pre-commit hook runs all 47 tests automatically before any change to `parser.js` or `type-library.js` can be committed. If tests fail, the commit is blocked. Restore anytime:
+
+```bash
+git checkout parser-v1.0-frozen -- js/parser.js js/type-library.js
+```
 
 ---
 
