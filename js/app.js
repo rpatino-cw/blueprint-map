@@ -579,11 +579,19 @@ function setCachedSheet(sheetId, tab, csv) {
   } catch(e) { /* quota exceeded — ok to skip */ }
 }
 
-// ── JSONP FETCH (raw) ──
+// ── JSONP FETCH (raw) with timeout ──
+const SHEET_FETCH_TIMEOUT = 10000; // 10s — enough for slow sheets, fast enough to not hang
+
 function fetchSheetRaw(tab, sheetId) {
   return new Promise((resolve, reject) => {
     const cbName = '_bpSheet' + Date.now();
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      reject(new Error('AUTH'));
+    }, SHEET_FETCH_TIMEOUT);
+
     window[cbName] = function(data) {
+      clearTimeout(timer);
       delete window[cbName];
       if (data.error) { reject(new Error(data.error)); return; }
       resolve(arrayToCSV(data));
@@ -593,7 +601,7 @@ function fetchSheetRaw(tab, sheetId) {
       + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
       + '&callback=' + cbName;
     s.src = SHEETS_ENDPOINT + params;
-    s.onerror = () => { delete window[cbName]; reject(new Error('Failed to reach Apps Script endpoint')); };
+    s.onerror = () => { clearTimeout(timer); delete window[cbName]; reject(new Error('AUTH')); };
     document.body.appendChild(s);
   });
 }
@@ -657,8 +665,24 @@ async function loadFromSheets(tab, sheetId) {
     // Auto-focus first hall on initial load
     autoFocusFirstHall();
   } catch(e) {
-    toast('Sheet error: ' + e.message, true);
-    setLoadingProgress(0, 'Failed to load');
+    if (e.message === 'AUTH') {
+      setLoadingProgress(0, '');
+      const es = document.getElementById('empty-state');
+      const wt = document.getElementById('welcome-title');
+      const ws = document.getElementById('welcome-sub');
+      if (wt) wt.textContent = 'CoreWeave sign-in required';
+      if (ws) ws.innerHTML = 'This tool connects to internal Google Sheets.<br>Sign in to your <strong>@coreweave.com</strong> Google account in this browser, then reload.'
+        + '<div style="margin-top:20px;display:flex;gap:10px;justify-content:center">'
+        + '<a href="https://accounts.google.com" target="_blank" rel="noopener" style="display:inline-block;padding:10px 20px;background:#1d1d1f;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500">Sign in to Google</a>'
+        + '<button onclick="location.reload()" style="padding:10px 20px;background:#fff;color:#1d1d1f;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">Retry</button>'
+        + '</div>';
+      if (es) es.style.display = '';
+      const lb = document.getElementById('loading-bar');
+      if (lb) lb.style.display = 'none';
+    } else {
+      toast('Sheet error: ' + e.message, true);
+      setLoadingProgress(0, 'Failed to load');
+    }
   }
   hideSheetLoading();
   refreshBtn.classList.remove('spinning');
