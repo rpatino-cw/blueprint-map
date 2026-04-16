@@ -281,9 +281,13 @@ async function ingest(csvText) {
     console.log('%c[Blueprint Map] AI disabled, no cache — pure rule-based parsing', 'color:#a68a3a;font-weight:bold');
   }
 
+  const _parseStart = performance.now();
   const parser = new LayoutParser(state.grid, hints);
   state.parseResult = parser.parse();
+  const _parseMs = (performance.now() - _parseStart).toFixed(1);
   const pr = state.parseResult;
+  console.log(`%c[Blueprint] Parse: ${_parseMs}ms | ${pr.totalRacks} racks | ${pr.halls.length} halls`, 'color:#3ab87a;font-weight:bold');
+  if (pr.timing) console.table(pr.timing);
 
   console.group('%c[Blueprint Map] AI vs Parser Comparison', 'color:#c4a035;font-weight:bold');
 

@@ -62,13 +62,14 @@ const TypeLibrary = {
     if (!value) return null;
     const v = value.trim();
     if (!v) return null;
+    // Fast path: use pre-built sorted index
+    if (this._index) return this._fastMatch(v);
+    // Fallback: linear scan (only if index not yet built)
     const all = [...this._custom, ...this.categories];
     for (const cat of all) {
       for (const p of cat.prefixes) {
         if (v === p) return cat;
         if (v.startsWith(p)) {
-          // Single-char prefixes (like "U") must be followed by space, digit, or end
-          // to avoid matching "US-DTN01..." as Unallocated
           if (p.length === 1) {
             const next = v[1];
             if (!next || next === ' ' || /\d/.test(next)) return cat;
@@ -88,6 +89,7 @@ const TypeLibrary = {
   addCustom(cat) {
     this._custom.push(cat);
     try { localStorage.setItem('bp_custom_types', JSON.stringify(this._custom)); } catch(e) {}
+    this._buildIndex();
   },
 
   loadCustom() {
@@ -95,6 +97,47 @@ const TypeLibrary = {
       const s = localStorage.getItem('bp_custom_types');
       if (s) this._custom = JSON.parse(s);
     } catch(e) {}
-  }
+    this._buildIndex();
+  },
+
+  // ── Sorted prefix index for fast matching ──
+  _index: null,
+  _singleCharPrefixes: null,
+
+  _buildIndex() {
+    const all = [...this._custom, ...this.categories];
+    const entries = [];
+    const singles = new Map(); // single-char prefix → category
+    for (const cat of all) {
+      for (const p of cat.prefixes) {
+        if (p.length === 1) {
+          if (!singles.has(p)) singles.set(p, cat);
+        } else {
+          entries.push([p, cat]);
+        }
+      }
+    }
+    // Sort descending by prefix length, then alphabetically — longest match wins
+    entries.sort((a, b) => b[0].length - a[0].length || a[0].localeCompare(b[0]));
+    this._index = entries;
+    this._singleCharPrefixes = singles;
+  },
+
+  _fastMatch(v) {
+    if (!this._index) return null;
+    // Check multi-char prefixes (longest first)
+    for (const [p, cat] of this._index) {
+      if (v === p || v.startsWith(p)) return cat;
+    }
+    // Check single-char prefixes with guard
+    for (const [p, cat] of this._singleCharPrefixes) {
+      if (v === p) return cat;
+      if (v.startsWith(p)) {
+        const next = v[1];
+        if (!next || next === ' ' || /\d/.test(next)) return cat;
+      }
+    }
+    return null;
+  },
 };
 TypeLibrary.loadCustom();

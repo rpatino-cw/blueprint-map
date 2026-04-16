@@ -35,6 +35,9 @@ function parseSPLAT(value) {
   return null;
 }
 
+// Minimum column gap between section clusters to infer separate halls
+const HALL_COL_GAP = 8;
+
 class LayoutParser {
   constructor(grid, hints) {
     this.grid = grid;
@@ -89,13 +92,26 @@ class LayoutParser {
   }
 
   parse() {
-    this.pass1_classify();
-    this.pass1_5_mergeGridLabels();
-    this.pass1_5_rowPatterns();
-    this.pass2_detectBlocks();
-    this.pass2_5_discoverTypes();
-    this.pass3_groupSections();
-    this.pass4_assignHierarchy();
+    const _t = typeof performance !== 'undefined' ? performance.now.bind(performance) : Date.now;
+    const marks = {};
+    const mark = (label) => { marks[label] = _t(); };
+
+    mark('start');
+    this.pass1_classify();           mark('pass1');
+    this.pass1_5_mergeGridLabels();  mark('pass1.5a');
+    this.pass1_5_rowPatterns();      mark('pass1.5b');
+    this.pass2_detectBlocks();       mark('pass2');
+    this.pass2_5_discoverTypes();    mark('pass2.5');
+    this.pass3_groupSections();      mark('pass3');
+    this.pass4_assignHierarchy();    mark('pass4');
+
+    const timing = {};
+    const labels = ['pass1','pass1.5a','pass1.5b','pass2','pass2.5','pass3','pass4'];
+    let prev = marks.start;
+    for (const l of labels) { timing[l] = +(marks[l] - prev).toFixed(2); prev = marks[l]; }
+    timing.total = +(prev - marks.start).toFixed(2);
+    this._timing = timing;
+
     return this.result();
   }
 
@@ -1064,6 +1080,50 @@ class LayoutParser {
       if (this.halls.length > 0) this.warnings.push('Hall boundaries detected via AI analysis');
     }
 
+    // ── SPATIAL HALL INFERENCE (fallback before "Layout") ──
+    // If no hall headers were found but multiple sections exist, cluster
+    // sections by column distance — large gaps imply separate halls.
+    if (this.halls.length === 0 && this.sections.length > 1) {
+      const sorted = [...this.sections].sort((a, b) => a.startCol - b.startCol);
+      const clusters = [[sorted[0]]];
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = clusters[clusters.length - 1];
+        const prevMaxCol = Math.max(...prev.map(s => s.endCol));
+        if (sorted[i].startCol - prevMaxCol >= HALL_COL_GAP) {
+          clusters.push([sorted[i]]);
+        } else {
+          prev.push(sorted[i]);
+        }
+      }
+      if (clusters.length >= 2) {
+        for (let ci = 0; ci < clusters.length; ci++) {
+          const clusterSecs = clusters[ci];
+          const colMin = Math.min(...clusterSecs.map(s => s.startCol));
+          const colMax = Math.max(...clusterSecs.map(s => s.endCol));
+          const hallName = `Section ${ci + 1}`;
+          for (const sec of clusterSecs) sec.hall = hallName;
+          const grids = new Map();
+          for (const sec of clusterSecs) {
+            const letter = sec.gridLetter || '?';
+            if (!grids.has(letter)) grids.set(letter, { letter, gridGroups: new Map(), pods: new Map() });
+            const g = grids.get(letter);
+            const pod = sec.podLabel || '?';
+            if (!g.pods.has(pod)) g.pods.set(pod, { name: pod, sections: [] });
+            g.pods.get(pod).sections.push(sec);
+          }
+          this.halls.push({
+            name: hallName, colMin, colMax,
+            grids: [...grids.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([, g]) => ({
+              letter: g.letter,
+              gridGroups: [...g.gridGroups.entries()].map(([gg, pods]) => ({ name: gg, pods: [...pods] })),
+              pods: [...g.pods.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([, p]) => ({ name: p.name, sections: p.sections })),
+            })),
+          });
+        }
+        this.warnings.push(`Inferred ${clusters.length} halls from spatial column gaps`);
+      }
+    }
+
     if (this.halls.length === 0 && this.sections.length > 0) {
       this.halls.push({
         name: 'Layout',
@@ -1164,6 +1224,7 @@ class LayoutParser {
       totalRacks,
       cols: this.cols,
       rows: this.rows,
+      timing: this._timing || null,
     };
   }
 }
