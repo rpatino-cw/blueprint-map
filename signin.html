@@ -179,7 +179,7 @@
       <h1>Sign in required</h1>
       <p>This tool only loads data for signed-in <strong>@coreweave.com</strong> Google accounts. Click below to pick your CoreWeave account.</p>
       <a class="btn" id="btn-signin">Continue with Google</a>
-      <a class="btn btn-secondary" href="/" target="_blank" rel="noopener">Back to map</a>
+      <a class="btn btn-secondary" href="index.html">Back to map</a>
       <div class="hint" id="signin-hint">Opens Google's account chooser</div>
       <div class="notice" id="signin-notice">
         <strong>Heads up:</strong> after signing in, you'll briefly see a page of raw data —
@@ -246,7 +246,7 @@
       // If close is blocked (not opened via script), redirect to map
       setTimeout(() => {
         const hint = document.getElementById('success-hint');
-        if (hint) hint.innerHTML = 'You can close this tab. <a href="/">Return to the map</a>';
+        if (hint) hint.innerHTML = 'You can close this tab. <a href="index.html">Return to the map</a>';
       }, 600);
     }, 900);
   }
