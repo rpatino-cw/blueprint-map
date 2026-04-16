@@ -204,12 +204,12 @@ function renderGrid() {
       const isSel = state.selectedRC?.row === r && state.selectedRC?.col === c;
 
       if (cls === 'rack-num') {
-        const bg = mkRect(x+1, y+1, CELL_W-2, CH-2, '#ffffff', isSel ? P.text : (isHL ? P.text : '#d2d2d7'));
-        bg.setAttribute('stroke-width', isSel ? '1.5' : '.5');
-        bg.setAttribute('rx', RX);
-        bg.setAttribute('data-rc', key);
-        svg.appendChild(bg);
-        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, P.text, 10, 500, FONT_MONO);
+        const hit = mkRect(x+1, y+1, CELL_W-2, CH-2, 'transparent', 'none');
+        hit.setAttribute('data-rc', key);
+        svg.appendChild(hit);
+        const fill = isSel ? P.text : (isHL ? P.text : P.text2);
+        const weight = isSel ? 700 : 500;
+        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, fill, 10, weight, FONT_MONO);
         t.setAttribute('text-anchor', 'middle');
         t.setAttribute('pointer-events', 'none');
         svg.appendChild(t);
