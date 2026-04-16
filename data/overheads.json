@@ -1,0 +1,887 @@
+{
+  "generated": "2026-04-16",
+  "source": "Glean search — Datacenter Overhead Links index + company-wide MASTER sheet search",
+  "stats": { "total": 88, "withOverheadLink": 62, "withMasterLink": 62, "legacyTbd": 42, "mismatches": 19 },
+  "sites": [
+    {
+      "site": "ATL1",
+      "locode": "US-LHS01",
+      "city": "Lithia Springs",
+      "status": "legacy",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "ATL2",
+      "locode": "US-DGV01",
+      "city": "Douglasville",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/17Bi2G9iguYZFcqRSXGchv0Sa51pf5Sh-nCZKYPDLuV4/edit?usp=drive_web&ouid=102764162836489641896",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/17Bi2G9iguYZFcqRSXGchv0Sa51pf5Sh-nCZKYPDLuV4",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "ATL4",
+      "locode": "US-AAI01",
+      "city": "Alpharetta",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1LM_xLgMenYkHaaUn2-AMsDnnlOCLwnObH65Lhf36xfw/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1LM_xLgMenYkHaaUn2-AMsDnnlOCLwnObH65Lhf36xfw",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "AUS1",
+      "locode": "US-AUS01",
+      "city": "Austin",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1Uzdg8sY5Aq-pY1DhfULzsudZSFXFG1IDwxSyEOL6arw/edit?gid=488679579#gid=488679579",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1Uzdg8sY5Aq-pY1DhfULzsudZSFXFG1IDwxSyEOL6arw",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "CA-EAST-01A",
+      "locode": "CA-GAL01",
+      "city": "Cambridge",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1TpqLdHeMmIchRv4-WCvOrLaPvRNVhsR52Rt-5AcsFkk",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1TpqLdHeMmIchRv4-WCvOrLaPvRNVhsR52Rt-5AcsFkk",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "DFW1A",
+      "locode": "US-PLZ01",
+      "city": "Plano",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1tAO7lpLWAZQVJywT8AFwUF2RN-ZvstZ8K-X7XfYIrBk/edit?gid=1344368235#gid=1344368235",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1tAO7lpLWAZQVJywT8AFwUF2RN-ZvstZ8K-X7XfYIrBk",
+      "visibleSections": ["US-PLZ01 DATA HALL 1", "US-PLZ01 DATA HALL 2", "US-PLZ01 DATA HALL 3", "US-PLZ01 DATA HALL 4"],
+      "source": "central index only"
+    },
+    {
+      "site": "EU-CFN2",
+      "locode": "NO-OVO01",
+      "city": "Ovrebo",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "EU-CFN3",
+      "locode": "SE-FAN01",
+      "city": "Falun",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "EU-NORTH-01A",
+      "locode": "SE-FAN01",
+      "city": "Falun",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1fW9k-5R5LuegZlr4CLQa09_MG450b2bhHNS3QkxU5h0/edit?gid=169405474#gid=169405474",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1fW9k-5R5LuegZlr4CLQa09_MG450b2bhHNS3QkxU5h0",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "EU-NORTH-02A",
+      "locode": "NO-OVO01",
+      "city": "Ovrebo",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1aiFc9wm5jLYX9Vd-TFkWEWo1d6IHysOCDotET0vgVHs",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1aiFc9wm5jLYX9Vd-TFkWEWo1d6IHysOCDotET0vgVHs",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "EU-NORTH-04A",
+      "locode": "SE-SKH01",
+      "city": "Stockholm",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1Oac2usujY9QDwChijxuJv1BW5OAh8H0K0iV95P3tBVI",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1Oac2usujY9QDwChijxuJv1BW5OAh8H0K0iV95P3tBVI",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "EU-NORTH-05A",
+      "locode": "DK-SVL01",
+      "city": "Skovlunde",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1PEHvXoUDVX5dCNftxoqKlkO4DDUtwQ99hXPrxO-fkdM",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1PEHvXoUDVX5dCNftxoqKlkO4DDUtwQ99hXPrxO-fkdM",
+      "visibleSections": [],
+      "source": "master search"
+    },
+    {
+      "site": "EU-SOUTH-01A",
+      "locode": "ES-BCN01",
+      "city": "Barcelona",
+      "status": "Production",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "EU-SOUTH-03A",
+      "locode": "ES-BCN03",
+      "city": "Barcelona",
+      "status": "In Progress",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1jvXWSmDtGDYbr4gNQmrcRUfKwN8jk3G4jDezg7GRmHk/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1jvXWSmDtGDYbr4gNQmrcRUfKwN8jk3G4jDezg7GRmHk",
+      "visibleSections": ["ES-BCN03 PHASE 2 DATA HALL 403 APPROVEDTBD", "ES-BCN03 PHASE 1 DATA HALL 402 APPROVEDTBD", "ES-BCN03 PHASE 1 DATA HALL 401 APPROVEDTBD"],
+      "source": "central index"
+    },
+    {
+      "site": "EU-SOUTH-03B",
+      "locode": "ES-BCN03",
+      "city": "Barcelona",
+      "status": "In Progress",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1IxGGyuraGj9qqAMsdpsBiYmPiXVAcHKl4D9pNmyoZ98/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1IxGGyuraGj9qqAMsdpsBiYmPiXVAcHKl4D9pNmyoZ98",
+      "visibleSections": ["ES-BCN03 PHASE 2 DATA HALL 403 APPROVEDTBD", "ES-BCN03 PHASE 1 DATA HALL 402 APPROVEDTBD", "ES-BCN03 PHASE 1 DATA HALL 401 APPROVED"],
+      "source": "central index"
+    },
+    {
+      "site": "EU-SOUTH-04A",
+      "locode": "ES-AVQ01",
+      "city": "Alava",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1r_qk1GASbrxYxPefVVK_ZXgVyPGG4BQsBnIVHMKJmFw",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1r_qk1GASbrxYxPefVVK_ZXgVyPGG4BQsBnIVHMKJmFw",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "EU-WEST-01A",
+      "locode": "GB-CWY01",
+      "city": "Crawley",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1Va-EBqTzMRRRYDvx63G_lz-YUpFHDPgRgy-NqU_dCi8/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1Va-EBqTzMRRRYDvx63G_lz-YUpFHDPgRgy-NqU_dCi8",
+      "visibleSections": ["ST-01 DATA HALL 1", "ST-01 DATA HALL 2", "ST-01 DATA HALL 3"],
+      "source": "central index"
+    },
+    {
+      "site": "EU-WEST-02A",
+      "locode": "GB-PPL01",
+      "city": "London (Docklands)",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/13LISzRY4BY0j3VZtoBEebZx1xk1lM45yepy--D33UsU/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/13LISzRY4BY0j3VZtoBEebZx1xk1lM45yepy--D33UsU",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "LAS1",
+      "locode": "US-LAS01",
+      "city": "Las Vegas",
+      "status": "legacy",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "LAS1",
+      "locode": "US-LAS02",
+      "city": "Las Vegas",
+      "status": "legacy",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "LAS1",
+      "locode": "US-LAS03",
+      "city": "Las Vegas",
+      "status": "legacy",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "LAS1",
+      "locode": "US-LAS03",
+      "city": "Las Vegas",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1WIYsVljd2dwElgzrTGIVMaRXi_zxaFTFfctXm1-f8-M/edit?gid=1574822693#gid=1574822693",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1WIYsVljd2dwElgzrTGIVMaRXi_zxaFTFfctXm1-f8-M",
+      "visibleSections": ["US-LAS02 NAP12 SECTOR 1", "US-LAS01 NAP 7 SECTOR 1 WIP", "US-LAS01 NAP 7 SECTOR 2 WIP", "US-LAS01 NAP 7 SECTOR 8 WIP 5MW", "US-LAS03 NAP 15 SECTOR 1 WIP", "US-LAS03 NAP 15 SECTOR 3 WIP", "US-LAS03 NAP 15 SECTOR 00 EVO LAB - TEMPORARY GB200 TESTING ONLY"],
+      "source": "central index only"
+    },
+    {
+      "site": "LGA1",
+      "locode": "US-WJQ01",
+      "city": "Weehawken",
+      "status": "legacy",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "ORD1",
+      "locode": "US-WCI01",
+      "city": "West Chicago",
+      "status": "legacy",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "ORD3",
+      "locode": "US-VO201",
+      "city": "Volo",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1Pi1I6ep6oXTR6ALNi_NTwFGoXRHGayVP1pMaXUrFBPo/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1Pi1I6ep6oXTR6ALNi_NTwFGoXRHGayVP1pMaXUrFBPo",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "central index"
+    },
+    {
+      "site": "PDX2",
+      "locode": "US-HIO02",
+      "city": "Hillsboro",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1J6-KKqTj75OvZaQu1KOgjhuWUoDBiDCii3-niY1VWjc/edit?gid=1574822693#gid=1574822693",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1J6-KKqTj75OvZaQu1KOgjhuWUoDBiDCii3-niY1VWjc",
+      "visibleSections": ["GRID-GROUP 1 GRID-A GRID-POD 1", "gg1-a1-", "A1"],
+      "source": "central index"
+    },
+    {
+      "site": "RDU1A",
+      "locode": "US-CVY01",
+      "city": "Clarksville",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/149BNLylQ9g580h1txmVDVH8L82s4iy5IwXWsMRg1GUg/edit?gid=1239497989#gid=1239497989",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/149BNLylQ9g580h1txmVDVH8L82s4iy5IwXWsMRg1GUg",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "RNO1",
+      "locode": "US-SPK02",
+      "city": "Sparks",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/14OSFS7VqWT3uU-tGCMXsfeabnB72saeXZvV60RR7_Qg/edit?gid=153703280#gid=153703280",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/14OSFS7VqWT3uU-tGCMXsfeabnB72saeXZvV60RR7_Qg",
+      "visibleSections": ["US-SPK02 SECTOR 2", "US-SPK02 SECTOR 4", "US-SPK01 SECTOR 6"],
+      "source": "central index only"
+    },
+    {
+      "site": "RNO2A",
+      "locode": "US-SPK02",
+      "city": "Sparks",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/14OSFS7VqWT3uU-tGCMXsfeabnB72saeXZvV60RR7_Qg/edit?gid=153703280#gid=153703280",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1c9PYJVlf0qFfaummPSi-lweKcOvr8zaQwEkkvmkaBdc",
+      "visibleSections": ["US-SPK02 SECTOR 2", "US-SPK02 SECTOR 4", "US-SPK01 SECTOR 6"],
+      "source": "central index"
+    },
+    {
+      "site": "SBN1",
+      "locode": "US-HMN01",
+      "city": "Hammond",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1DiL7ktVZCk5-QEWF-rzMb_SLCXhYFaHOunNQjC83W4E/edit?gid=1574822693#gid=1574822693",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1DiL7ktVZCk5-QEWF-rzMb_SLCXhYFaHOunNQjC83W4E",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CENTRAL-01",
+      "locode": "US-VO201",
+      "city": "Volo",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CENTRAL-01A",
+      "locode": "US-VO201",
+      "city": "Volo",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1pim6u1CAv2D-wAP-xVw0cxBJimsfhli3LR_FVPeOlk8",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1pim6u1CAv2D-wAP-xVw0cxBJimsfhli3LR_FVPeOlk8",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-02A",
+      "locode": "US-PLZ01",
+      "city": "Plano",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1fdh40HYmVGvc_si1z12kPVIuW8BL0NWM55I_8BClt84",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1fdh40HYmVGvc_si1z12kPVIuW8BL0NWM55I_8BClt84",
+      "visibleSections": ["US-PLZ01 DATA HALL 1", "US-PLZ01 DATA HALL 2", "US-PLZ01 DATA HALL 3", "US-PLZ01 DATA HALL 4"],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-03A",
+      "locode": "US-DTN01",
+      "city": "Denton",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1dBRuMiVtym03N800A1KsB42mmNYxHR3UEsIu5S8sW5c",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1dBRuMiVtym03N800A1KsB42mmNYxHR3UEsIu5S8sW5c",
+      "visibleSections": ["US-DTN01 NORTH CAMPUS BUILDING E 8 MegaWatts", "US-DTN01 NORTH CAMPUS BUILDING E 8 M"],
+      "source": "master search"
+    },
+    {
+      "site": "US-CENTRAL-04A",
+      "locode": "US-PLZ02",
+      "city": "Plano",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/13Pkjz2q0did2EeO3y5dBGIHpdxj1vcmv1vx8TcYMUQg",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/13Pkjz2q0did2EeO3y5dBGIHpdxj1vcmv1vx8TcYMUQg",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-05A",
+      "locode": "US-RIN01",
+      "city": "Richardson",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1TtIpPH5azmtVNOuTcclJlGqwWzCDL6KCXCAGos9-PAY",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1TtIpPH5azmtVNOuTcclJlGqwWzCDL6KCXCAGos9-PAY",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-06A",
+      "locode": "US-RRX01",
+      "city": "Round Rock",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1sXGOeTwXgU6wAkIpjpeQje7VTsNzz6RkYMKKXN-Cc6g",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1sXGOeTwXgU6wAkIpjpeQje7VTsNzz6RkYMKKXN-Cc6g",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-07A",
+      "locode": "US-EVI01",
+      "city": "Elk Grove",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-08A",
+      "locode": "US-LZL01",
+      "city": "Ellendale",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/18Kdd2qLaJ8_FR4KBRCZ2o2LuRxd6tPq7Bd4lqf7QAVI",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/18Kdd2qLaJ8_FR4KBRCZ2o2LuRxd6tPq7Bd4lqf7QAVI",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-08B",
+      "locode": "US-LZL01",
+      "city": "Ellendale",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1Wb6iD9WtLhtV4xfEVrbvVs0UIb03jgNsAnCkmWlInsQ",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1Wb6iD9WtLhtV4xfEVrbvVs0UIb03jgNsAnCkmWlInsQ",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-10A",
+      "locode": "US-MKO01",
+      "city": "Muskogee",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1lyYoRhYtBgKywZrWO4Zr7YNj9g3jSq_fl-ha--HUAik",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1lyYoRhYtBgKywZrWO4Zr7YNj9g3jSq_fl-ha--HUAik",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-CENTRAL-11A",
+      "locode": "US-SKY01",
+      "city": "Sandusky",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/119wkLyYL41HIgQTzcEvXwwkEr5YI2Hjv2Rk5oQKl2PY",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/119wkLyYL41HIgQTzcEvXwwkEr5YI2Hjv2Rk5oQKl2PY",
+      "visibleSections": [],
+      "source": "master search"
+    },
+    {
+      "site": "US-CFN-EVI01",
+      "locode": "US-EVI01",
+      "city": "Elk Grove",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN-PHX01",
+      "locode": "US-PHX01",
+      "city": "Phoenix",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN-RIN01",
+      "locode": "US-RIN01",
+      "city": "Richardson",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN11",
+      "locode": "US-MKO01",
+      "city": "Muskogee",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN12",
+      "locode": "US-DTN01",
+      "city": "Denton",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN12",
+      "locode": "US-DTN02",
+      "city": "Denton",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN12",
+      "locode": "US-PLZ02",
+      "city": "Plano",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN16",
+      "locode": "US-QNC01",
+      "city": "Quincy",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN4",
+      "locode": "US-PLZ01",
+      "city": "Plano",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN5",
+      "locode": "US-HMN02",
+      "city": "Hammond",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN7",
+      "locode": "US-SPK03",
+      "city": "Sparks",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CFN9",
+      "locode": "US-RRX01",
+      "city": "Round Rock",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-CHI02-CHICAGO",
+      "locode": null,
+      "city": null,
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1stXcGwU_DpvtQ65MwzGcBs7WWXeRsHpy4ROS_GtNNS4",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1stXcGwU_DpvtQ65MwzGcBs7WWXeRsHpy4ROS_GtNNS4",
+      "visibleSections": [],
+      "source": "master search"
+    },
+    {
+      "site": "US-EAST-01A",
+      "locode": "US-OBG01",
+      "city": "Orangeburg",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1D5lp_9wzSRWEEVLktRKNroTHe1K_vTllEZ47BWKpPBk/edit?gid=243355314#gid=243355314",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1D5lp_9wzSRWEEVLktRKNroTHe1K_vTllEZ47BWKpPBk",
+      "visibleSections": ["US-OBG01 PHASE 1 DATA HALL 1 APPROVED J", "US-OBG01 PHASE 1 DATA HALL 2 APPROVED J", "US-OBG01 DATA HALL 3 LIQUID COOLED 4 MW APPROVED J", "US-OBG01 DATA HALL 4 LIQUID ROW"],
+      "source": "central index"
+    },
+    {
+      "site": "US-EAST-02A",
+      "locode": "US-EWS01",
+      "city": "East Windsor",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1b3ikoEpwhy20HaMLAz25J1PpFHAYbf_0w88w1msu6bo/edit?gid=480277739#gid=480277739",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1b3ikoEpwhy20HaMLAz25J1PpFHAYbf_0w88w1msu6bo",
+      "visibleSections": ["US-EWS01 PHASE 1 DATA HALL 1", "US-EWS01 PHASE 1 DATA HALL 2", "US-EWS01 PHASE 2 DATA HALL 3", "US-EWS01 PHASE 3 DATA HALL 4"],
+      "source": "central index"
+    },
+    {
+      "site": "US-EAST-02B",
+      "locode": "US-EWS01",
+      "city": "Kenilworth",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1bxVq9THKhii4y-fUGuYEuO6vy9u273Dbfu4unqD9kTw",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1bxVq9THKhii4y-fUGuYEuO6vy9u273Dbfu4unqD9kTw",
+      "visibleSections": ["US-EWS01 PHASE 1 DATA HALL 1 APPROVED", "US-EWS01 PHASE 1 DATA HALL 2 WIP", "US-EWS01 PHASE 2 DATA HALL 3 WIP", "US-EWS01 PHASE 3 DATA HALL 4 LIQUID COOLED 4.5MW", "US-EWS01 PHASE 4 DATA HALL 5 AIR + LIQUID 4.5MW", "US-EWS01 PHASE 5 DATA HALL 6"],
+      "source": "master search"
+    },
+    {
+      "site": "US-EAST-02B",
+      "locode": "US-KWO01/02",
+      "city": "Kenilworth",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-EAST-03A",
+      "locode": "US-BVI01",
+      "city": "Breinigsville",
+      "status": "Production",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1JvPIyPx5M6q6rHV7kCNrS_Z_IG6alu0Zc504u6TzyFs/edit#gid=169405474",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1JvPIyPx5M6q6rHV7kCNrS_Z_IG6alu0Zc504u6TzyFs",
+      "visibleSections": ["1,468", "2,112", "16,896"],
+      "source": "central index"
+    },
+    {
+      "site": "US-EAST-04A",
+      "locode": "US-CSZ01",
+      "city": "Chester",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1gOZQT-RT0saXmeWsvc77_6i2p7Lws7zZYQh1k663xok/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1gOZQT-RT0saXmeWsvc77_6i2p7Lws7zZYQh1k663xok",
+      "visibleSections": ["US-CSZ01 DATA HALL 1", "US-CSZ01 DATA HALL 2", "US-CSZ01 DATA HALL 3"],
+      "source": "central index"
+    },
+    {
+      "site": "US-EAST-04B",
+      "locode": "US-CSZ02",
+      "city": "Chester",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/10foCtgwuPA9V0sryv-qxTFP1FPxPtkYqXh0vnrsq6x4",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/10foCtgwuPA9V0sryv-qxTFP1FPxPtkYqXh0vnrsq6x4",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-EAST-06A",
+      "locode": "US-CVG01",
+      "city": "Cincinnatti",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1X2tNBihZjYb4CkvA6ggTroekD2IxXKesLvRWrbKC_OU/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1X2tNBihZjYb4CkvA6ggTroekD2IxXKesLvRWrbKC_OU",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-EAST-07A",
+      "locode": "US-LNB01",
+      "city": "Lebanon",
+      "status": "Unknown",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-EAST-08A",
+      "locode": "US-CMH01",
+      "city": "Columbus",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/14Ku0dFO-7Ri5FNCKCrnpCncwOwZc56uYrbkSdp7r5Uw/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/14Ku0dFO-7Ri5FNCKCrnpCncwOwZc56uYrbkSdp7r5Uw",
+      "visibleSections": ["US-CMH01 DATA HALL 1"],
+      "source": "central index"
+    },
+    {
+      "site": "US-EAST-09A",
+      "locode": "US-SVG01",
+      "city": "Suwanee",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1dF2KJCSc21sCccnuzQsy1BSgy2rcbUBC-tHahkLNXrA/edit?gid=169405474#gid=169405474",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1dF2KJCSc21sCccnuzQsy1BSgy2rcbUBC-tHahkLNXrA",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-EAST-10A",
+      "locode": "US-LOE01",
+      "city": "Lowell",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1slRVcBUlftnThSvMsQ5296qdNzYq_DSyPwEyXj9dRvk/edit",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1slRVcBUlftnThSvMsQ5296qdNzYq_DSyPwEyXj9dRvk",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "US-EAST-11A",
+      "locode": "US-ARQ01",
+      "city": "Marble",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1FgjwFAxfr-rHTi_iYQ01BE2joFq0D50bq3Ufey6dd2U",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1FgjwFAxfr-rHTi_iYQ01BE2joFq0D50bq3Ufey6dd2U",
+      "visibleSections": ["ST-11A DATA HALL 1 APPROVED", "ST-11A DATA HALL 2 APPROVED", "ST-11A DATA HALL 3 APPROVED"],
+      "source": "master search"
+    },
+    {
+      "site": "US-EAST-12A",
+      "locode": "US-DNN01",
+      "city": "Dalton",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1_3gB6r1gL1iWlsHETldtYqRfnJ1_ZCXCfHeGEHojLxw",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1_3gB6r1gL1iWlsHETldtYqRfnJ1_ZCXCfHeGEHojLxw",
+      "visibleSections": ["Feb 27, 2026"],
+      "source": "master search"
+    },
+    {
+      "site": "US-EAST-13A",
+      "locode": "US-CDZ01",
+      "city": "Caledonia",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1fAbQRuqQ_0-PGao6bzivJ-hoT7AT-Nmeezp6oY-ggt8",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1fAbQRuqQ_0-PGao6bzivJ-hoT7AT-Nmeezp6oY-ggt8",
+      "visibleSections": ["FL 3 DH900", "FL 4 DH700", "FL 7 DH600", "FL 8 DH3000"],
+      "source": "master search"
+    },
+    {
+      "site": "US-EAST-14A",
+      "locode": "US-PPY01",
+      "city": "Parsippany",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/17D1atSm8GVtvMljLkd7VXCrMqQTx9gMltVDinGlquI0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/17D1atSm8GVtvMljLkd7VXCrMqQTx9gMltVDinGlquI0",
+      "visibleSections": ["US-PPY01 PHASE 1 DATA HALL 1 APPROVED"],
+      "source": "master search"
+    },
+    {
+      "site": "US-EAST-15A",
+      "locode": "US-CYL01",
+      "city": "Chantilly",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1dCTSUpl3nrd623u29U2EKwqCx2qYxahf6Tx4sDdn_S8",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1dCTSUpl3nrd623u29U2EKwqCx2qYxahf6Tx4sDdn_S8",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-EAST-17A",
+      "locode": "US-WJQ01",
+      "city": "Weehawken",
+      "status": "index says legacy; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1gTBrZg3sx6Ssoed8EursMopwCl9N45kI9zHcQFX-T50",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1gTBrZg3sx6Ssoed8EursMopwCl9N45kI9zHcQFX-T50",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-EAST-18A",
+      "locode": "US-KWO01",
+      "city": "Kenilworth",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1S_ekMhlbDPyiyFFr9ni29r-OFwvtvzoRdbUqJxHZEEc",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1S_ekMhlbDPyiyFFr9ni29r-OFwvtvzoRdbUqJxHZEEc",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-LAB-01",
+      "locode": "US-LHS01",
+      "city": "Lithia Springs",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1PBr7hsr-UWJ5GPVl1tZO930_renG6DjKFo6_XSOUm_w/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1PBr7hsr-UWJ5GPVl1tZO930_renG6DjKFo6_XSOUm_w",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "US-LBB01",
+      "locode": null,
+      "city": "Lubbock",
+      "status": "Unknown",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-TBD01",
+      "locode": "US-LAS05",
+      "city": "Las Vegas",
+      "status": "tbd",
+      "overheadTab": null,
+      "masterCutsheet": null,
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-WEST-01A",
+      "locode": "US-LAS02",
+      "city": "Las Vegas",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1Z64xV5vwrGbx8tZ3JhyG6GfY7RW5N-hDppyN6sV4dKk/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1Z64xV5vwrGbx8tZ3JhyG6GfY7RW5N-hDppyN6sV4dKk",
+      "visibleSections": ["US-LAS02 NAP12 SECTOR 1", "US-LAS01 NAP 7 SECTOR 1 WIP", "US-LAS01 NAP 7 SECTOR 2 WIP", "US-LAS01 NAP 7 SECTOR 8 WIP 5MW", "US-LAS03 NAP 15 SECTOR 1 WIP", "US-LAS03 NAP 15 SECTOR 3 WIP", "US-LAS03 NAP 15 SECTOR 00 EVO"],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-02A",
+      "locode": "US-PHX01",
+      "city": "Phoenix",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1PqCDUaXATd7qQX8Yiv6uihRmqyhqQDZoYcu9lUPu4Z4/edit?gid=169405474#gid=169405474",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1PqCDUaXATd7qQX8Yiv6uihRmqyhqQDZoYcu9lUPu4Z4",
+      "visibleSections": [],
+      "source": "central index only"
+    },
+    {
+      "site": "US-WEST-02B",
+      "locode": "US-PHX01",
+      "city": "Phoenix",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1PqCDUaXATd7qQX8Yiv6uihRmqyhqQDZoYcu9lUPu4Z4/edit?gid=169405474#gid=169405474",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1nTuC8l8oflGY0XI9vnrIu27oSuUDJ4T3v_9E68ukz80",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-03A",
+      "locode": "US-HIO01",
+      "city": "Hillsboro",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1E79X8Yd5yJnqQtdfUWOOTFD0FarcUCcgoumpARrzVRw/edit?gid=404343779#gid=404343779",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1E79X8Yd5yJnqQtdfUWOOTFD0FarcUCcgoumpARrzVRw",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-04A",
+      "locode": "US-MSC01",
+      "city": "Mesa",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1JNRKf3Uc9x9XNpafNfqvrwntNf0Q2R_kqyhBwJMxUo0/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1JNRKf3Uc9x9XNpafNfqvrwntNf0Q2R_kqyhBwJMxUo0",
+      "visibleSections": [],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-05",
+      "locode": "US-LYF01",
+      "city": "Lynnwood",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1MqHscS2ai9Cq70U2FdyNiB9qc5x3LcAX0Su8LWpwQmQ/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1MqHscS2ai9Cq70U2FdyNiB9qc5x3LcAX0Su8LWpwQmQ",
+      "visibleSections": ["US-LYF01 DATA HALL 1 US-WEST-05 WORK-IN-PROGRESS"],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-06",
+      "locode": "US-HIO03",
+      "city": "Hillsboro",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1VX83MBKRLSROqwHBqIb2E0bfIa1zxbdaqr6RCtmGwnE/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1VX83MBKRLSROqwHBqIb2E0bfIa1zxbdaqr6RCtmGwnE",
+      "visibleSections": ["US-HIO03 DATA HALL 100", "US-HIO03 DATA HALL 105"],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-07A",
+      "locode": "US-NNN01",
+      "city": "Centennial",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/11wDvTwzc82yolrUgmE71kgSKW2oaCRWZJqXNZFMZHmM/edit?gid=0#gid=0",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/11wDvTwzc82yolrUgmE71kgSKW2oaCRWZJqXNZFMZHmM",
+      "visibleSections": ["US-NNN01 DATA HALL 2"],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-08a",
+      "locode": "US-NKQ01",
+      "city": "Newark",
+      "status": "Unknown",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1W4AN4vQa0elz1lf3SoLucUCE0b4TzKhfR8eMkgVHZ4I/edit?gid=169405474#gid=169405474",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1W4AN4vQa0elz1lf3SoLucUCE0b4TzKhfR8eMkgVHZ4I",
+      "visibleSections": ["1,468", "2,112", "16,896"],
+      "source": "central index"
+    },
+    {
+      "site": "US-WEST-09B",
+      "locode": "US-QNC01",
+      "city": "Quincy",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/1kEzOhIr-XNrvu7-YtUFEXDhWyoKQSh2Msno192z_Q6o",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/1kEzOhIr-XNrvu7-YtUFEXDhWyoKQSh2Msno192z_Q6o",
+      "visibleSections": [],
+      "source": "master search + site search"
+    },
+    {
+      "site": "US-WEST-10A",
+      "locode": "US-SPK03",
+      "city": "Sparks",
+      "status": "index says tbd; master found",
+      "overheadTab": "https://docs.google.com/spreadsheets/d/14pyLRTcGhxL1cWa0PPLFgt8kVLVEDuCxGowzpz2RpyE",
+      "masterCutsheet": "https://docs.google.com/spreadsheets/d/14pyLRTcGhxL1cWa0PPLFgt8kVLVEDuCxGowzpz2RpyE",
+      "visibleSections": [],
+      "source": "master search + site search"
+    }
+  ]
+}

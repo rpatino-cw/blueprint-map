@@ -870,10 +870,58 @@ document.getElementById('sheet-site').addEventListener('change', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// AUTO-LOAD — no blank screen
+// DYNAMIC SITE LIST — load from NetBox-generated sites.json
 // ═══════════════════════════════════════════════════════════════
-(function autoLoad() {
-  const sheetId = document.getElementById('sheet-site').value;
+const GROUP_ORDER = ['US CENTRAL','US EAST','US WEST','EUROPE','CANADA','US LAB','OTHER'];
+
+function populateSiteSelector(data) {
+  const sel = document.getElementById('sheet-site');
+  const prev = sel.value; // preserve current selection
+  // Keep the TEMPLATES optgroup if present
+  const tplGroup = sel.querySelector('optgroup[label*="TEMPLATE"]');
+
+  // Clear existing optgroups (except templates)
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+
+  for (const gName of GROUP_ORDER) {
+    const sites = data.groups[gName];
+    if (!sites || sites.length === 0) continue;
+    const og = document.createElement('optgroup');
+    og.label = '── ' + gName + ' ──';
+    for (const s of sites) {
+      const opt = document.createElement('option');
+      opt.value = s.sheetId;
+      const label = s.name + (s.facility ? ' — ' + s.facility : '');
+      opt.textContent = label;
+      if (s.rackCount) opt.title = s.rackCount + ' racks, ' + s.deviceCount + ' devices';
+      og.appendChild(opt);
+    }
+    sel.appendChild(og);
+  }
+
+  // Re-add templates
+  if (tplGroup) sel.appendChild(tplGroup);
+
+  // Restore selection or default to first
+  if (prev && sel.querySelector('option[value="' + prev + '"]')) {
+    sel.value = prev;
+  }
+}
+
+(async function autoLoad() {
+  const sel = document.getElementById('sheet-site');
+  try {
+    const res = await fetch('data/sites.json');
+    if (res.ok) {
+      const data = await res.json();
+      populateSiteSelector(data);
+      console.log('[Blueprint Map] Loaded ' + data.count + ' sites from NetBox');
+    }
+  } catch (e) {
+    console.warn('[Blueprint Map] sites.json not found, using HTML fallback');
+  }
+  // Always load the selected sheet
+  const sheetId = sel.value;
   if (sheetId && typeof loadFromSheets === 'function') {
     loadFromSheets('OVERHEAD', sheetId);
   }
