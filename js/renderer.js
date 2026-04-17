@@ -42,7 +42,18 @@ function mkSVG(w, h) {
   svg.setAttribute('shape-rendering', 'geometricPrecision');
   svg.setAttribute('text-rendering', 'optimizeLegibility');
 
-  // clean background — no grid pattern
+  const defs = document.createElementNS(NS, 'defs');
+  defs.innerHTML = `
+    <filter id="hall-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>`;
+  svg.appendChild(defs);
+
   svg.appendChild(mkRect(0, 0, w, h, P.bg, 'none'));
 
   // site title
@@ -163,9 +174,12 @@ function renderGrid() {
   const cx = c => PAD + (c - minC) * CELL_W;
   const cy = r => PAD + (r - minR) * CH;
 
-  // Hall boundaries + titles
   state.hallBounds = [];
   const filteredHalls = state.hallFilter === '__all' ? pr.halls : pr.halls.filter(h => h.name === state.hallFilter);
+
+  const PAD_OUTER = 22, PADY = 22, MIN_GAP = 24;
+
+  const tentative = [];
   for (const hall of filteredHalls) {
     let hMinR = Infinity, hMaxR = 0;
     for (const g of hall.grids) for (const p of g.pods) for (const s of p.sections) {
@@ -173,16 +187,54 @@ function renderGrid() {
       hMaxR = Math.max(hMaxR, s.maxRow);
     }
     if (hMinR > hMaxR) continue;
+    tentative.push({
+      hall, hMinR, hMaxR,
+      left: cx(hall.colMin) - PAD_OUTER,
+      right: cx(hall.colMin) - PAD_OUTER + (hall.colMax - hall.colMin + 1) * CELL_W + PAD_OUTER * 2,
+      top: cy(hMinR) - PADY,
+      bottom: cy(hMinR) - PADY + (hMaxR - hMinR + 1) * CH + PADY * 2,
+    });
+  }
 
-    const PADX = 10, PADY = 14;
-    const hx = cx(hall.colMin) - PADX;
-    const hy = cy(hMinR) - PADY;
-    const hw = (hall.colMax - hall.colMin + 1) * CELL_W + PADX * 2;
-    const hh = (hMaxR - hMinR + 1) * CH + PADY * 2;
+  const sameRowGroups = [];
+  const sorted = [...tentative].sort((a, b) => a.top - b.top || a.left - b.left);
+  for (const t of sorted) {
+    const g = sameRowGroups.find(grp => !(t.bottom < grp.top || t.top > grp.bottom));
+    if (g) { g.items.push(t); g.top = Math.min(g.top, t.top); g.bottom = Math.max(g.bottom, t.bottom); }
+    else sameRowGroups.push({ top: t.top, bottom: t.bottom, items: [t] });
+  }
+  for (const g of sameRowGroups) {
+    g.items.sort((a, b) => a.left - b.left);
+    for (let i = 1; i < g.items.length; i++) {
+      const prev = g.items[i - 1], cur = g.items[i];
+      const overlap = prev.right + MIN_GAP - cur.left;
+      if (overlap > 0) {
+        const shrinkPrev = Math.min(overlap / 2, PAD_OUTER - 4);
+        const shrinkCur = overlap - shrinkPrev;
+        prev.right -= shrinkPrev;
+        cur.left += shrinkCur;
+      }
+    }
+  }
+
+  for (const t of tentative) {
+    const { hall, hMinR, hMaxR } = t;
+    const hx = t.left;
+    const hy = t.top;
+    const hw = t.right - t.left;
+    const hh = t.bottom - t.top;
     state.hallBounds.push({ name: hall.name, x: hx, y: hy, w: hw, h: hh });
 
-    const box = mkRect(hx, hy, hw, hh, '#fafbfc', '#c7c7cc');
-    box.setAttribute('stroke-width', '1');
+    const halo = mkRect(hx, hy, hw, hh, 'none', '#8a9fc7');
+    halo.setAttribute('stroke-width', '6');
+    halo.setAttribute('stroke-opacity', '0.35');
+    halo.setAttribute('rx', '14');
+    halo.setAttribute('ry', '14');
+    halo.setAttribute('filter', 'url(#hall-glow)');
+    svg.appendChild(halo);
+
+    const box = mkRect(hx, hy, hw, hh, '#fafbfc', '#4a6fb5');
+    box.setAttribute('stroke-width', '2');
     box.setAttribute('rx', '12');
     box.setAttribute('ry', '12');
     svg.appendChild(box);

@@ -403,13 +403,12 @@ async function ingest(csvText) {
 
   setLoadingProgress(90, 'Rendering floor plan...');
   toast(`Parsed: ${pr.totalRacks} racks, ${pr.halls.length} halls, ${pr.blocks.length} blocks`);
+  populateHallSelect(pr);
   renderAll();
   setLoadingProgress(100, 'Done');
   document.getElementById('btn-prettify').disabled = false;
-  populateHallSelect(pr);
 }
 
-// ── HALL PILLS ──
 function populateHallSelect(pr) {
   const container = document.getElementById('hall-pills');
   container.innerHTML = '';
@@ -417,9 +416,12 @@ function populateHallSelect(pr) {
   const realHalls = pr.halls.filter(h => h.name !== 'Layout');
   if (realHalls.length < 2) return;
 
-  // "All" pill
+  if (state.hallFilter === '__all' || !realHalls.some(h => h.name === state.hallFilter)) {
+    state.hallFilter = realHalls[0].name;
+  }
+
   const allPill = document.createElement('button');
-  allPill.className = 'hall-pill active';
+  allPill.className = 'hall-pill' + (state.hallFilter === '__all' ? ' active' : '');
   allPill.textContent = 'All';
   allPill.dataset.hall = '__all';
   allPill.style.animationDelay = '0s';
@@ -427,7 +429,7 @@ function populateHallSelect(pr) {
 
   realHalls.forEach((h, i) => {
     const pill = document.createElement('button');
-    pill.className = 'hall-pill';
+    pill.className = 'hall-pill' + (state.hallFilter === h.name ? ' active' : '');
     pill.textContent = h.name;
     pill.dataset.hall = h.name;
     pill.style.animationDelay = (0.05 * (i + 1)) + 's';
@@ -442,7 +444,6 @@ function populateHallSelect(pr) {
     focusHall(pill.dataset.hall);
   });
 
-  // keep hidden select in sync for backward compat
   const sel = document.getElementById('hall-select');
   sel.innerHTML = '<option value="__all">All halls</option>';
   for (const h of realHalls) {
@@ -451,6 +452,7 @@ function populateHallSelect(pr) {
     opt.textContent = h.name;
     sel.appendChild(opt);
   }
+  sel.value = state.hallFilter;
 }
 
 function focusHall(name) {
