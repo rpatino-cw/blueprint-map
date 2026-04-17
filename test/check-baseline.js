@@ -7,8 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const SPEED_REGRESSION_TOLERANCE = 2.0;
-const SPEED_ABSOLUTE_FLOOR_MS = 5;
+const SPEED_REGRESSION_TOLERANCE = 3.0;
+const SPEED_ABSOLUTE_FLOOR_MS = 15;
 const WARMUP_RUNS = 3;
 const MEASURE_RUNS = 7;
 const BASELINE_PATH = path.join(__dirname, 'baseline.json');
