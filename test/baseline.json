@@ -1,0 +1,783 @@
+{
+  "generated": "2026-04-17T00:11:30.798Z",
+  "node": "v25.8.0",
+  "parserSize": 55673,
+  "fixtures": {
+    "aai01-overhead.csv": {
+      "size": {
+        "rows": 108,
+        "cols": 40,
+        "cells": 4320
+      },
+      "timing": {
+        "totalMs": 0.96,
+        "p95Ms": 1.32,
+        "perPassMs": {
+          "pass1": 0.59,
+          "pass1.5a": 0.02,
+          "pass1.5b": 0.1,
+          "pass2": 0.18,
+          "pass2.5": 0,
+          "pass3": 0.11,
+          "pass4": 0.05
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH1"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 1,
+        "autoPodSections": 0,
+        "totalRacks": 300,
+        "blockCount": 25,
+        "warnings": 0
+      }
+    },
+    "bvi01-overhead.csv": {
+      "size": {
+        "rows": 44,
+        "cols": 102,
+        "cells": 4488
+      },
+      "timing": {
+        "totalMs": 0.89,
+        "p95Ms": 1.24,
+        "perPassMs": {
+          "pass1": 0.27,
+          "pass1.5a": 0.03,
+          "pass1.5b": 0.06,
+          "pass2": 0.14,
+          "pass2.5": 0,
+          "pass3": 0.19,
+          "pass4": 0.06
+        }
+      },
+      "hierarchy": {
+        "hallCount": 2,
+        "hallNames": [
+          "DHDC2",
+          "DHDC7"
+        ],
+        "gridCount": 3,
+        "podCount": 11,
+        "sectionCount": 12,
+        "autoPodSections": 6,
+        "totalRacks": 444,
+        "blockCount": 39,
+        "warnings": 0
+      }
+    },
+    "campus-style.csv": {
+      "size": {
+        "rows": 8,
+        "cols": 31,
+        "cells": 248
+      },
+      "timing": {
+        "totalMs": 0.12,
+        "p95Ms": 0.13,
+        "perPassMs": {
+          "pass1": 0.03,
+          "pass1.5a": 0,
+          "pass1.5b": 0.01,
+          "pass2": 0.02,
+          "pass2.5": 0,
+          "pass3": 0.03,
+          "pass4": 0.03
+        }
+      },
+      "hierarchy": {
+        "hallCount": 2,
+        "hallNames": [
+          "NORTH CAMPUS BUILDING E",
+          "SOUTH CAMPUS BUILDING A"
+        ],
+        "gridCount": 2,
+        "podCount": 2,
+        "sectionCount": 4,
+        "autoPodSections": 2,
+        "totalRacks": 52,
+        "blockCount": 6,
+        "warnings": 0
+      }
+    },
+    "dgv01-overhead.csv": {
+      "size": {
+        "rows": 104,
+        "cols": 96,
+        "cells": 9984
+      },
+      "timing": {
+        "totalMs": 2.16,
+        "p95Ms": 2.49,
+        "perPassMs": {
+          "pass1": 0.47,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.14,
+          "pass2": 0.32,
+          "pass2.5": 0.01,
+          "pass3": 1.26,
+          "pass4": 0.13
+        }
+      },
+      "hierarchy": {
+        "hallCount": 3,
+        "hallNames": [
+          "DH1",
+          "DH2",
+          "DH3"
+        ],
+        "gridCount": 3,
+        "podCount": 12,
+        "sectionCount": 42,
+        "autoPodSections": 42,
+        "totalRacks": 840,
+        "blockCount": 84,
+        "warnings": 0
+      }
+    },
+    "dtn01-overhead.csv": {
+      "size": {
+        "rows": 183,
+        "cols": 189,
+        "cells": 34587
+      },
+      "timing": {
+        "totalMs": 11.53,
+        "p95Ms": 13.68,
+        "perPassMs": {
+          "pass1": 1.9,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.58,
+          "pass2": 1.83,
+          "pass2.5": 0.01,
+          "pass3": 5.87,
+          "pass4": 0.41
+        }
+      },
+      "hierarchy": {
+        "hallCount": 8,
+        "hallNames": [
+          "NORTH CAMPUS BUILDING E",
+          "SOUTH CAMPUS BUILDING A",
+          "SOUTH CAMPUS BUILDING B",
+          "SOUTH CAMPUS BUILDING C",
+          "SOUTH CAMPUS BUILDING D",
+          "NORTH CAMPUS BUILDING F",
+          "NORTH CAMPUS BUILDING G",
+          "NORTH CAMPUS BUILDING H"
+        ],
+        "gridCount": 9,
+        "podCount": 9,
+        "sectionCount": 143,
+        "autoPodSections": 130,
+        "totalRacks": 3380,
+        "blockCount": 338,
+        "warnings": 0
+      }
+    },
+    "edge-empty-hall.csv": {
+      "size": {
+        "rows": 17,
+        "cols": 14,
+        "cells": 238
+      },
+      "timing": {
+        "totalMs": 0.1,
+        "p95Ms": 0.11,
+        "perPassMs": {
+          "pass1": 0.02,
+          "pass1.5a": 0,
+          "pass1.5b": 0.01,
+          "pass2": 0.02,
+          "pass2.5": 0,
+          "pass3": 0.03,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 3,
+        "hallNames": [
+          "DH1",
+          "DH2",
+          "DH3"
+        ],
+        "gridCount": 2,
+        "podCount": 2,
+        "sectionCount": 2,
+        "autoPodSections": 1,
+        "totalRacks": 30,
+        "blockCount": 3,
+        "warnings": 0
+      }
+    },
+    "edge-malformed.csv": {
+      "size": {
+        "rows": 10,
+        "cols": 25,
+        "cells": 250
+      },
+      "timing": {
+        "totalMs": 0.08,
+        "p95Ms": 0.1,
+        "perPassMs": {
+          "pass1": 0.02,
+          "pass1.5a": 0,
+          "pass1.5b": 0.01,
+          "pass2": 0.02,
+          "pass2.5": 0,
+          "pass3": 0.02,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH1"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 2,
+        "autoPodSections": 1,
+        "totalRacks": 25,
+        "blockCount": 3,
+        "warnings": 0
+      }
+    },
+    "edge-merged-cells.csv": {
+      "size": {
+        "rows": 13,
+        "cols": 14,
+        "cells": 182
+      },
+      "timing": {
+        "totalMs": 0.11,
+        "p95Ms": 0.15,
+        "perPassMs": {
+          "pass1": 0.02,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.02,
+          "pass2": 0.02,
+          "pass2.5": 0,
+          "pass3": 0.02,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH1"
+        ],
+        "gridCount": 1,
+        "podCount": 2,
+        "sectionCount": 2,
+        "autoPodSections": 2,
+        "totalRacks": 40,
+        "blockCount": 4,
+        "warnings": 0
+      }
+    },
+    "edge-single-rack.csv": {
+      "size": {
+        "rows": 12,
+        "cols": 14,
+        "cells": 168
+      },
+      "timing": {
+        "totalMs": 0.07,
+        "p95Ms": 0.08,
+        "perPassMs": {
+          "pass1": 0.01,
+          "pass1.5a": 0,
+          "pass1.5b": 0.01,
+          "pass2": 0.01,
+          "pass2.5": 0,
+          "pass3": 0.02,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH1"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 1,
+        "autoPodSections": 0,
+        "totalRacks": 30,
+        "blockCount": 3,
+        "warnings": 0
+      }
+    },
+    "evi01-overhead.csv": {
+      "size": {
+        "rows": 88,
+        "cols": 196,
+        "cells": 17248
+      },
+      "timing": {
+        "totalMs": 2.27,
+        "p95Ms": 2.81,
+        "perPassMs": {
+          "pass1": 0.53,
+          "pass1.5a": 0.03,
+          "pass1.5b": 0.18,
+          "pass2": 0.36,
+          "pass2.5": 0,
+          "pass3": 0.52,
+          "pass4": 0.15
+        }
+      },
+      "hierarchy": {
+        "hallCount": 4,
+        "hallNames": [
+          "DH1",
+          "DH2",
+          "DH3",
+          "DH4"
+        ],
+        "gridCount": 9,
+        "podCount": 18,
+        "sectionCount": 26,
+        "autoPodSections": 20,
+        "totalRacks": 900,
+        "blockCount": 90,
+        "warnings": 0
+      }
+    },
+    "ews01-overhead.csv": {
+      "size": {
+        "rows": 58,
+        "cols": 247,
+        "cells": 14326
+      },
+      "timing": {
+        "totalMs": 2.1,
+        "p95Ms": 2.88,
+        "perPassMs": {
+          "pass1": 0.55,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.16,
+          "pass2": 0.48,
+          "pass2.5": 0,
+          "pass3": 0.39,
+          "pass4": 0.16
+        }
+      },
+      "hierarchy": {
+        "hallCount": 6,
+        "hallNames": [
+          "DH1",
+          "DH2",
+          "DH3",
+          "DH4",
+          "DH5",
+          "DH6"
+        ],
+        "gridCount": 7,
+        "podCount": 7,
+        "sectionCount": 19,
+        "autoPodSections": 13,
+        "totalRacks": 780,
+        "blockCount": 78,
+        "warnings": 0
+      }
+    },
+    "multi-type.csv": {
+      "size": {
+        "rows": 8,
+        "cols": 14,
+        "cells": 112
+      },
+      "timing": {
+        "totalMs": 0.11,
+        "p95Ms": 0.11,
+        "perPassMs": {
+          "pass1": 0.01,
+          "pass1.5a": 0,
+          "pass1.5b": 0.01,
+          "pass2": 0.01,
+          "pass2.5": 0,
+          "pass3": 0.05,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH201"
+        ],
+        "gridCount": 2,
+        "podCount": 2,
+        "sectionCount": 2,
+        "autoPodSections": 0,
+        "totalRacks": 20,
+        "blockCount": 4,
+        "warnings": 0
+      }
+    },
+    "obg01-overhead.csv": {
+      "size": {
+        "rows": 74,
+        "cols": 138,
+        "cells": 10212
+      },
+      "timing": {
+        "totalMs": 1.97,
+        "p95Ms": 3.15,
+        "perPassMs": {
+          "pass1": 0.65,
+          "pass1.5a": 0.03,
+          "pass1.5b": 0.14,
+          "pass2": 0.32,
+          "pass2.5": 0,
+          "pass3": 0.53,
+          "pass4": 0.12
+        }
+      },
+      "hierarchy": {
+        "hallCount": 4,
+        "hallNames": [
+          "DH1",
+          "DH2",
+          "DH3",
+          "DH4"
+        ],
+        "gridCount": 7,
+        "podCount": 12,
+        "sectionCount": 25,
+        "autoPodSections": 22,
+        "totalRacks": 616,
+        "blockCount": 60,
+        "warnings": 0
+      }
+    },
+    "ovo01-overhead.csv": {
+      "size": {
+        "rows": 121,
+        "cols": 67,
+        "cells": 8107
+      },
+      "timing": {
+        "totalMs": 1.6,
+        "p95Ms": 2.27,
+        "perPassMs": {
+          "pass1": 0.34,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.11,
+          "pass2": 0.16,
+          "pass2.5": 0,
+          "pass3": 0.74,
+          "pass4": 0.09
+        }
+      },
+      "hierarchy": {
+        "hallCount": 3,
+        "hallNames": [
+          "DH101",
+          "DH102",
+          "DH103"
+        ],
+        "gridCount": 4,
+        "podCount": 4,
+        "sectionCount": 20,
+        "autoPodSections": 20,
+        "totalRacks": 400,
+        "blockCount": 40,
+        "warnings": 0
+      }
+    },
+    "plz01-overhead.csv": {
+      "size": {
+        "rows": 84,
+        "cols": 145,
+        "cells": 12180
+      },
+      "timing": {
+        "totalMs": 4.01,
+        "p95Ms": 4.63,
+        "perPassMs": {
+          "pass1": 0.86,
+          "pass1.5a": 0.04,
+          "pass1.5b": 0.22,
+          "pass2": 0.53,
+          "pass2.5": 0.01,
+          "pass3": 2.11,
+          "pass4": 0.16
+        }
+      },
+      "hierarchy": {
+        "hallCount": 4,
+        "hallNames": [
+          "DH1",
+          "DH2",
+          "DH3",
+          "DH4"
+        ],
+        "gridCount": 8,
+        "podCount": 11,
+        "sectionCount": 70,
+        "autoPodSections": 16,
+        "totalRacks": 1394,
+        "blockCount": 140,
+        "warnings": 0
+      }
+    },
+    "plz02-overhead.csv": {
+      "size": {
+        "rows": 104,
+        "cols": 104,
+        "cells": 10816
+      },
+      "timing": {
+        "totalMs": 1.64,
+        "p95Ms": 2.01,
+        "perPassMs": {
+          "pass1": 0.69,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.13,
+          "pass2": 0.22,
+          "pass2.5": 0,
+          "pass3": 0.21,
+          "pass4": 0.16
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH1"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 14,
+        "autoPodSections": 2,
+        "totalRacks": 408,
+        "blockCount": 35,
+        "warnings": 0
+      }
+    },
+    "real-world-noise.csv": {
+      "size": {
+        "rows": 31,
+        "cols": 35,
+        "cells": 1085
+      },
+      "timing": {
+        "totalMs": 0.26,
+        "p95Ms": 0.28,
+        "perPassMs": {
+          "pass1": 0.12,
+          "pass1.5a": 0,
+          "pass1.5b": 0.04,
+          "pass2": 0.04,
+          "pass2.5": 0,
+          "pass3": 0.02,
+          "pass4": 0.02
+        }
+      },
+      "hierarchy": {
+        "hallCount": 4,
+        "hallNames": [
+          "NORTH CAMPUS",
+          "SOUTH CAMPUS",
+          "BUILDING E",
+          "BUILDING A"
+        ],
+        "gridCount": 2,
+        "podCount": 2,
+        "sectionCount": 2,
+        "autoPodSections": 0,
+        "totalRacks": 80,
+        "blockCount": 8,
+        "warnings": 0
+      }
+    },
+    "rin01-overhead.csv": {
+      "size": {
+        "rows": 40,
+        "cols": 75,
+        "cells": 3000
+      },
+      "timing": {
+        "totalMs": 0.65,
+        "p95Ms": 0.67,
+        "perPassMs": {
+          "pass1": 0.2,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.06,
+          "pass2": 0.1,
+          "pass2.5": 0,
+          "pass3": 0.21,
+          "pass4": 0.04
+        }
+      },
+      "hierarchy": {
+        "hallCount": 2,
+        "hallNames": [
+          "DH1",
+          "DH2"
+        ],
+        "gridCount": 5,
+        "podCount": 6,
+        "sectionCount": 14,
+        "autoPodSections": 14,
+        "totalRacks": 280,
+        "blockCount": 28,
+        "warnings": 0
+      }
+    },
+    "simple-dh.csv": {
+      "size": {
+        "rows": 16,
+        "cols": 13,
+        "cells": 208
+      },
+      "timing": {
+        "totalMs": 0.08,
+        "p95Ms": 0.12,
+        "perPassMs": {
+          "pass1": 0.05,
+          "pass1.5a": 0,
+          "pass1.5b": 0.01,
+          "pass2": 0.01,
+          "pass2.5": 0,
+          "pass3": 0.02,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH101"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 2,
+        "autoPodSections": 2,
+        "totalRacks": 40,
+        "blockCount": 4,
+        "warnings": 0
+      }
+    },
+    "spk02-overhead.csv": {
+      "size": {
+        "rows": 75,
+        "cols": 39,
+        "cells": 2925
+      },
+      "timing": {
+        "totalMs": 1.45,
+        "p95Ms": 1.51,
+        "perPassMs": {
+          "pass1": 0.27,
+          "pass1.5a": 0,
+          "pass1.5b": 0.05,
+          "pass2": 0.16,
+          "pass2.5": 0.04,
+          "pass3": 0.62,
+          "pass4": 0.15
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "Layout"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 33,
+        "autoPodSections": 0,
+        "totalRacks": 580,
+        "blockCount": 58,
+        "warnings": 1
+      }
+    },
+    "splat-ranges.csv": {
+      "size": {
+        "rows": 11,
+        "cols": 13,
+        "cells": 143
+      },
+      "timing": {
+        "totalMs": 0.07,
+        "p95Ms": 0.08,
+        "perPassMs": {
+          "pass1": 0.02,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.01,
+          "pass2": 0.01,
+          "pass2.5": 0,
+          "pass3": 0.02,
+          "pass4": 0.01
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH201"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 1,
+        "autoPodSections": 1,
+        "totalRacks": 20,
+        "blockCount": 2,
+        "warnings": 0
+      }
+    },
+    "vo201-overhead.csv": {
+      "size": {
+        "rows": 87,
+        "cols": 35,
+        "cells": 3045
+      },
+      "timing": {
+        "totalMs": 0.98,
+        "p95Ms": 1.62,
+        "perPassMs": {
+          "pass1": 0.3,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.09,
+          "pass2": 0.2,
+          "pass2.5": 0,
+          "pass3": 0.15,
+          "pass4": 0.12
+        }
+      },
+      "hierarchy": {
+        "hallCount": 1,
+        "hallNames": [
+          "DH1"
+        ],
+        "gridCount": 1,
+        "podCount": 1,
+        "sectionCount": 2,
+        "autoPodSections": 0,
+        "totalRacks": 560,
+        "blockCount": 56,
+        "warnings": 0
+      }
+    }
+  },
+  "summary": {
+    "totalMs": 33.21,
+    "totalCells": 137872,
+    "totalRacks": 11219,
+    "totalSections": 439,
+    "totalPods": 108,
+    "totalHalls": 55
+  },
+  "accuracy": {
+    "generated": "2026-04-17T00:11:30.654Z",
+    "hallsPass": 31,
+    "hallsTotal": 35,
+    "hallsPassPct": 88.6,
+    "racksExpected": 8254,
+    "racksMatched": 7824,
+    "racksMatchedPct": 94.8
+  }
+}
