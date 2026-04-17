@@ -9,8 +9,9 @@
     "test:auth-gate": "node test/auth-gate.test.js",
     "test:baseline": "node test/check-baseline.js",
     "test:smoke": "node test/smoke.playwright.js",
+    "test:perf": "node test/perf-measure.js",
     "baseline:capture": "node test/regression/run-offline.js && node test/capture-baseline.js",
-    "test:all": "npm run test && npm run test:regression && npm run test:baseline && npm run test:smoke",
+    "test:all": "npm run test && npm run test:regression && npm run test:baseline && npm run test:smoke && npm run test:perf",
     "apps:push": "cd appsscript && clasp push -f",
     "apps:deploy": "cd appsscript && clasp push -f && clasp deploy -i AKfycbw_DYXJFneaL7C-6xP4L2XxvlJN9wm0sIEZZWC_aDEygfj5vFUPk98iDV4oUy8r45Bt -d \"$(git log -1 --pretty=%s)\""
   },
