@@ -10,6 +10,8 @@
     "test:baseline": "node test/check-baseline.js",
     "test:smoke": "node test/smoke.playwright.js",
     "test:perf": "node test/perf-measure.js",
+    "test:audit-sites": "node test/audit-sites.mjs",
+    "test:audit-sites:update": "node test/audit-sites.mjs --update-baseline",
     "baseline:capture": "node test/regression/run-offline.js && node test/capture-baseline.js",
     "test:all": "npm run test && npm run test:regression && npm run test:baseline && npm run test:smoke && npm run test:perf",
     "apps:push": "cd appsscript && clasp push -f",
