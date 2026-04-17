@@ -701,10 +701,12 @@ function setCachedSheet(sheetId, tab, csv) {
 
 // ── JSONP FETCH (raw) with timeout ──
 const SHEET_FETCH_TIMEOUT = 10000; // 10s — enough for slow sheets, fast enough to not hang
+let _bpSheetCbSeq = 0;
 
 function fetchSheetRaw(tab, sheetId) {
   return new Promise((resolve, reject) => {
-    const cbName = '_bpSheet' + Date.now();
+    // Date.now() alone collides when many fetches fire in the same ms — append a counter.
+    const cbName = '_bpSheet' + Date.now() + '_' + (++_bpSheetCbSeq);
     const timer = setTimeout(() => {
       delete window[cbName];
       reject(new Error('AUTH'));
