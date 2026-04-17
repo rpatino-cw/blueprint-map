@@ -327,6 +327,10 @@ async function ingest(csvText) {
     state.parseResult = parser.parse();
   }
 
+  if (typeof Enricher !== 'undefined') {
+    Enricher.enrich(state.parseResult, document.getElementById('sheet-site')?.value);
+  }
+
   const _parseMs = (performance.now() - _parseStart).toFixed(1);
   const pr = state.parseResult;
   setLoadingProgress(80, `Found ${pr.totalRacks} racks in ${pr.halls.length} halls`);
@@ -429,6 +433,9 @@ async function ingest(csvText) {
       if (!fresh || state.currentCsvHash !== quickHash) return;
       try {
         const refined = new LayoutParser(state.grid, fresh).parse();
+        if (typeof Enricher !== 'undefined') {
+          Enricher.enrich(refined, document.getElementById('sheet-site')?.value);
+        }
         state.parseResult = refined;
         populateHallSelect(refined);
         renderAll();
@@ -1120,6 +1127,7 @@ async function prefetchAllSites(currentSheetId) {
     if (res.ok) {
       const data = await res.json();
       populateSiteSelector(data);
+      if (typeof Enricher !== 'undefined') Enricher.setSitesMeta(data);
       console.log('[Blueprint Map] Loaded ' + data.count + ' sites from NetBox');
     }
   } catch (e) {
