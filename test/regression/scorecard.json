@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-17T01:24:50.892Z",
+  "generated": "2026-04-17T02:07:27.482Z",
   "sites": [
     {
       "locode": "US-EVI01",
@@ -160,140 +160,6 @@
       "flat_delta": 0,
       "flat_accuracy": 100,
       "hall_distribution_ok": true
-    },
-    {
-      "locode": "US-SPK02",
-      "fixture": "spk02-overhead.csv",
-      "halls": [
-        {
-          "status": "HALL_NOT_FOUND",
-          "datahall": "US-SPK02 Sector 2",
-          "expected_racks": 380,
-          "found_racks": 0,
-          "delta": -380,
-          "accuracy": 0,
-          "missing_racks": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20
-          ],
-          "extra_racks": [],
-          "missing_count": 380,
-          "extra_count": 0,
-          "details": "Parser did not detect hall \"US-SPK02 Sector 2\""
-        },
-        {
-          "status": "HALL_NOT_FOUND",
-          "datahall": "US-SPK02 Sector 4",
-          "expected_racks": 400,
-          "found_racks": 0,
-          "delta": -400,
-          "accuracy": 0,
-          "missing_racks": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20
-          ],
-          "extra_racks": [],
-          "missing_count": 400,
-          "extra_count": 0,
-          "details": "Parser did not detect hall \"US-SPK02 Sector 4\""
-        }
-      ],
-      "total_expected": 780,
-      "total_found": 0,
-      "total_delta": -780,
-      "pass_count": 0,
-      "total_halls": 2,
-      "site_accuracy": 0,
-      "parser_total_racks": 580,
-      "flat_delta": -200,
-      "flat_accuracy": 74.4,
-      "hall_distribution_ok": false
-    },
-    {
-      "locode": "US-VO201",
-      "fixture": "vo201-overhead.csv",
-      "halls": [
-        {
-          "status": "HALL_NOT_FOUND",
-          "datahall": "Data Hall 2",
-          "expected_racks": 120,
-          "found_racks": 0,
-          "delta": -120,
-          "accuracy": 0,
-          "missing_racks": [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20
-          ],
-          "extra_racks": [],
-          "missing_count": 120,
-          "extra_count": 0,
-          "details": "Parser did not detect hall \"Data Hall 2\""
-        }
-      ],
-      "total_expected": 120,
-      "total_found": 0,
-      "total_delta": -120,
-      "pass_count": 0,
-      "total_halls": 1,
-      "site_accuracy": 0,
-      "parser_total_racks": 560,
-      "flat_delta": 440,
-      "flat_accuracy": 100,
-      "hall_distribution_ok": false
     },
     {
       "locode": "US-PLZ01",
@@ -856,13 +722,13 @@
   ],
   "summary": {
     "halls_passed": 32,
-    "halls_total": 35,
-    "hall_pass_rate": 91.4,
-    "racks_expected": 8254,
+    "halls_total": 32,
+    "hall_pass_rate": 100,
+    "racks_expected": 7354,
     "racks_found_per_hall": 7824,
-    "racks_found_flat": 10882,
-    "hall_level_accuracy": 94.8,
+    "racks_found_flat": 9742,
+    "hall_level_accuracy": 93.6,
     "flat_accuracy": 100,
-    "fixtures_tested": 13
+    "fixtures_tested": 11
   }
 }

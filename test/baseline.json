@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-17T00:24:52.190Z",
+  "generated": "2026-04-17T02:06:47.040Z",
   "node": "v25.8.0",
   "parserSize": 56541,
   "fixtures": {
@@ -10,16 +10,16 @@
         "cells": 4320
       },
       "timing": {
-        "totalMs": 1.13,
-        "p95Ms": 1.48,
+        "totalMs": 1.66,
+        "p95Ms": 2.12,
         "perPassMs": {
-          "pass1": 0.67,
-          "pass1.5a": 0.02,
-          "pass1.5b": 0.11,
-          "pass2": 0.2,
-          "pass2.5": 0,
-          "pass3": 0.13,
-          "pass4": 0.05
+          "pass1": 0.93,
+          "pass1.5a": 0.03,
+          "pass1.5b": 0.17,
+          "pass2": 0.32,
+          "pass2.5": 0.01,
+          "pass3": 0.18,
+          "pass4": 0.08
         }
       },
       "hierarchy": {
@@ -43,16 +43,16 @@
         "cells": 4488
       },
       "timing": {
-        "totalMs": 1.13,
-        "p95Ms": 1.48,
+        "totalMs": 1.7,
+        "p95Ms": 2.25,
         "perPassMs": {
-          "pass1": 0.32,
-          "pass1.5a": 0.03,
-          "pass1.5b": 0.06,
-          "pass2": 0.15,
-          "pass2.5": 0,
-          "pass3": 0.2,
-          "pass4": 0.05
+          "pass1": 0.58,
+          "pass1.5a": 0.06,
+          "pass1.5b": 0.11,
+          "pass2": 0.24,
+          "pass2.5": 0.01,
+          "pass3": 0.32,
+          "pass4": 0.11
         }
       },
       "hierarchy": {
@@ -77,16 +77,16 @@
         "cells": 248
       },
       "timing": {
-        "totalMs": 0.14,
-        "p95Ms": 0.14,
+        "totalMs": 0.2,
+        "p95Ms": 0.21,
         "perPassMs": {
-          "pass1": 0.03,
+          "pass1": 0.05,
           "pass1.5a": 0,
           "pass1.5b": 0.01,
-          "pass2": 0.03,
+          "pass2": 0.04,
           "pass2.5": 0,
-          "pass3": 0.03,
-          "pass4": 0.03
+          "pass3": 0.05,
+          "pass4": 0.04
         }
       },
       "hierarchy": {
@@ -111,16 +111,16 @@
         "cells": 9984
       },
       "timing": {
-        "totalMs": 2.3,
-        "p95Ms": 3.03,
+        "totalMs": 3.55,
+        "p95Ms": 4.51,
         "perPassMs": {
-          "pass1": 0.5,
-          "pass1.5a": 0.02,
-          "pass1.5b": 0.14,
-          "pass2": 0.31,
-          "pass2.5": 0,
-          "pass3": 1.83,
-          "pass4": 0.14
+          "pass1": 1.02,
+          "pass1.5a": 0.03,
+          "pass1.5b": 0.25,
+          "pass2": 0.47,
+          "pass2.5": 0.01,
+          "pass3": 1.65,
+          "pass4": 0.21
         }
       },
       "hierarchy": {
@@ -146,16 +146,16 @@
         "cells": 34587
       },
       "timing": {
-        "totalMs": 12.51,
-        "p95Ms": 14.39,
+        "totalMs": 19.82,
+        "p95Ms": 21.96,
         "perPassMs": {
-          "pass1": 2.05,
+          "pass1": 2.99,
           "pass1.5a": 0.01,
-          "pass1.5b": 0.49,
-          "pass2": 1.77,
-          "pass2.5": 0.01,
-          "pass3": 9.37,
-          "pass4": 0.62
+          "pass1.5b": 0.73,
+          "pass2": 2.61,
+          "pass2.5": 0.02,
+          "pass3": 14.57,
+          "pass4": 0.91
         }
       },
       "hierarchy": {
@@ -186,16 +186,16 @@
         "cells": 238
       },
       "timing": {
-        "totalMs": 0.09,
-        "p95Ms": 0.1,
+        "totalMs": 0.25,
+        "p95Ms": 0.36,
         "perPassMs": {
-          "pass1": 0.02,
+          "pass1": 0.06,
           "pass1.5a": 0,
-          "pass1.5b": 0.01,
-          "pass2": 0.03,
+          "pass1.5b": 0.02,
+          "pass2": 0.04,
           "pass2.5": 0,
-          "pass3": 0.01,
-          "pass4": 0.02
+          "pass3": 0.04,
+          "pass4": 0.09
         }
       },
       "hierarchy": {
@@ -221,15 +221,15 @@
         "cells": 250
       },
       "timing": {
-        "totalMs": 0.08,
-        "p95Ms": 0.11,
+        "totalMs": 0.16,
+        "p95Ms": 0.25,
         "perPassMs": {
-          "pass1": 0.02,
+          "pass1": 0.03,
           "pass1.5a": 0,
-          "pass1.5b": 0.01,
-          "pass2": 0.02,
+          "pass1.5b": 0.02,
+          "pass2": 0.03,
           "pass2.5": 0,
-          "pass3": 0.01,
+          "pass3": 0.05,
           "pass4": 0.01
         }
       },
@@ -254,16 +254,16 @@
         "cells": 182
       },
       "timing": {
-        "totalMs": 0.13,
-        "p95Ms": 0.14,
+        "totalMs": 0.31,
+        "p95Ms": 0.58,
         "perPassMs": {
-          "pass1": 0.02,
-          "pass1.5a": 0.01,
-          "pass1.5b": 0.02,
-          "pass2": 0.02,
+          "pass1": 0.04,
+          "pass1.5a": 0.02,
+          "pass1.5b": 0.01,
+          "pass2": 0.1,
           "pass2.5": 0,
-          "pass3": 0.03,
-          "pass4": 0.01
+          "pass3": 0.12,
+          "pass4": 0.02
         }
       },
       "hierarchy": {
@@ -287,16 +287,16 @@
         "cells": 168
       },
       "timing": {
-        "totalMs": 0.11,
-        "p95Ms": 0.11,
+        "totalMs": 0.15,
+        "p95Ms": 0.17,
         "perPassMs": {
-          "pass1": 0.02,
+          "pass1": 0.04,
           "pass1.5a": 0,
-          "pass1.5b": 0.01,
-          "pass2": 0.02,
+          "pass1.5b": 0.03,
+          "pass2": 0.03,
           "pass2.5": 0,
-          "pass3": 0.03,
-          "pass4": 0.01
+          "pass3": 0.02,
+          "pass4": 0.02
         }
       },
       "hierarchy": {
@@ -320,16 +320,16 @@
         "cells": 17248
       },
       "timing": {
-        "totalMs": 2.79,
-        "p95Ms": 3.19,
+        "totalMs": 4.69,
+        "p95Ms": 6.12,
         "perPassMs": {
-          "pass1": 1.16,
-          "pass1.5a": 0.04,
-          "pass1.5b": 0.22,
-          "pass2": 0.39,
-          "pass2.5": 0,
-          "pass3": 0.65,
-          "pass4": 0.2
+          "pass1": 1.45,
+          "pass1.5a": 0.09,
+          "pass1.5b": 1.62,
+          "pass2": 0.88,
+          "pass2.5": 0.01,
+          "pass3": 0.89,
+          "pass4": 0.3
         }
       },
       "hierarchy": {
@@ -356,16 +356,16 @@
         "cells": 14326
       },
       "timing": {
-        "totalMs": 2.1,
-        "p95Ms": 3.11,
+        "totalMs": 3.28,
+        "p95Ms": 3.78,
         "perPassMs": {
-          "pass1": 0.79,
-          "pass1.5a": 0.01,
-          "pass1.5b": 0.16,
-          "pass2": 0.59,
-          "pass2.5": 0,
-          "pass3": 0.49,
-          "pass4": 0.19
+          "pass1": 1.16,
+          "pass1.5a": 0.02,
+          "pass1.5b": 0.24,
+          "pass2": 0.67,
+          "pass2.5": 0.01,
+          "pass3": 0.71,
+          "pass4": 0.28
         }
       },
       "hierarchy": {
@@ -394,16 +394,16 @@
         "cells": 112
       },
       "timing": {
-        "totalMs": 0.11,
-        "p95Ms": 0.11,
+        "totalMs": 0.18,
+        "p95Ms": 0.26,
         "perPassMs": {
-          "pass1": 0.01,
-          "pass1.5a": 0,
-          "pass1.5b": 0.01,
+          "pass1": 0.02,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.02,
           "pass2": 0.01,
           "pass2.5": 0,
-          "pass3": 0.05,
-          "pass4": 0.01
+          "pass3": 0.08,
+          "pass4": 0.02
         }
       },
       "hierarchy": {
@@ -427,16 +427,16 @@
         "cells": 10212
       },
       "timing": {
-        "totalMs": 1.66,
-        "p95Ms": 1.76,
+        "totalMs": 2.91,
+        "p95Ms": 3.38,
         "perPassMs": {
-          "pass1": 0.55,
-          "pass1.5a": 0.03,
-          "pass1.5b": 0.13,
-          "pass2": 0.34,
-          "pass2.5": 0,
-          "pass3": 0.54,
-          "pass4": 0.13
+          "pass1": 1.16,
+          "pass1.5a": 0.07,
+          "pass1.5b": 0.22,
+          "pass2": 0.51,
+          "pass2.5": 0.01,
+          "pass3": 0.96,
+          "pass4": 0.25
         }
       },
       "hierarchy": {
@@ -463,16 +463,16 @@
         "cells": 8107
       },
       "timing": {
-        "totalMs": 1.43,
-        "p95Ms": 2.14,
+        "totalMs": 2.6,
+        "p95Ms": 3.7,
         "perPassMs": {
-          "pass1": 0.38,
-          "pass1.5a": 0.02,
-          "pass1.5b": 0.11,
-          "pass2": 0.21,
-          "pass2.5": 0,
-          "pass3": 0.41,
-          "pass4": 0.1
+          "pass1": 0.6,
+          "pass1.5a": 0.03,
+          "pass1.5b": 0.17,
+          "pass2": 0.32,
+          "pass2.5": 0.01,
+          "pass3": 0.6,
+          "pass4": 0.15
         }
       },
       "hierarchy": {
@@ -498,16 +498,16 @@
         "cells": 12180
       },
       "timing": {
-        "totalMs": 3.91,
-        "p95Ms": 4.84,
+        "totalMs": 6.15,
+        "p95Ms": 8.04,
         "perPassMs": {
-          "pass1": 0.86,
-          "pass1.5a": 0.04,
-          "pass1.5b": 0.22,
-          "pass2": 0.57,
+          "pass1": 1.32,
+          "pass1.5a": 0.06,
+          "pass1.5b": 0.36,
+          "pass2": 0.87,
           "pass2.5": 0.01,
-          "pass3": 1.88,
-          "pass4": 0.19
+          "pass3": 2.99,
+          "pass4": 0.31
         }
       },
       "hierarchy": {
@@ -534,16 +534,16 @@
         "cells": 10816
       },
       "timing": {
-        "totalMs": 1.38,
-        "p95Ms": 1.69,
+        "totalMs": 2.11,
+        "p95Ms": 2.99,
         "perPassMs": {
-          "pass1": 0.72,
+          "pass1": 0.94,
           "pass1.5a": 0.01,
-          "pass1.5b": 0.16,
-          "pass2": 0.24,
+          "pass1.5b": 0.17,
+          "pass2": 0.33,
           "pass2.5": 0,
-          "pass3": 0.22,
-          "pass4": 0.16
+          "pass3": 0.31,
+          "pass4": 0.21
         }
       },
       "hierarchy": {
@@ -567,16 +567,16 @@
         "cells": 1085
       },
       "timing": {
-        "totalMs": 0.24,
-        "p95Ms": 0.27,
+        "totalMs": 0.47,
+        "p95Ms": 0.64,
         "perPassMs": {
-          "pass1": 0.11,
+          "pass1": 0.22,
           "pass1.5a": 0,
-          "pass1.5b": 0.04,
-          "pass2": 0.04,
+          "pass1.5b": 0.08,
+          "pass2": 0.07,
           "pass2.5": 0,
-          "pass3": 0.02,
-          "pass4": 0.02
+          "pass3": 0.03,
+          "pass4": 0.04
         }
       },
       "hierarchy": {
@@ -603,16 +603,16 @@
         "cells": 3000
       },
       "timing": {
-        "totalMs": 0.61,
-        "p95Ms": 0.74,
+        "totalMs": 0.92,
+        "p95Ms": 1.08,
         "perPassMs": {
-          "pass1": 0.18,
+          "pass1": 0.29,
           "pass1.5a": 0.01,
-          "pass1.5b": 0.05,
-          "pass2": 0.1,
+          "pass1.5b": 0.08,
+          "pass2": 0.18,
           "pass2.5": 0,
-          "pass3": 0.2,
-          "pass4": 0.04
+          "pass3": 0.3,
+          "pass4": 0.07
         }
       },
       "hierarchy": {
@@ -637,16 +637,16 @@
         "cells": 208
       },
       "timing": {
-        "totalMs": 0.07,
-        "p95Ms": 0.1,
+        "totalMs": 0.12,
+        "p95Ms": 0.12,
         "perPassMs": {
-          "pass1": 0.02,
+          "pass1": 0.03,
           "pass1.5a": 0,
           "pass1.5b": 0.01,
-          "pass2": 0.01,
+          "pass2": 0.02,
           "pass2.5": 0,
-          "pass3": 0.02,
-          "pass4": 0
+          "pass3": 0.03,
+          "pass4": 0.02
         }
       },
       "hierarchy": {
@@ -670,16 +670,16 @@
         "cells": 2925
       },
       "timing": {
-        "totalMs": 1.27,
-        "p95Ms": 1.35,
+        "totalMs": 2.01,
+        "p95Ms": 2.32,
         "perPassMs": {
-          "pass1": 0.24,
+          "pass1": 0.42,
           "pass1.5a": 0,
-          "pass1.5b": 0.05,
-          "pass2": 0.23,
-          "pass2.5": 0.04,
-          "pass3": 0.54,
-          "pass4": 0.14
+          "pass1.5b": 0.07,
+          "pass2": 0.21,
+          "pass2.5": 0.06,
+          "pass3": 0.8,
+          "pass4": 0.2
         }
       },
       "hierarchy": {
@@ -703,16 +703,16 @@
         "cells": 143
       },
       "timing": {
-        "totalMs": 0.12,
-        "p95Ms": 0.19,
+        "totalMs": 0.15,
+        "p95Ms": 0.16,
         "perPassMs": {
           "pass1": 0.02,
-          "pass1.5a": 0,
-          "pass1.5b": 0,
+          "pass1.5a": 0.01,
+          "pass1.5b": 0.01,
           "pass2": 0.01,
           "pass2.5": 0,
-          "pass3": 0.01,
-          "pass4": 0.04
+          "pass3": 0.02,
+          "pass4": 0.07
         }
       },
       "hierarchy": {
@@ -736,16 +736,16 @@
         "cells": 3045
       },
       "timing": {
-        "totalMs": 0.91,
-        "p95Ms": 0.94,
+        "totalMs": 1.27,
+        "p95Ms": 1.83,
         "perPassMs": {
-          "pass1": 0.31,
+          "pass1": 0.42,
           "pass1.5a": 0.01,
-          "pass1.5b": 0.1,
-          "pass2": 0.21,
+          "pass1.5b": 0.12,
+          "pass2": 0.29,
           "pass2.5": 0,
-          "pass3": 0.16,
-          "pass4": 0.03
+          "pass3": 0.21,
+          "pass4": 0.11
         }
       },
       "hierarchy": {
@@ -764,7 +764,7 @@
     }
   },
   "summary": {
-    "totalMs": 34.22,
+    "totalMs": 54.66,
     "totalCells": 137872,
     "totalRacks": 11219,
     "totalSections": 439,
@@ -772,12 +772,12 @@
     "totalHalls": 55
   },
   "accuracy": {
-    "generated": "2026-04-17T00:24:52.029Z",
+    "generated": "2026-04-17T02:06:46.776Z",
     "hallsPass": 32,
-    "hallsTotal": 35,
-    "hallsPassPct": 91.4,
-    "racksExpected": 8254,
+    "hallsTotal": 32,
+    "hallsPassPct": 100,
+    "racksExpected": 7354,
     "racksMatched": 7824,
-    "racksMatchedPct": 94.8
+    "racksMatchedPct": 106.4
   }
 }

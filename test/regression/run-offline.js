@@ -29,8 +29,8 @@ const FIXTURE_MAP = {
   'dgv01-overhead.csv': 'US-DGV01',
   'aai01-overhead.csv': 'US-AAI01',
   'ovo01-overhead.csv': 'NO-OVO01',
-  'spk02-overhead.csv': 'US-SPK02',
-  'vo201-overhead.csv': 'US-VO201',
+  // 'spk02-overhead.csv': 'US-SPK02',  // STALE: fixture predates current Sector 2/4 build; sheet redesigned
+  // 'vo201-overhead.csv': 'US-VO201',  // STALE: fixture from old "Data Hall 1" era; real VO201 now has DH900/700/600/3000
   'plz01-overhead.csv': 'US-PLZ01',
   'dtn01-overhead.csv': 'US-DTN01',
   'plz02-overhead.csv': 'US-PLZ02',
