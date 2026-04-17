@@ -121,7 +121,10 @@ class LayoutParser {
     this.splatRanges = [];
     this.warnings = [];
 
-    if (this.hints?.custom_type_prefixes) {
+    // Gate on Theme.typeLibrary.allowCustomPrefixes when running in browser.
+    // Node/test path (no window) keeps legacy injection behavior for test parity.
+    const allowCustom = typeof window === 'undefined' || window.Theme?.typeLibrary?.allowCustomPrefixes !== false;
+    if (allowCustom && this.hints?.custom_type_prefixes) {
       for (const cp of this.hints.custom_type_prefixes) {
         const existing = TypeLibrary.match(cp.prefix);
         if (!existing) {

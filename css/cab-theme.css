@@ -1,0 +1,200 @@
+/* ── Unified Cab Theme — global, CSS-driven, GPU-friendly ───────────────── */
+
+:root {
+  --cab-fill-compute:    #d8ecf7;
+  --cab-fill-gpu-nvl:    #c8e0f8;
+  --cab-fill-gpu-gh:     #c8d8f8;
+  --cab-fill-gpu-b4:     #d0e4f8;
+  --cab-fill-inference:  #d8ecf8;
+  --cab-fill-ib-spine:   #f4dce8;
+  --cab-fill-xdr:        #f4e8d4;
+  --cab-fill-sc:         #e8dcf4;
+  --cab-fill-tor-combo:  #d4f4e4;
+  --cab-fill-tor:        #dcf4e8;
+  --cab-fill-frontend:   #e8f4dc;
+  --cab-fill-roce-bfr:   #dcecf4;
+  --cab-fill-roce-wsr:   #dcecf4;
+  --cab-fill-ring:       #ecdcec;
+  --cab-fill-roce:       #dcecf4;
+  --cab-fill-fabric:     #ececdc;
+  --cab-fill-core:       #e4dcf4;
+  --cab-fill-dpr:        #f4f0d4;
+  --cab-fill-pscr:       #f4f0d4;
+  --cab-fill-psdr:       #f4f0d4;
+  --cab-fill-fcr:        #f4ead4;
+  --cab-fill-ms-sec:     #f4dcd8;
+  --cab-fill-mgmt:       #dcf0dc;
+  --cab-fill-ethernet:   #e0f4e0;
+  --cab-fill-storage:    #dce4f4;
+  --cab-fill-fdp:        #dcf0f0;
+  --cab-fill-spine-sw:   #dcf0f4;
+  --cab-fill-reserved:   #ebebeb;
+  --cab-fill-unalloc:    #e8e8e8;
+  --cab-fill-firewall:   #f4dcd8;
+  --cab-fill-console:    #dcdcf4;
+  --cab-fill-pkey:       #ececdc;
+  --cab-fill-t-tier:     #dcecf4;
+  --cab-fill-fbs:        #ecdcec;
+  --cab-fill-dss:        #ececdc;
+  --cab-fill-overflow:   #f4dcdc;
+  --cab-fill-gpu-rma:    #f8d8d8;
+  --cab-fill-temp:       #f0f0dc;
+  --cab-fill-fallback:   #f0f0f2;
+
+  --cab-stroke:     #94a6c6;
+  --cab-stroke-sel: #1c2333;
+  --cab-text:       #1c2333;
+  --cab-text-dim:   #6e6e73;
+  --cab-glow:       #6d89c7;
+
+  --hall-divider:   rgba(138, 159, 199, 0.16);
+  --hall-number:    rgba(28, 35, 51, 0.35);
+
+  --cab-ease:       cubic-bezier(.2, .9, .3, 1);
+}
+
+/* ── Cab base ────────────────────────────────────────────────────────────── */
+
+.cab {
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 140ms var(--cab-ease);
+}
+
+.cab > rect {
+  fill: var(--cab-fill-fallback);
+  stroke: var(--cab-stroke);
+  stroke-width: 0.75;
+  transition: filter 140ms var(--cab-ease), stroke-width 140ms var(--cab-ease), stroke 140ms var(--cab-ease);
+}
+
+.cab > text {
+  fill: var(--cab-text);
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 13px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Per-category fill — keyed off TypeLibrary cat.id */
+.cab--compute   > rect { fill: var(--cab-fill-compute); }
+.cab--gpu-nvl   > rect { fill: var(--cab-fill-gpu-nvl); }
+.cab--gpu-gh    > rect { fill: var(--cab-fill-gpu-gh); }
+.cab--gpu-b4    > rect { fill: var(--cab-fill-gpu-b4); }
+.cab--inference > rect { fill: var(--cab-fill-inference); }
+.cab--ib-spine  > rect { fill: var(--cab-fill-ib-spine); }
+.cab--xdr       > rect { fill: var(--cab-fill-xdr); }
+.cab--sc        > rect { fill: var(--cab-fill-sc); }
+.cab--tor-combo > rect { fill: var(--cab-fill-tor-combo); }
+.cab--tor       > rect { fill: var(--cab-fill-tor); }
+.cab--frontend  > rect { fill: var(--cab-fill-frontend); }
+.cab--roce-bfr  > rect { fill: var(--cab-fill-roce-bfr); }
+.cab--roce-wsr  > rect { fill: var(--cab-fill-roce-wsr); }
+.cab--ring      > rect { fill: var(--cab-fill-ring); }
+.cab--roce      > rect { fill: var(--cab-fill-roce); }
+.cab--fabric    > rect { fill: var(--cab-fill-fabric); }
+.cab--core      > rect { fill: var(--cab-fill-core); }
+.cab--dpr       > rect { fill: var(--cab-fill-dpr); }
+.cab--pscr      > rect { fill: var(--cab-fill-pscr); }
+.cab--psdr      > rect { fill: var(--cab-fill-psdr); }
+.cab--fcr       > rect { fill: var(--cab-fill-fcr); }
+.cab--ms-sec    > rect { fill: var(--cab-fill-ms-sec); }
+.cab--mgmt      > rect { fill: var(--cab-fill-mgmt); }
+.cab--ethernet  > rect { fill: var(--cab-fill-ethernet); }
+.cab--storage   > rect { fill: var(--cab-fill-storage); }
+.cab--fdp       > rect { fill: var(--cab-fill-fdp); }
+.cab--spine-sw  > rect { fill: var(--cab-fill-spine-sw); }
+.cab--reserved  > rect { fill: var(--cab-fill-reserved); }
+.cab--unalloc   > rect { fill: var(--cab-fill-unalloc); }
+.cab--firewall  > rect { fill: var(--cab-fill-firewall); }
+.cab--console   > rect { fill: var(--cab-fill-console); }
+.cab--pkey      > rect { fill: var(--cab-fill-pkey); }
+.cab--t-tier    > rect { fill: var(--cab-fill-t-tier); }
+.cab--fbs       > rect { fill: var(--cab-fill-fbs); }
+.cab--dss       > rect { fill: var(--cab-fill-dss); }
+.cab--overflow  > rect { fill: var(--cab-fill-overflow); }
+.cab--gpu-rma   > rect { fill: var(--cab-fill-gpu-rma); }
+.cab--temp      > rect { fill: var(--cab-fill-temp); }
+
+/* ── Hover / selected glow — paid for only when active ───────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .cab:hover {
+    transform: scale(1.04);
+    will-change: transform, filter;
+  }
+  .cab:hover > rect {
+    filter:
+      drop-shadow(0 0 5px var(--cab-glow))
+      drop-shadow(0 0 14px var(--cab-glow));
+    stroke: var(--cab-stroke-sel);
+    stroke-width: 1.25;
+  }
+}
+
+.cab.selected > rect {
+  stroke: var(--cab-stroke-sel);
+  stroke-width: 1.5;
+  animation: cab-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes cab-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px var(--cab-glow)); }
+  50%      { filter: drop-shadow(0 0 12px var(--cab-glow)) drop-shadow(0 0 22px var(--cab-glow)); }
+}
+
+.cab.highlight > rect {
+  stroke: var(--cab-stroke-sel);
+  stroke-width: 1.25;
+}
+
+/* ── Hall divider + tiny corner number ───────────────────────────────────── */
+
+.hall-group {
+  contain: layout style paint;
+}
+
+.hall-divider {
+  fill: none;
+  stroke: var(--hall-divider);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+}
+
+.hall-number {
+  fill: var(--hall-number);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Hover tooltip ───────────────────────────────────────────────────────── */
+
+.cab-tooltip {
+  position: fixed;
+  z-index: 1000;
+  padding: 6px 10px;
+  background: rgba(28, 35, 51, 0.92);
+  color: #f2f4f8;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 10px));
+  transition: opacity 120ms var(--cab-ease);
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.cab-tooltip.visible { opacity: 1; }
+
+.cab-tooltip .tt-num {
+  color: var(--cab-glow);
+  margin-right: 6px;
+  font-weight: 700;
+}

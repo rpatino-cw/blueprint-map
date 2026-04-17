@@ -390,18 +390,21 @@ async function ingest(csvText) {
     console.log(`SUPERPODS — Parser found: ${pr.superpods.length}`, pr.superpods.map(s => s.value));
 
     // AUTO-LEARN: register AI-discovered custom type prefixes into TypeLibrary
-    const customPrefixes = hints.custom_type_prefixes || [];
-    let learned = 0;
-    for (const cp of customPrefixes) {
-      if (!TypeLibrary.match(cp.prefix)) {
-        const catMap = { compute:'#0d2b3d/#4a9ec4', network:'#200d33/#955ac4', power:'#33330d/#c4c45a', storage:'#0d1f33/#5a8ac4' };
-        const colors = catMap[cp.likely_category] || '#1a2233/#5a8ac4';
-        const [fill, stroke] = colors.split('/');
-        TypeLibrary.addCustom({ id: 'ai-' + cp.prefix.replace(/[^a-z0-9]/gi,''), label: cp.prefix, prefixes: [cp.prefix], fill, stroke });
-        learned++;
+    // Gated by Theme.typeLibrary.allowCustomPrefixes — global palette is default.
+    if (window.Theme?.typeLibrary?.allowCustomPrefixes !== false) {
+      const customPrefixes = hints.custom_type_prefixes || [];
+      let learned = 0;
+      for (const cp of customPrefixes) {
+        if (!TypeLibrary.match(cp.prefix)) {
+          const catMap = { compute:'#0d2b3d/#4a9ec4', network:'#200d33/#955ac4', power:'#33330d/#c4c45a', storage:'#0d1f33/#5a8ac4' };
+          const colors = catMap[cp.likely_category] || '#1a2233/#5a8ac4';
+          const [fill, stroke] = colors.split('/');
+          TypeLibrary.addCustom({ id: 'ai-' + cp.prefix.replace(/[^a-z0-9]/gi,''), label: cp.prefix, prefixes: [cp.prefix], fill, stroke });
+          learned++;
+        }
       }
+      if (learned) console.log(`%c[Blueprint Map] Auto-learned ${learned} new type prefixes from AI`, 'color:#34a853;font-weight:bold');
     }
-    if (learned) console.log(`%c[Blueprint Map] Auto-learned ${learned} new type prefixes from AI`, 'color:#34a853;font-weight:bold');
 
     // Store exportable rules for codegen
     state.learnedRules = {

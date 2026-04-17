@@ -1,10 +1,17 @@
 // ════════════════════════════════════════════════════════════════
-// RENDERER — Clean rack-focused output
-// Only renders: rack numbers, rack types, hall labels, row labels
+// RENDERER — Cab-focused output driven by the global Theme contract
+// Labels suppressed via Theme.labels flags. Colors, glow, and hover
+// live in css/cab-theme.css; renderer only emits class names.
 // ════════════════════════════════════════════════════════════════
 
 const NS = 'http://www.w3.org/2000/svg';
-const CELL_W = 56, CH = 24, PAD = 40;
+const THEME = (typeof window !== 'undefined' && window.Theme) || {
+  cab: { width: 64, height: 44, radius: 7, gap: 4 },
+  hall: { padOuter: 22, padY: 22, minGap: 40, showCornerNumber: true },
+  labels: { showSiteTitle: false, showHallName: false, showRowLabels: false, showExternalRackNumbers: false, showTypeLabels: false, rackNumberInside: true },
+  glow: { mode: 'hover-only' }, tooltip: { enabled: true, showType: true },
+};
+const CELL_W = THEME.cab.width, CH = THEME.cab.height, PAD = 40;
 
 const P = {
   bg:'#f5f5f7', surface:'#ffffff', text:'#1d1d1f',
@@ -13,7 +20,7 @@ const P = {
 const FONT = 'system-ui,-apple-system,sans-serif';
 const FONT_DISPLAY = 'DM Serif Display,Georgia,serif';
 const FONT_MONO = 'JetBrains Mono,SF Mono,monospace';
-const TYPE_FALLBACK = { fill: '#f0f0f2', stroke: '#c0c0c0', label: 'Other' };
+const TYPE_FALLBACK = { id: 'fallback', label: 'Other' };
 
 function mkRect(x,y,w,h,fill,stroke) {
   const r = document.createElementNS(NS,'rect');
@@ -42,25 +49,14 @@ function mkSVG(w, h) {
   svg.setAttribute('shape-rendering', 'geometricPrecision');
   svg.setAttribute('text-rendering', 'optimizeLegibility');
 
-  const defs = document.createElementNS(NS, 'defs');
-  defs.innerHTML = `
-    <filter id="hall-glow" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="2.2" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>`;
-  svg.appendChild(defs);
-
   svg.appendChild(mkRect(0, 0, w, h, P.bg, 'none'));
 
-  // site title
-  const site = state.parseResult?.site || 'DATACENTER';
-  const tt = mkText(PAD, PAD - 10, site, P.text, 14, 400, FONT_DISPLAY);
-  tt.setAttribute('letter-spacing', '1');
-  svg.appendChild(tt);
+  if (THEME.labels.showSiteTitle) {
+    const site = state.parseResult?.site || 'DATACENTER';
+    const tt = mkText(PAD, PAD - 10, site, P.text, 14, 400, FONT_DISPLAY);
+    tt.setAttribute('letter-spacing', '1');
+    svg.appendChild(tt);
+  }
 
   return svg;
 }
@@ -79,6 +75,35 @@ function insertSVG(svg, canvas) {
     const [r, c] = el.getAttribute('data-rc').split(',').map(Number);
     selectCell(r, c);
   });
+
+  // One tooltip element, reused; zero per-cab listeners.
+  if (THEME.tooltip?.enabled) {
+    let tip = document.getElementById('cab-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'cab-tooltip';
+      tip.className = 'cab-tooltip';
+      document.body.appendChild(tip);
+    }
+    svg.addEventListener('mouseover', e => {
+      const el = e.target.closest('.cab');
+      if (!el) return;
+      const type = el.getAttribute('data-type') || el.getAttribute('data-type-label') || '';
+      const num = (el.querySelector('text')?.textContent || '').trim();
+      if (!type && !num) { tip.classList.remove('visible'); return; }
+      tip.innerHTML = (num ? `<span class="tt-num">#${num}</span>` : '') + (type || '');
+      tip.classList.add('visible');
+    });
+    svg.addEventListener('mousemove', e => {
+      if (!tip.classList.contains('visible')) return;
+      tip.style.left = e.clientX + 'px';
+      tip.style.top = e.clientY + 'px';
+    });
+    svg.addEventListener('mouseout', e => {
+      if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.cab')) return;
+      tip.classList.remove('visible');
+    });
+  }
 
   const pr = state.parseResult;
   document.getElementById('title-block').style.display = '';
@@ -217,85 +242,138 @@ function renderGrid() {
     }
   }
 
+  let hallIndex = 0;
   for (const t of tentative) {
-    const { hall, hMinR, hMaxR } = t;
+    const { hall } = t;
     const hx = t.left;
     const hy = t.top;
     const hw = t.right - t.left;
     const hh = t.bottom - t.top;
     state.hallBounds.push({ name: hall.name, x: hx, y: hy, w: hw, h: hh });
 
-    const halo = mkRect(hx, hy, hw, hh, 'none', '#8a9fc7');
-    halo.setAttribute('stroke-width', '6');
-    halo.setAttribute('stroke-opacity', '0.35');
-    halo.setAttribute('rx', '14');
-    halo.setAttribute('ry', '14');
-    halo.setAttribute('filter', 'url(#hall-glow)');
-    svg.appendChild(halo);
+    // Light divider in place of the old heavy halo + box.
+    const divider = mkRect(hx, hy, hw, hh, 'none', 'transparent');
+    divider.setAttribute('rx', '12');
+    divider.setAttribute('ry', '12');
+    divider.setAttribute('class', 'hall-divider');
+    svg.appendChild(divider);
 
-    const box = mkRect(hx, hy, hw, hh, '#fafbfc', '#4a6fb5');
-    box.setAttribute('stroke-width', '2');
-    box.setAttribute('rx', '12');
-    box.setAttribute('ry', '12');
-    svg.appendChild(box);
+    if (THEME.labels.showHallName) {
+      const ht = mkText(hx + 8, hy - 8, hall.name, P.text, 16, 700, FONT_DISPLAY);
+      ht.setAttribute('letter-spacing', '0.5');
+      svg.appendChild(ht);
+    }
 
-    const ht = mkText(hx + 8, hy - 8, hall.name, P.text, 16, 700, FONT_DISPLAY);
-    ht.setAttribute('letter-spacing', '0.5');
-    svg.appendChild(ht);
+    if (THEME.hall.showCornerNumber) {
+      const num = mkText(hx + 10, hy + 18, String(++hallIndex), '', 11, 500, FONT_MONO);
+      num.setAttribute('class', 'hall-number');
+      svg.appendChild(num);
+    } else {
+      hallIndex++;
+    }
   }
 
-  // Render only racks + row labels
+  // ── Pairing pass: rack-type ↔ adjacent rack-num → single cab
   const typeCounts = {};
-  const RX = 3; // border radius
+  const consumedNum = new Set(); // "r,c" of rack-num cells folded into a cab
+  const DIGIT_RE = /^\d{1,3}$/;
 
+  const inBounds = (r, c) => {
+    if (hallBounds && (r < hallBounds.rowMin || r > hallBounds.rowMax)) return false;
+    if (hallBounds && (c < hallBounds.colMin || c > hallBounds.colMax)) return false;
+    return r >= minR && r <= maxR && c >= minC && c <= maxC;
+  };
+
+  const pairedNum = (r, c) => {
+    const above = (grid[r-1]?.[c] || '').trim();
+    const below = (grid[r+1]?.[c] || '').trim();
+    if (DIGIT_RE.test(above) && classified[r-1]?.[c]?.kind === 'rack-num') return { num: above, row: r - 1 };
+    if (DIGIT_RE.test(below) && classified[r+1]?.[c]?.kind === 'rack-num') return { num: below, row: r + 1 };
+    return null;
+  };
+
+  const renderCab = ({ r, c, rTop, rBot, rackNum, typeValue, cat }) => {
+    const x = cx(c), yTop = cy(rTop);
+    const h = (rBot - rTop + 1) * CH - 2;
+    const key = `${r},${c}`;
+    const isHL = state.highlightSet.has(key);
+    const isSel = state.selectedRC?.row === r && state.selectedRC?.col === c;
+
+    const g = document.createElementNS(NS, 'g');
+    const classes = ['cab', 'cab--' + cat.id];
+    if (isHL) classes.push('highlight');
+    if (isSel) classes.push('selected');
+    g.setAttribute('class', classes.join(' '));
+    g.setAttribute('data-rc', key);
+    if (typeValue) g.setAttribute('data-type', typeValue);
+    if (cat.label) g.setAttribute('data-type-label', cat.label);
+
+    const rect = mkRect(x + 1, yTop + 1, CELL_W - 2, h, '', '');
+    rect.setAttribute('rx', THEME.cab.radius);
+    rect.setAttribute('ry', THEME.cab.radius);
+    g.appendChild(rect);
+
+    if (rackNum && THEME.labels.rackNumberInside) {
+      const t = mkText(x + CELL_W / 2, yTop + h / 2 + 5, rackNum, '', 13, 600, FONT_MONO);
+      t.setAttribute('text-anchor', 'middle');
+      g.appendChild(t);
+    }
+
+    if (THEME.labels.showTypeLabels && typeValue) {
+      const label = typeValue.length > 9 ? typeValue.substring(0, 8) + '\u2026' : typeValue;
+      const t = mkText(x + CELL_W / 2, yTop + h / 2 + 18, label, '', 8, 500, FONT);
+      t.setAttribute('text-anchor', 'middle');
+      g.appendChild(t);
+    }
+
+    svg.appendChild(g);
+    if (cat.label) typeCounts[cat.label] = (typeCounts[cat.label] || 0) + 1;
+  };
+
+  // Pass 1 — rack-type cells, paired with adjacent rack-num when available
   for (let r = minR; r <= maxR; r++) {
-    if (hallBounds && (r < hallBounds.rowMin || r > hallBounds.rowMax)) continue;
     for (let c = minC; c <= maxC; c++) {
-      if (hallBounds && (c < hallBounds.colMin || c > hallBounds.colMax)) continue;
+      if (!inBounds(r, c)) continue;
       const cls = classified[r]?.[c]?.kind;
-      if (!cls) continue;
-
+      if (cls !== 'rack-type' && cls !== 'rack-type-candidate') continue;
       const v = (grid[r]?.[c] || '').trim();
       if (!v) continue;
-      const x = cx(c), y = cy(r);
-      const key = `${r},${c}`;
-      const isHL = state.highlightSet.has(key);
-      const isSel = state.selectedRC?.row === r && state.selectedRC?.col === c;
+      const cat = TypeLibrary.match(v) || TYPE_FALLBACK;
+      const pair = pairedNum(r, c);
+      const rTop = pair ? Math.min(pair.row, r) : r;
+      const rBot = pair ? Math.max(pair.row, r) : r;
+      if (pair) consumedNum.add(`${pair.row},${c}`);
+      renderCab({ r, c, rTop, rBot, rackNum: pair?.num || '', typeValue: v, cat });
+    }
+  }
 
-      if (cls === 'rack-num') {
-        const hit = mkRect(x+1, y+1, CELL_W-2, CH-2, 'transparent', 'none');
-        hit.setAttribute('data-rc', key);
-        svg.appendChild(hit);
-        const fill = isSel ? P.text : (isHL ? P.text : P.text2);
-        const weight = isSel ? 700 : 600;
-        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, fill, 12, weight, FONT_MONO);
-        t.setAttribute('text-anchor', 'middle');
-        t.setAttribute('pointer-events', 'none');
-        svg.appendChild(t);
-      }
-      else if (cls === 'rack-type' || cls === 'rack-type-candidate') {
-        const style = TypeLibrary.match(v) || TYPE_FALLBACK;
-        typeCounts[style.label] = (typeCounts[style.label]||0) + 1;
-        const bg = mkRect(x+1, y+1, CELL_W-2, CH-2, style.fill, isHL ? P.text : style.stroke);
-        bg.setAttribute('stroke-width', isHL ? '1' : '.5');
-        bg.setAttribute('rx', RX);
-        bg.setAttribute('data-rc', key);
-        svg.appendChild(bg);
-        let label = v.length > 9 ? v.substring(0,8)+'\u2026' : v;
-        const t = mkText(x + CELL_W/2, y + CH/2 + 3, label, style.stroke, 7.5, 500, FONT);
-        t.setAttribute('text-anchor', 'middle');
-        t.setAttribute('pointer-events', 'none');
-        svg.appendChild(t);
-      }
-      else if (cls === 'row-label') {
-        const t = mkText(x + CELL_W/2, y + CH/2 + 4, v, P.text, 12, 700, FONT_MONO);
+  // Pass 2 — standalone rack-num cells (no paired rack-type)
+  for (let r = minR; r <= maxR; r++) {
+    for (let c = minC; c <= maxC; c++) {
+      if (!inBounds(r, c)) continue;
+      const cls = classified[r]?.[c]?.kind;
+      if (cls !== 'rack-num') continue;
+      const key = `${r},${c}`;
+      if (consumedNum.has(key)) continue;
+      const v = (grid[r]?.[c] || '').trim();
+      if (!v) continue;
+      renderCab({ r, c, rTop: r, rBot: r, rackNum: v, typeValue: '', cat: TYPE_FALLBACK });
+    }
+  }
+
+  // Pass 3 — row labels (optional)
+  if (THEME.labels.showRowLabels) {
+    for (let r = minR; r <= maxR; r++) {
+      for (let c = minC; c <= maxC; c++) {
+        if (!inBounds(r, c)) continue;
+        const cls = classified[r]?.[c]?.kind;
+        if (cls !== 'row-label') continue;
+        const v = (grid[r]?.[c] || '').trim();
+        if (!v) continue;
+        const t = mkText(cx(c) + CELL_W/2, cy(r) + CH/2 + 4, v, P.text, 12, 700, FONT_MONO);
         t.setAttribute('text-anchor', 'middle');
         svg.appendChild(t);
       }
-      else if (cls === 'hall-header') {
-        // skip — handled above as hall labels
-      }
-      // everything else: skip (no grid labels, stats, annotations, text, numbers, etc.)
     }
   }
 
