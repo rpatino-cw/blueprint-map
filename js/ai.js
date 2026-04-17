@@ -74,17 +74,26 @@ const AI = {
     return text;
   },
 
-  async analyze(grid) {
-    const statusEl = document.getElementById('ai-status');
-
+  async getCachedHints(grid) {
     const flatCSV = grid.map(r => (r || []).join(',')).join('\n');
     const hash = await this._hash(flatCSV);
-
     const cacheKey = `bp_ai_cache_${hash}`;
     const cached = this._cache.get(hash) || (() => {
       try { const s = localStorage.getItem(cacheKey); return s ? JSON.parse(s) : null; } catch(e) { return null; }
     })();
     if (cached && cached._v >= 2) {
+      this._cache.set(hash, cached);
+      return { hints: cached, hash };
+    }
+    return { hints: null, hash };
+  },
+
+  async analyze(grid) {
+    const statusEl = document.getElementById('ai-status');
+
+    const { hints: cached, hash } = await this.getCachedHints(grid);
+    const cacheKey = `bp_ai_cache_${hash}`;
+    if (cached) {
       console.log('%c[Blueprint Map] Using cached AI result (hash: ' + hash + ')', 'color:#5a7a9a');
       const hallNames = (cached.halls || []).map(h => h.name).join(', ');
       const gridPodSummary = AI._gridPodSummary(cached.grid_pod_map);

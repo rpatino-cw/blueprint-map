@@ -243,6 +243,15 @@ function timeAgo(ts) {
 
 // ── INGEST ──
 async function ingest(csvText) {
+  const quickHash = _fastHash(csvText);
+  if (state.currentCsvHash === quickHash && state.parseResult) {
+    console.log('%c[Blueprint Map] Same CSV as current view — skipping re-parse', 'color:#5a9ec4');
+    populateHallSelect(state.parseResult);
+    renderAll();
+    setLoadingProgress(100, 'Up to date');
+    return;
+  }
+
   const isLarge = csvText.length > LARGE_FILE_THRESHOLD;
   if (isLarge) {
     toast('Parsing large file...');
@@ -266,16 +275,24 @@ async function ingest(csvText) {
   let hints = null;
   const statusEl = document.getElementById('ai-status');
 
-  // Check localStorage for cached AI hints from previous runs
   const cachedKey = 'bp_hints_' + (state.grid[2]?.join('') || '').replace(/\s+/g,'').substring(0,40);
   const cached = localStorage.getItem(cachedKey);
 
-  if (AI.isEnabled()) {
-    hints = await AI.analyze(state.grid);
-    // Cache hints for future runs without AI
-    if (hints) {
-      try { localStorage.setItem(cachedKey, JSON.stringify({ ts: Date.now(), data: hints })); } catch(e) {}
-      console.log('%c[Blueprint Map] AI hints cached for this site', 'color:#34a853');
+  const aiOn = AI.isEnabled();
+  let aiBackgroundPromise = null;
+
+  if (aiOn) {
+    const quick = await AI.getCachedHints(state.grid);
+    if (quick.hints) {
+      hints = quick.hints;
+      const hallNames = (hints.halls || []).map(h => h.name).join(', ');
+      statusEl.className = 'ai-status active done';
+      statusEl.innerHTML = `<strong>Cached:</strong> ${hints.layout_type} layout · Halls: ${hallNames || 'none'}`;
+      console.log('%c[Blueprint Map] AI cache hit — sync', 'color:#5a7a9a');
+    } else {
+      statusEl.className = 'ai-status active';
+      statusEl.innerHTML = '<strong style="color:#a68a3a">AI pending</strong> — rendering now, refining in background';
+      aiBackgroundPromise = AI.analyze(state.grid);
     }
   } else if (cached) {
     try {
@@ -285,11 +302,9 @@ async function ingest(csvText) {
     } catch(e) { hints = null; }
     statusEl.className = 'ai-status active';
     statusEl.innerHTML = `<strong style="color:#34a853">LEARNED</strong> — cached ${age || ''} ago`;
-    console.log('%c[Blueprint Map] Using cached AI hints (no API call)', 'color:#34a853;font-weight:bold');
   } else {
     statusEl.className = 'ai-status active';
     statusEl.innerHTML = '<strong style="color:#a68a3a">AI OFF</strong> — pure rule-based parsing';
-    console.log('%c[Blueprint Map] AI disabled, no cache — pure rule-based parsing', 'color:#a68a3a;font-weight:bold');
   }
 
   setLoadingProgress(50, 'Running 7-pass parser...');
@@ -407,6 +422,27 @@ async function ingest(csvText) {
   renderAll();
   setLoadingProgress(100, 'Done');
   document.getElementById('btn-prettify').disabled = false;
+  state.currentCsvHash = quickHash;
+
+  if (aiBackgroundPromise) {
+    aiBackgroundPromise.then(fresh => {
+      if (!fresh || state.currentCsvHash !== quickHash) return;
+      try {
+        const refined = new LayoutParser(state.grid, fresh).parse();
+        state.parseResult = refined;
+        populateHallSelect(refined);
+        renderAll();
+        toast('Layout refined by AI');
+      } catch (e) { console.warn('Background AI refine failed:', e); }
+    }).catch(e => console.warn('Background AI fetch failed:', e));
+  }
+}
+
+function _fastHash(s) {
+  let h = 2166136261;
+  const n = Math.min(s.length, 8192);
+  for (let i = 0; i < n; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return h.toString(36) + ':' + s.length;
 }
 
 function populateHallSelect(pr) {
