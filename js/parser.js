@@ -1025,6 +1025,10 @@ class LayoutParser {
       }
     } else {
       // Side-by-side layout: match by column overlap + row proximity tiebreaker.
+      // Stacked siblings (halls sharing the left edge within stackedColSpread) are
+      // rescued by a row-proximity pass so mixed layouts (OVO01: DH101+DH103 share
+      // col 2, DH102 at col 34) don't swallow a later hall's sections into the
+      // first hall with the tightest column match.
       for (const section of this.sections) {
         const secMid = (section.startCol + section.endCol) / 2;
         let bestHall = null;
@@ -1041,6 +1045,19 @@ class LayoutParser {
               bestRowDist = rowDist;
               bestHall = hall;
             }
+          }
+        }
+
+        if (bestHall) {
+          for (const [, hall] of hallMap) {
+            if (hall === bestHall) continue;
+            if (Math.abs(hall.colMin - bestHall.colMin) > this.cfg.stackedColSpread) continue;
+            if (hall.header.row <= bestHall.header.row) continue;
+            const rowDist = section.minRow - hall.header.row;
+            if (rowDist < 0 || rowDist >= bestRowDist) continue;
+            if (secMid < hall.colMin - 3 || secMid > hall.colMax + 3) continue;
+            bestHall = hall;
+            bestRowDist = rowDist;
           }
         }
         // Fallback: nearest hall header ABOVE section by row distance
