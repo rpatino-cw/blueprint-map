@@ -627,6 +627,8 @@ function showAuthBanner(opts) {
   }
   el.classList.toggle('stale-mode', !!opts.stale);
   el.classList.add('show');
+  const badge = document.getElementById('stale-badge');
+  if (badge) badge.classList.remove('show');
 }
 function hideAuthBanner() {
   const el = document.getElementById('auth-banner');
