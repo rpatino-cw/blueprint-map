@@ -710,20 +710,26 @@ function setCachedSheet(sheetId, tab, csv) {
 }
 
 // ── JSONP FETCH (raw) with timeout ──
-const SHEET_FETCH_TIMEOUT = 10000; // 10s — enough for slow sheets, fast enough to not hang
+const SHEET_FETCH_TIMEOUT = 4000; // 4s — Apps Script 302s silently on auth fail; short timeout surfaces sign-in banner fast
 let _bpSheetCbSeq = 0;
 
 function fetchSheetRaw(tab, sheetId) {
   return new Promise((resolve, reject) => {
     // Date.now() alone collides when many fetches fire in the same ms — append a counter.
     const cbName = '_bpSheet' + Date.now() + '_' + (++_bpSheetCbSeq);
+    const hintTimer = setTimeout(() => {
+      const txt = document.getElementById('sheet-loading-text');
+      if (txt) txt.textContent = 'Checking CoreWeave sign-in...';
+    }, 1500);
     const timer = setTimeout(() => {
+      clearTimeout(hintTimer);
       delete window[cbName];
       reject(new Error('AUTH'));
     }, SHEET_FETCH_TIMEOUT);
 
     window[cbName] = function(data) {
       clearTimeout(timer);
+      clearTimeout(hintTimer);
       delete window[cbName];
       if (data.error) { reject(new Error(data.error)); return; }
       resolve(arrayToCSV(data));
@@ -733,7 +739,7 @@ function fetchSheetRaw(tab, sheetId) {
       + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
       + '&callback=' + cbName;
     s.src = SHEETS_ENDPOINT + params;
-    s.onerror = () => { clearTimeout(timer); delete window[cbName]; reject(new Error('AUTH')); };
+    s.onerror = () => { clearTimeout(timer); clearTimeout(hintTimer); delete window[cbName]; reject(new Error('AUTH')); };
     document.body.appendChild(s);
   });
 }
