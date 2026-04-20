@@ -21,6 +21,9 @@ function doGet(e) {
     var authed = email.indexOf("@coreweave.com") > -1;
     var html;
     if (authed) {
+      // Generate session token — bypasses 3rd-party cookie blocking on subsequent JSONP calls
+      var token = Utilities.getUuid();
+      CacheService.getScriptCache().put("bp_tk_" + token, email, 3600);
       html =
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Signed in</title>' +
         '<style>body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f5f5f7;display:flex;align-items:center;justify-content:center;min-height:100vh}' +
@@ -33,9 +36,10 @@ function doGet(e) {
         '<script>' +
         'var MAP_URL="https://rpatino-cw.github.io/blueprint-map/index.html";' +
         'var EMAIL=' + JSON.stringify(email) + ';' +
+        'var TOKEN=' + JSON.stringify(token) + ';' +
         'var W=window.top||window;' +
         'function finish(){' +
-          'try{var o=W.opener;if(o&&!o.closed){o.postMessage({type:"bp-auth-success",email:EMAIL},"*")}}catch(e){}' +
+          'try{var o=W.opener;if(o&&!o.closed){o.postMessage({type:"bp-auth-success",email:EMAIL,token:TOKEN},"*")}}catch(e){}' +
           'try{W.close()}catch(e){}' +
           'setTimeout(function(){try{W.location.replace(MAP_URL)}catch(e){try{location.replace(MAP_URL)}catch(e2){}}},300);' +
         '}' +
@@ -52,6 +56,17 @@ function doGet(e) {
     return HtmlService.createHtmlOutput(html)
       .setTitle("Blueprint Map — Signing in")
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
+  // Token-based auth: valid session token bypasses cookie requirement (Chrome 3P cookie block fix)
+  if (params.token) {
+    var cachedEmail = CacheService.getScriptCache().get("bp_tk_" + params.token);
+    if (!cachedEmail || cachedEmail.indexOf("@coreweave.com") === -1) {
+      var authErr = JSON.stringify({ error: "AUTH" });
+      if (params.callback) return ContentService.createTextOutput(params.callback + "(" + authErr + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+      return ContentService.createTextOutput(authErr).setMimeType(ContentService.MimeType.JSON);
+    }
+    // Valid token — fall through to serve data
   }
 
   var sheetId = params.id || "1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI";

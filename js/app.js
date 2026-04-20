@@ -653,6 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Auto-retry when the signin popup reports success
 window.addEventListener('message', (ev) => {
   if (!ev.data || ev.data.type !== 'bp-auth-success') return;
+  if (ev.data.token) sessionStorage.setItem('bp_auth_token', ev.data.token);
   hideAuthBanner();
   try { if (_signinWin && !_signinWin.closed) _signinWin.close(); } catch (e) {}
   const sel = document.getElementById('sheet-site');
@@ -726,6 +727,7 @@ function fetchSheetRaw(tab, sheetId) {
     const timer = setTimeout(() => {
       clearTimeout(hintTimer);
       delete window[cbName];
+      sessionStorage.removeItem('bp_auth_token');
       reject(new Error('AUTH'));
     }, SHEET_FETCH_TIMEOUT);
 
@@ -737,11 +739,13 @@ function fetchSheetRaw(tab, sheetId) {
       resolve(arrayToCSV(data));
     };
     const s = document.createElement('script');
+    const _bpToken = sessionStorage.getItem('bp_auth_token');
     const params = '?tab=' + encodeURIComponent(tab || 'OVERHEAD')
       + (sheetId ? '&id=' + encodeURIComponent(sheetId) : '')
+      + (_bpToken ? '&token=' + encodeURIComponent(_bpToken) : '')
       + '&callback=' + cbName;
     s.src = SHEETS_ENDPOINT + params;
-    s.onerror = () => { clearTimeout(timer); clearTimeout(hintTimer); delete window[cbName]; reject(new Error('AUTH')); };
+    s.onerror = () => { clearTimeout(timer); clearTimeout(hintTimer); delete window[cbName]; sessionStorage.removeItem('bp_auth_token'); reject(new Error('AUTH')); };
     document.body.appendChild(s);
   });
 }
