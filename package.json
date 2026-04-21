@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node test/parser.test.js",
     "test:regression": "node test/regression/run-offline.js",
+    "test:regression:ews01": "node test/regression/run-offline.js US-EWS01",
     "test:regression:logged": "node test/regression/run-offline.js && node scripts/regression-to-memory.mjs",
     "test:auth-gate": "node test/auth-gate.test.js",
     "test:baseline": "node test/check-baseline.js",

@@ -22,22 +22,24 @@ for (const file of ['type-library.js', 'parser.js', 'netbox-matcher.js']) {
 
 const refData = JSON.parse(fs.readFileSync(path.join(__dirname, 'reference-data.json'), 'utf8'));
 
-// Map CSV fixture filenames to locodes
-// Add entries here as you download more site CSVs
+// Map CSV fixture filenames to NetBox zones.
+// Some locodes (US-EWS01, US-LZL01, US-LHS01) span multiple zones with their own
+// reference halls, so a fixture must pin to exactly one zone to compare cleanly.
+// Add entries here as you download more site CSVs.
 const FIXTURE_MAP = {
-  'evi01-overhead.csv': 'US-EVI01',
-  'dgv01-overhead.csv': 'US-DGV01',
-  'aai01-overhead.csv': 'US-AAI01',
-  'ovo01-overhead.csv': 'NO-OVO01',
+  'evi01-overhead.csv': 'US-CENTRAL-07A',
+  'dgv01-overhead.csv': 'ATL2',
+  'aai01-overhead.csv': 'ATL4',
+  'ovo01-overhead.csv': 'EU-NORTH-02A',
   // 'spk02-overhead.csv': 'US-SPK02',  // STALE: fixture predates current Sector 2/4 build; sheet redesigned
   // 'vo201-overhead.csv': 'US-VO201',  // STALE: fixture from old "Data Hall 1" era; real VO201 now has DH900/700/600/3000
-  'plz01-overhead.csv': 'US-PLZ01',
-  'dtn01-overhead.csv': 'US-DTN01',
-  'plz02-overhead.csv': 'US-PLZ02',
-  'rin01-overhead.csv': 'US-RIN01',
-  'obg01-overhead.csv': 'US-OBG01',
-  'ews01-overhead.csv': 'US-EWS01',
-  'bvi01-overhead.csv': 'US-BVI01',
+  'plz01-overhead.csv': 'US-CENTRAL-02A',
+  'dtn01-overhead.csv': 'US-CENTRAL-03A',
+  'plz02-overhead.csv': 'US-CENTRAL-04A',
+  'rin01-overhead.csv': 'US-CENTRAL-05A',
+  'obg01-overhead.csv': 'US-EAST-01A',
+  'ews01-overhead.csv': 'US-EAST-02A',
+  'bvi01-overhead.csv': 'US-EAST-03A',
 };
 
 function loadCSV(name) {
@@ -67,11 +69,14 @@ function loadCSV(name) {
   });
 }
 
+// Optional filter: `node run-offline.js US-EWS01` (matches locode or zone).
+const filterArg = process.argv[2] ? process.argv[2].toUpperCase() : null;
+
 // Run comparisons
 const scorecard = { generated: new Date().toISOString(), sites: [], summary: {} };
 let totalPass = 0, totalHalls = 0, totalExpected = 0, totalFound = 0;
 
-for (const [csvFile, locode] of Object.entries(FIXTURE_MAP)) {
+for (const [csvFile, zone] of Object.entries(FIXTURE_MAP)) {
   const fixtPath = path.join(__dirname, '..', 'fixtures', csvFile);
   if (!fs.existsSync(fixtPath)) {
     console.warn(`  Fixture not found: ${csvFile}`);
@@ -80,15 +85,18 @@ for (const [csvFile, locode] of Object.entries(FIXTURE_MAP)) {
 
   const grid = loadCSV(csvFile);
   const parseResult = vm.runInContext('new LayoutParser(grid).parse()', Object.assign(ctx, { grid }));
-  const refHalls = refData.halls.filter(h => h.locode === locode);
+  const refHalls = refData.halls.filter(h => h.zone === zone);
 
   if (refHalls.length === 0) {
-    console.warn(`  No reference data for ${locode}`);
+    console.warn(`  No reference data for zone ${zone} (fixture ${csvFile})`);
     continue;
   }
 
+  const locode = refHalls[0].locode;
+  if (filterArg && locode !== filterArg && zone !== filterArg) continue;
+
   const siteResult = compareSite(parseResult, refHalls);
-  scorecard.sites.push({ locode, fixture: csvFile, ...siteResult });
+  scorecard.sites.push({ locode, zone, fixture: csvFile, ...siteResult });
 
   totalPass += siteResult.pass_count;
   totalHalls += siteResult.total_halls;
@@ -96,7 +104,7 @@ for (const [csvFile, locode] of Object.entries(FIXTURE_MAP)) {
   totalFound += siteResult.total_found;
 
   const icon = siteResult.pass_count === siteResult.total_halls ? '\x1b[32m✓\x1b[0m' : '\x1b[33m△\x1b[0m';
-  console.log(`${icon} ${locode}: ${siteResult.pass_count}/${siteResult.total_halls} halls pass | ` +
+  console.log(`${icon} ${locode} [${zone}]: ${siteResult.pass_count}/${siteResult.total_halls} halls pass | ` +
     `Hall-level: ${siteResult.total_found}/${siteResult.total_expected} racks (${siteResult.site_accuracy}%) | ` +
     `Flat: ${siteResult.parser_total_racks}/${siteResult.total_expected} (${siteResult.flat_accuracy}%)`);
 
@@ -131,7 +139,7 @@ scorecard.summary = {
   racks_found_flat: flatTotal,
   hall_level_accuracy: totalExpected > 0 ? Math.round((1 - Math.abs(totalFound - totalExpected) / totalExpected) * 1000) / 10 : 0,
   flat_accuracy: totalExpected > 0 ? Math.round(Math.min(flatTotal, totalExpected) / totalExpected * 1000) / 10 : 0,
-  fixtures_tested: Object.keys(FIXTURE_MAP).length,
+  fixtures_tested: scorecard.sites.length,
 };
 
 fs.writeFileSync(path.join(__dirname, 'scorecard.json'), JSON.stringify(scorecard, null, 2));
