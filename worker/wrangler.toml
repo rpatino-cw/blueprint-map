@@ -1,0 +1,13 @@
+name = "bp-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-04-22"
+workers_dev = true
+
+# Public (non-secret) config.
+# Secrets are set separately via `wrangler secret put <NAME>`:
+#   GOOGLE_SA_KEY         — full service-account JSON key, as a string
+#   GOOGLE_OAUTH_CLIENT_ID — OAuth 2.0 Client ID that the GIS client in
+#                            blueprint-map uses to mint id_tokens
+[vars]
+ALLOWED_ORIGIN = "https://rpatino-cw.github.io"
+ALLOWED_HD = "coreweave.com"
