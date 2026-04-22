@@ -2,7 +2,7 @@
 // Serves cached assets instantly, fetches fresh copies in background,
 // notifies the page when an update is ready.
 
-const CACHE_NAME = 'bp-v3';
+const CACHE_NAME = 'bp-v4';
 
 const LOCAL_ASSETS = [
   '/',

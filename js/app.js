@@ -1143,7 +1143,13 @@ async function loadFromSheets(tab, sheetId) {
         'Most common cause: private-browsing mode. The Apps Script backend requires a first-party Google session cookie, which Incognito / Safari private / strict-cookie browsers block cross-origin. <strong>Open in regular Chrome</strong> signed into your <strong>@coreweave.com</strong> account.'
       );
       setLoadingProgress(0, '');
-      showAuthBanner({ stale: false });
+      // Skip the sign-in banner if the user already signed in this session —
+      // the failure is a browser-context issue, not a missing-auth issue.
+      if (!(sessionStorage.getItem('bp_auth_token') || _postAuthGrace)) {
+        showAuthBanner({ stale: false });
+      } else {
+        toast('Live refresh blocked — sheet not cached yet', true);
+      }
       const es = document.getElementById('empty-state');
       const wt = document.getElementById('welcome-title');
       const ws = document.getElementById('welcome-sub');
