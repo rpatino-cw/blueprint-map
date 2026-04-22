@@ -6,7 +6,7 @@
 <title>Signing in — Blueprint Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='6' width='24' height='20' rx='2' fill='none' stroke='%231d1d1f' stroke-width='1.5'/><line x1='4' y1='16' x2='28' y2='16' stroke='%231d1d1f' opacity='.3'/><line x1='16' y1='6' x2='16' y2='26' stroke='%231d1d1f' opacity='.3'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script>window.BP_VERSION = '2026.04.20-def1b4a';</script>
+<script>window.BP_VERSION = '2026.04.22-926e11a';</script>
 <style>
   :root {
     --bg: #f5f5f7;
@@ -266,7 +266,13 @@
     btn.onclick = (ev) => {
       ev.preventDefault();
       attemptedSignin = true;
+      console.log('[BP-SIGNIN] Continue with Google clicked — opening Apps Script popup');
       signinPopup = window.open(SHEETS_ENDPOINT + '?mode=signin', 'bp-signin', 'width=520,height=640');
+      if (!signinPopup) {
+        console.warn('[BP-SIGNIN] Apps Script popup BLOCKED — falling back to same-tab nav');
+        window.location.href = SHEETS_ENDPOINT + '?mode=signin';
+        return;
+      }
       const hint = document.getElementById('signin-hint');
       if (hint) hint.textContent = 'Popup will close itself when you\'re signed in.';
       watchPopupClose();
@@ -278,15 +284,33 @@
     }
   }
 
+  // Set to true once Apps Script's `?mode=signin` page posts a real
+  // {type:"bp-auth-success", token} message. Until that happens, popup
+  // closing means "user gave up / closed the tab" — NOT "auth succeeded."
+  let authTokenReceived = false;
+
   function watchPopupClose() {
     if (!signinPopup) return;
     const t = setInterval(() => {
       if (!signinPopup || signinPopup.closed) {
         clearInterval(t);
-        // Trust the sign-in attempt. Incognito/3rd-party-cookie browsers
-        // block JSONP reprobe from seeing the auth cookie, so don't gate
-        // on it — if auth actually failed, the map shows its own banner.
-        notifyOpenerAndClose();
+        if (authTokenReceived) {
+          // Token already relayed — nothing to do. (notifyOpenerAndClose
+          // was called by the message listener below.)
+          return;
+        }
+        // Popup closed without a token. Most common cause in incognito:
+        // Chrome blocked Apps Script's finish() navigation, or user
+        // closed the window before it could postMessage. Show a clear
+        // error instead of silently claiming success.
+        show('signin');
+        const hint = document.getElementById('signin-hint');
+        if (hint) hint.textContent = 'Sign-in window closed before auth completed. Try again.';
+        const err = document.getElementById('err-detail');
+        if (err) {
+          err.textContent = 'Incognito? Make sure your popup blocker is off and Okta finished loading before you closed the tab.';
+          err.classList.add('show');
+        }
       }
     }, 500);
   }
@@ -313,6 +337,10 @@
   //     redirect our own tab to the map.
   window.addEventListener('message', (ev) => {
     if (!ev || !ev.data || ev.data.type !== 'bp-auth-success') return;
+    // Mark as received so watchPopupClose knows auth actually happened
+    // (not a user-closed-before-auth event).
+    authTokenReceived = true;
+    console.log('[BP-SIGNIN] got bp-auth-success from Apps Script', { hasToken: !!ev.data.token, email: ev.data.email });
     try {
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage(ev.data, '*');
@@ -323,8 +351,70 @@
     window.location.replace('index.html');
   });
 
+  // JSONP the new ?mode=token endpoint. Fresh Google session is now set on
+  // script.google.com, so Session.getActiveUser() returns the email and a
+  // new token gets minted server-side.
+  function fetchToken() {
+    return new Promise((resolve, reject) => {
+      const cb = '_signinToken' + Date.now();
+      const timer = setTimeout(() => {
+        delete window[cb];
+        reject(new Error('TIMEOUT'));
+      }, PROBE_TIMEOUT);
+      window[cb] = function (data) {
+        clearTimeout(timer);
+        delete window[cb];
+        if (data && data.error) { reject(new Error(data.error)); return; }
+        if (data && data.token) { resolve(data); return; }
+        reject(new Error('EMPTY'));
+      };
+      const s = document.createElement('script');
+      s.src = SHEETS_ENDPOINT + '?mode=token&callback=' + cb;
+      s.onerror = () => { clearTimeout(timer); delete window[cb]; reject(new Error('NETWORK')); };
+      document.body.appendChild(s);
+    });
+  }
+
+  // Post-auth return path. Apps Script's success page redirects the popup
+  // here with ?signedin=1. We fetch a token via JSONP (same-origin to main
+  // app, cross-origin to Apps Script — CORS-safe via JSONP), write it to
+  // localStorage to fire a storage event in the main tab, and scrub the
+  // query string from history before closing / redirecting.
+  async function handleSignedinReturn() {
+    show('success');
+    try {
+      const data = await fetchToken();
+      const payload = JSON.stringify({ token: data.token, email: data.email || '', ts: Date.now() });
+      try { localStorage.setItem('bp_auth_bridge', payload); } catch (e) { /* quota / disabled */ }
+      console.log('[BP-SIGNIN] token delivered via ?mode=token; bridge written');
+      // Backwards-compat: postMessage opener if it's still reachable.
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'bp-auth-success', token: data.token, email: data.email }, '*');
+        }
+      } catch (e) { /* ignore */ }
+      // Scrub ?signedin=1 from history so a reload doesn't re-fire.
+      try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+      setTimeout(() => {
+        try { window.close(); } catch (e) { /* blocked */ }
+        setTimeout(() => { window.location.replace('index.html'); }, 600);
+      }, 500);
+    } catch (e) {
+      console.warn('[BP-SIGNIN] ?mode=token failed:', e && e.message);
+      showSignin('Token fetch failed: ' + (e && e.message) + '. Please try again.');
+    }
+  }
+
   // Entry point — probe first. If already authed, close or redirect.
   async function run() {
+    // Post-auth return from Apps Script: ?signedin=1 means the popup just
+    // got redirected back from a successful Google login. Fetch a token
+    // via same-origin JSONP instead of relying on postMessage/opener.
+    try {
+      const qs = new URLSearchParams(location.search);
+      if (qs.get('signedin') === '1') { return handleSignedinReturn(); }
+    } catch (e) { /* fall through to probe */ }
+
     try {
       await probe();
       if (window.opener && !window.opener.closed) {

@@ -21,29 +21,25 @@ function doGet(e) {
     var authed = email.indexOf("@coreweave.com") > -1;
     var html;
     if (authed) {
-      // Generate session token — bypasses 3rd-party cookie blocking on subsequent JSONP calls
-      var token = Utilities.getUuid();
-      CacheService.getScriptCache().put("bp_tk_" + token, email, 3600);
+      // Redirect straight back to signin.html?signedin=1 — same origin as the
+      // main app. That page will JSONP ?mode=token to get a fresh token, write
+      // it to localStorage, and signal the main app via a storage event.
+      // The old postMessage-to-opener path died silently in Incognito because
+      // COOP on Google's auth redirect chain severs window.opener. This path
+      // avoids relying on opener surviving cross-origin nav.
       html =
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Signed in</title>' +
         '<style>body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f5f5f7;display:flex;align-items:center;justify-content:center;min-height:100vh}' +
         '.c{background:#fff;padding:40px 32px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);text-align:center;max-width:320px}' +
         '.ck{width:56px;height:56px;margin:0 auto 16px;background:#ebf9ef;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;color:#22a556;font-weight:700}' +
         'h1{font-size:18px;margin:0 0 8px;color:#1d1d1f;font-weight:600}p{font-size:13px;color:#6e6e73;margin:0;line-height:1.5}' +
-        '.email{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#6e6e73;margin-top:10px}</style></head><body>' +
-        '<div class="c"><div class="ck">&#10003;</div><h1>Signed in</h1><p>Closing automatically&hellip;</p>' +
+        '.email{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#6e6e73;margin-top:10px}</style>' +
+        '<meta http-equiv="refresh" content="1;url=https://rpatino-cw.github.io/blueprint-map/signin.html?signedin=1">' +
+        '</head><body>' +
+        '<div class="c"><div class="ck">&#10003;</div><h1>Signed in</h1><p>Continuing&hellip;</p>' +
         '<div class="email">' + email + '</div></div>' +
         '<script>' +
-        'var MAP_URL="https://rpatino-cw.github.io/blueprint-map/index.html";' +
-        'var EMAIL=' + JSON.stringify(email) + ';' +
-        'var TOKEN=' + JSON.stringify(token) + ';' +
-        'var W=window.top||window;' +
-        'function finish(){' +
-          'try{var o=W.opener;if(o&&!o.closed){o.postMessage({type:"bp-auth-success",email:EMAIL,token:TOKEN},"*")}}catch(e){}' +
-          'try{W.close()}catch(e){}' +
-          'setTimeout(function(){try{W.location.replace(MAP_URL)}catch(e){try{location.replace(MAP_URL)}catch(e2){}}},300);' +
-        '}' +
-        'setTimeout(finish,700);' +
+        'location.replace("https://rpatino-cw.github.io/blueprint-map/signin.html?signedin=1");' +
         '</script>' +
         '</body></html>';
     } else {
@@ -58,15 +54,41 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
-  // Token-based auth: valid session token bypasses cookie requirement (Chrome 3P cookie block fix)
+  // Token mint endpoint — called as JSONP from signin.html after a successful
+  // Google auth redirect. Uses the fresh Google session to validate domain,
+  // then mints a UUID token cached server-side for 1 h. The client then passes
+  // ?token=... on subsequent data fetches. Token never appears in any URL.
+  if (params.mode === "token") {
+    var tokenEmail = Session.getActiveUser().getEmail() || "";
+    var tokenAuthed = tokenEmail.indexOf("@coreweave.com") > -1;
+    var tokenBody;
+    if (tokenAuthed) {
+      var newToken = Utilities.getUuid();
+      CacheService.getScriptCache().put("bp_tk_" + newToken, tokenEmail, 3600);
+      tokenBody = JSON.stringify({ token: newToken, email: tokenEmail });
+    } else {
+      tokenBody = JSON.stringify({ error: "AUTH" });
+    }
+    if (params.callback) return ContentService.createTextOutput(params.callback + "(" + tokenBody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(tokenBody).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Auth gate: require a valid session token OR an active CoreWeave Google session.
+  // access: ANYONE_ANONYMOUS lets doGet run so token validation can handle auth
+  // without Google's infrastructure blocking the request before code executes.
+  var authOk = false;
   if (params.token) {
     var cachedEmail = CacheService.getScriptCache().get("bp_tk_" + params.token);
-    if (!cachedEmail || cachedEmail.indexOf("@coreweave.com") === -1) {
-      var authErr = JSON.stringify({ error: "AUTH" });
-      if (params.callback) return ContentService.createTextOutput(params.callback + "(" + authErr + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
-      return ContentService.createTextOutput(authErr).setMimeType(ContentService.MimeType.JSON);
-    }
-    // Valid token — fall through to serve data
+    authOk = !!(cachedEmail && cachedEmail.indexOf("@coreweave.com") > -1);
+  } else {
+    // Fallback: session cookie (works in browsers that still allow 3P cookies)
+    var sessionEmail = Session.getActiveUser().getEmail() || "";
+    authOk = sessionEmail.indexOf("@coreweave.com") > -1;
+  }
+  if (!authOk) {
+    var authErr = JSON.stringify({ error: "AUTH" });
+    if (params.callback) return ContentService.createTextOutput(params.callback + "(" + authErr + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(authErr).setMimeType(ContentService.MimeType.JSON);
   }
 
   var sheetId = params.id || "1dtuaNuDuLPGzqkUb6pBOBM-meeoEioGata3xGkq-zgI";

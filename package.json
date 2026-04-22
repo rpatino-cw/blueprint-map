@@ -11,6 +11,7 @@
     "test:auth-gate": "node test/auth-gate.test.js",
     "test:baseline": "node test/check-baseline.js",
     "test:smoke": "node test/smoke.playwright.js",
+    "test:auth-incognito": "node test/auth-incognito.playwright.js",
     "test:perf": "node test/perf-measure.js",
     "test:audit-sites": "node test/audit-sites.mjs",
     "test:audit-sites:update": "node test/audit-sites.mjs --update-baseline",

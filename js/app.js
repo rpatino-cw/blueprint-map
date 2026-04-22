@@ -613,7 +613,33 @@ function arrayToCSV(arr) {
 // Shown whenever fetchSheetRaw fails with 'AUTH' — from any code path
 // (fresh load, stale revalidation, manual refresh). Stays visible until
 // a successful fetch or user dismissal.
+//
+// POST-AUTH GRACE: right after a successful sign-in the first fetch can
+// hit Apps Script cold-start (6–10s). The 4s fetch timeout then falsely
+// reports AUTH and the banner loops back. During grace we swallow the
+// first AUTH failure and retry once with a longer timeout.
+let _postAuthGrace = false;
+let _postAuthRetried = false;
+function _clearPostAuthGrace() {
+  _postAuthGrace = false;
+  _postAuthRetried = false;
+  SHEET_FETCH_TIMEOUT = 4000;
+}
 function showAuthBanner(opts) {
+  console.log('[BP-AUTH] showAuthBanner called', { grace: _postAuthGrace, retried: _postAuthRetried, opts });
+  // During post-auth grace, one AUTH failure is absorbed as a silent retry.
+  if (_postAuthGrace && !_postAuthRetried) {
+    _postAuthRetried = true;
+    console.log('[BP-AUTH] absorbing first AUTH failure, retrying in 1.5s');
+    setTimeout(() => {
+      const sel = document.getElementById('sheet-site');
+      if (sel && typeof loadFromSheets === 'function') {
+        loadFromSheets('OVERHEAD', sel.value);
+      }
+    }, 1500);
+    return;
+  }
+  _clearPostAuthGrace();
   opts = opts || {};
   const el = document.getElementById('auth-banner');
   const txt = document.getElementById('auth-banner-text');
@@ -637,9 +663,15 @@ function hideAuthBanner() {
 let _signinWin = null;
 function openSigninFlow(e) {
   if (e) e.preventDefault();
+  console.log('[BP-AUTH] openSigninFlow — opening signin.html popup');
   // Popup first (cleanest UX); fall back to same-tab if blocked.
   _signinWin = window.open('signin.html', 'bp-signin', 'width=480,height=620,menubar=no,toolbar=no,location=no');
-  if (!_signinWin) window.location.href = 'signin.html';
+  if (!_signinWin) {
+    console.warn('[BP-AUTH] popup blocked — falling back to same-tab nav');
+    window.location.href = 'signin.html';
+  } else {
+    console.log('[BP-AUTH] signin.html popup opened');
+  }
 }
 document.addEventListener('DOMContentLoaded', () => {
   const close = document.getElementById('auth-banner-close');
@@ -650,16 +682,71 @@ document.addEventListener('DOMContentLoaded', () => {
   if (signin) signin.addEventListener('click', openSigninFlow);
 });
 
-// Auto-retry when the signin popup reports success
-window.addEventListener('message', (ev) => {
-  if (!ev.data || ev.data.type !== 'bp-auth-success') return;
-  if (ev.data.token) sessionStorage.setItem('bp_auth_token', ev.data.token);
+// Token can be delivered via three paths, depending on browser / context:
+//   1. postMessage from signin.html (works when window.opener survives the
+//      Google auth redirect chain — regular Chrome with active session).
+//   2. storage event on 'bp_auth_bridge' (signin.html writes localStorage
+//      after the ?mode=token fetch — Incognito path where opener is severed).
+//   3. One-shot localStorage read on load (main tab was reloaded or opened
+//      after signin.html already wrote the bridge).
+// `_bpLastBridgeToken` dedupes if more than one path fires for the same token.
+let _bpLastBridgeToken = null;
+
+function _bpAcceptToken(token, via) {
+  if (!token || token === _bpLastBridgeToken) return false;
+  _bpLastBridgeToken = token;
+  sessionStorage.setItem('bp_auth_token', token);
+  try { localStorage.removeItem('bp_auth_bridge'); } catch (e) {}
   hideAuthBanner();
   try { if (_signinWin && !_signinWin.closed) _signinWin.close(); } catch (e) {}
+  _postAuthGrace = true;
+  _postAuthRetried = false;
+  SHEET_FETCH_TIMEOUT = 12000;
+  console.log('[BP-AUTH] token delivered via', via + ', grace armed, calling loadFromSheets');
   const sel = document.getElementById('sheet-site');
   if (sel && typeof loadFromSheets === 'function') {
     loadFromSheets('OVERHEAD', sel.value);
+  } else {
+    console.warn('[BP-AUTH] sel or loadFromSheets missing', { hasSel: !!sel, hasFn: typeof loadFromSheets });
   }
+  return true;
+}
+
+// Path 1: postMessage from signin.html (works when opener survives).
+window.addEventListener('message', (ev) => {
+  if (!ev.data || ev.data.type !== 'bp-auth-success') return;
+  console.log('[BP-AUTH] received bp-auth-success message', ev.data);
+  _bpAcceptToken(ev.data.token, 'postMessage');
+});
+
+// Path 2: storage event on bp_auth_bridge (Incognito / opener-severed case).
+// Storage events fire in same-origin tabs OTHER than the writer, so the main
+// tab reliably sees signin.html's write regardless of opener state.
+window.addEventListener('storage', (ev) => {
+  if (ev.key !== 'bp_auth_bridge' || !ev.newValue) return;
+  let payload;
+  try { payload = JSON.parse(ev.newValue); } catch (e) { return; }
+  if (!payload || !payload.token) return;
+  if (typeof payload.ts === 'number' && Date.now() - payload.ts > 60000) return;
+  _bpAcceptToken(payload.token, 'storage-event');
+});
+
+// Path 3: one-shot read on load — covers main tab reloaded after signin.html
+// already wrote the bridge but before the storage listener was registered.
+// Deferred via DOMContentLoaded so `let`-declared module state below this
+// block (SHEET_FETCH_TIMEOUT at line ~800) is fully initialized.
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const raw = localStorage.getItem('bp_auth_bridge');
+    if (!raw) return;
+    const payload = JSON.parse(raw);
+    if (!payload || !payload.token) return;
+    if (typeof payload.ts === 'number' && Date.now() - payload.ts > 60000) {
+      localStorage.removeItem('bp_auth_bridge');
+      return;
+    }
+    _bpAcceptToken(payload.token, 'onload');
+  } catch (e) {}
 });
 
 // ── SHEET LOADING OVERLAY ──
@@ -713,13 +800,18 @@ function setCachedSheet(sheetId, tab, csv) {
 }
 
 // ── JSONP FETCH (raw) with timeout ──
-const SHEET_FETCH_TIMEOUT = 4000; // 4s — Apps Script 302s silently on auth fail; short timeout surfaces sign-in banner fast
+// `let` (not const) so post-auth grace can bump it to 12s for the first
+// post-sign-in fetch (Apps Script cold-start). Reverts via _clearPostAuthGrace().
+let SHEET_FETCH_TIMEOUT = 4000; // 4s — Apps Script 302s silently on auth fail; short timeout surfaces sign-in banner fast
 let _bpSheetCbSeq = 0;
 
 function fetchSheetRaw(tab, sheetId) {
   return new Promise((resolve, reject) => {
     // Date.now() alone collides when many fetches fire in the same ms — append a counter.
     const cbName = '_bpSheet' + Date.now() + '_' + (++_bpSheetCbSeq);
+    const t0 = performance.now();
+    const effectiveTimeout = SHEET_FETCH_TIMEOUT;
+    console.log('[BP-FETCH] start', { tab, sheetId, timeoutMs: effectiveTimeout, grace: _postAuthGrace });
     const hintTimer = setTimeout(() => {
       const txt = document.getElementById('sheet-loading-text');
       if (txt) txt.textContent = 'Checking CoreWeave sign-in...';
@@ -728,13 +820,15 @@ function fetchSheetRaw(tab, sheetId) {
       clearTimeout(hintTimer);
       delete window[cbName];
       sessionStorage.removeItem('bp_auth_token');
+      console.warn('[BP-FETCH] TIMEOUT after', Math.round(performance.now() - t0), 'ms — treating as AUTH');
       reject(new Error('AUTH'));
-    }, SHEET_FETCH_TIMEOUT);
+    }, effectiveTimeout);
 
     window[cbName] = function(data) {
       clearTimeout(timer);
       clearTimeout(hintTimer);
       delete window[cbName];
+      console.log('[BP-FETCH] callback fired after', Math.round(performance.now() - t0), 'ms, hasError:', !!data.error);
       if (data.error) { reject(new Error(data.error)); return; }
       resolve(arrayToCSV(data));
     };
@@ -745,7 +839,11 @@ function fetchSheetRaw(tab, sheetId) {
       + (_bpToken ? '&token=' + encodeURIComponent(_bpToken) : '')
       + '&callback=' + cbName;
     s.src = SHEETS_ENDPOINT + params;
-    s.onerror = () => { clearTimeout(timer); clearTimeout(hintTimer); delete window[cbName]; sessionStorage.removeItem('bp_auth_token'); reject(new Error('AUTH')); };
+    s.onerror = (err) => {
+      clearTimeout(timer); clearTimeout(hintTimer); delete window[cbName]; sessionStorage.removeItem('bp_auth_token');
+      console.warn('[BP-FETCH] script.onerror after', Math.round(performance.now() - t0), 'ms — AUTH');
+      reject(new Error('AUTH'));
+    };
     document.body.appendChild(s);
   });
 }
@@ -781,6 +879,7 @@ async function loadFromSheets(tab, sheetId) {
         const freshCSV = await fetchSheetRaw(tab, sheetId);
         badge.classList.remove('show');
         hideAuthBanner();
+        _clearPostAuthGrace();
         if (freshCSV !== cached.csv) {
           setCachedSheet(sheetId, tab, freshCSV);
           // Preserve user's current hall selection during background update
@@ -813,6 +912,7 @@ async function loadFromSheets(tab, sheetId) {
     await ingest(csv);
     setLoadingProgress(100, 'Done');
     hideAuthBanner();
+    _clearPostAuthGrace();
 
     // Auto-focus first hall on initial load
     autoFocusFirstHall();
@@ -1044,6 +1144,7 @@ document.getElementById('btn-refresh').addEventListener('click', async () => {
     await ingest(csv);
     autoFocusFirstHall();
     hideAuthBanner();
+    _clearPostAuthGrace();
     toast('Refreshed with live data');
   } catch(e) {
     if (e.message === 'AUTH') {
@@ -1120,19 +1221,23 @@ async function prefetchAllSites(currentSheetId) {
   if (!opts.length) return;
 
   const CONCURRENCY = 3;
-  let i = 0, ok = 0, fail = 0;
+  let i = 0, ok = 0, fail = 0, authFailed = false;
   async function worker() {
-    while (i < opts.length) {
+    while (i < opts.length && !authFailed) {
       const id = opts[i++];
       try {
         const csv = await fetchSheetRaw('OVERHEAD', id);
         setCachedSheet(id, 'OVERHEAD', csv);
         ok++;
-      } catch (e) { fail++; /* missing/inaccessible sheet — skip quietly */ }
+      } catch (e) {
+        fail++;
+        // If auth is broken, don't keep spamming 60+ failed fetches.
+        if (e.message === 'AUTH') { authFailed = true; break; }
+      }
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-  console.log('[Blueprint Map] Prefetch done — ' + ok + ' sites cached, ' + fail + ' skipped');
+  console.log('[Blueprint Map] Prefetch done — ' + ok + ' sites cached, ' + fail + ' skipped' + (authFailed ? ' (aborted on AUTH failure)' : ''));
 }
 
 (async function autoLoad() {
