@@ -71,6 +71,14 @@ const bpStatus = (function () {
     if (panelEl) {
       panelEl.classList.remove('fail');
       panelEl.classList.add('ok');
+      // Auto-collapse after 4s when everything's green — reclaim screen space.
+      setTimeout(() => {
+        if (panelEl.classList.contains('ok') && !panelEl.classList.contains('collapsed')) {
+          panelEl.classList.add('collapsed');
+          const toggle = document.getElementById('status-toggle');
+          if (toggle) toggle.textContent = '+';
+        }
+      }, 4000);
     }
   }
 
@@ -765,10 +773,11 @@ function showAuthBanner(opts) {
   const txt = document.getElementById('auth-banner-text');
   if (!el) return;
   if (txt) {
+    const incognitoSubtitle = '<small style="display:block;font-weight:400;opacity:.75;margin-top:2px">Not working in Incognito or private browsing — open this in regular Chrome.</small>';
     if (opts.stale) {
-      txt.innerHTML = '<strong>Showing cached data</strong> — live refresh blocked. Sign in with your @coreweave.com Google account to update.';
+      txt.innerHTML = '<strong>Showing cached data</strong> — live refresh blocked. Sign in with your @coreweave.com Google account to update.' + incognitoSubtitle;
     } else {
-      txt.innerHTML = '<strong>CoreWeave sign-in required</strong> — live sheet data couldn\'t load. Sign in with your @coreweave.com Google account.';
+      txt.innerHTML = '<strong>CoreWeave sign-in required</strong> — live sheet data couldn\'t load. Sign in with your @coreweave.com Google account.' + incognitoSubtitle;
     }
   }
   el.classList.toggle('stale-mode', !!opts.stale);
