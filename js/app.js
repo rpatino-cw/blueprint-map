@@ -759,6 +759,15 @@ function _clearPostAuthGrace() {
 }
 function showAuthBanner(opts) {
   console.log('[BP-AUTH] showAuthBanner called', { grace: _postAuthGrace, retried: _postAuthRetried, opts });
+  // Hard override: if the user has any auth state (active token or recently
+  // signed in), NEVER show the banner. Background-fetch AUTH failures in a
+  // signed-in session are browser-context issues (3P cookies, timeouts), not
+  // "please sign in" signals. Hide the banner and bail.
+  if (sessionStorage.getItem('bp_auth_token') || _postAuthGrace) {
+    console.log('[BP-AUTH] showAuthBanner suppressed — user has token or grace');
+    hideAuthBanner();
+    return;
+  }
   // During post-auth grace, one AUTH failure is absorbed as a silent retry.
   if (_postAuthGrace && !_postAuthRetried) {
     _postAuthRetried = true;
@@ -887,6 +896,21 @@ document.addEventListener('DOMContentLoaded', () => {
     _bpAcceptToken(payload.token, 'onload', payload.email);
   } catch (e) {}
 });
+
+// Banner watchdog: if user has auth state but banner is still visible, hide it.
+// Catches race conditions where showAuthBanner ran BEFORE auth arrived.
+setInterval(() => {
+  const el = document.getElementById('auth-banner');
+  if (!el || !el.classList.contains('show')) return;
+  const authed =
+    sessionStorage.getItem('bp_auth_token') ||
+    _postAuthGrace ||
+    localStorage.getItem('bp_auth_bridge');
+  if (authed) {
+    console.log('[BP-AUTH] watchdog hiding banner — user has auth state');
+    hideAuthBanner();
+  }
+}, 1000);
 
 // ── SHEET LOADING OVERLAY ──
 function showSheetLoading(text) {
