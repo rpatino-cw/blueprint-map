@@ -137,7 +137,7 @@ scorecard.summary = {
   racks_expected: totalExpected,
   racks_found_per_hall: totalFound,
   racks_found_flat: flatTotal,
-  hall_level_accuracy: totalExpected > 0 ? Math.round((1 - Math.abs(totalFound - totalExpected) / totalExpected) * 1000) / 10 : 0,
+  hall_level_accuracy: totalExpected > 0 ? Math.round((1 - Math.max(0, totalExpected - totalFound) / totalExpected) * 1000) / 10 : 0,
   flat_accuracy: totalExpected > 0 ? Math.round(Math.min(flatTotal, totalExpected) / totalExpected * 1000) / 10 : 0,
   fixtures_tested: scorecard.sites.length,
 };

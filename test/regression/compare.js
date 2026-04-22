@@ -164,7 +164,9 @@ function compareSite(parseResult, refHalls) {
     total_delta: totalFound - totalExpected,
     pass_count: results.filter(r => r.status === 'PASS').length,
     total_halls: results.length,
-    site_accuracy: totalExpected > 0 ? Math.round((1 - Math.abs(totalFound - totalExpected) / totalExpected) * 1000) / 10 : 0,
+    // Asymmetric: only penalize under-count. Mirrors compareHall's per-hall PASS rule
+    // (extra racks are fine — parser found more than the named range declares).
+    site_accuracy: totalExpected > 0 ? Math.round((1 - Math.max(0, totalExpected - totalFound) / totalExpected) * 1000) / 10 : 0,
     parser_total_racks: parserTotalRacks,
     flat_delta: parserTotalRacks - totalExpected,
     flat_accuracy: totalExpected > 0 ? Math.round(Math.min(parserTotalRacks, totalExpected) / totalExpected * 1000) / 10 : 0,
