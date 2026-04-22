@@ -6,7 +6,7 @@
 <title>Signing in — Blueprint Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='6' width='24' height='20' rx='2' fill='none' stroke='%231d1d1f' stroke-width='1.5'/><line x1='4' y1='16' x2='28' y2='16' stroke='%231d1d1f' opacity='.3'/><line x1='16' y1='6' x2='16' y2='26' stroke='%231d1d1f' opacity='.3'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script>window.BP_VERSION = '2026.04.22-926e11a';</script>
+<script>window.BP_VERSION = '2026.04.22-217d97e';</script>
 <style>
   :root {
     --bg: #f5f5f7;
@@ -375,30 +375,47 @@
     });
   }
 
-  // Post-auth return path. Apps Script's success page redirects the popup
-  // here with ?signedin=1. We fetch a token via JSONP (same-origin to main
-  // app, cross-origin to Apps Script — CORS-safe via JSONP), write it to
-  // localStorage to fire a storage event in the main tab, and scrub the
-  // query string from history before closing / redirecting.
+  // Parse a token handoff carried in the URL fragment: #a=TOKEN&e=EMAIL.
+  // Apps Script uses this because JSONP-over-DOMAIN-access fails in
+  // third-party-cookie-restricted contexts (Incognito, Safari ITP). The
+  // fragment is not sent to servers, so the token stays client-side.
+  function parseHashHandoff() {
+    const hash = location.hash.replace(/^#/, '');
+    if (!hash) return null;
+    const qp = new URLSearchParams(hash);
+    const token = qp.get('a');
+    if (!token) return null;
+    return { token, email: qp.get('e') || '' };
+  }
+
+  function writeBridgeAndClose(data, via) {
+    const payload = JSON.stringify({ token: data.token, email: data.email || '', ts: Date.now() });
+    try { localStorage.setItem('bp_auth_bridge', payload); } catch (e) { /* quota / disabled */ }
+    console.log('[BP-SIGNIN] token delivered via ' + via + '; bridge written');
+    // Backwards-compat: postMessage opener if it's still reachable.
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'bp-auth-success', token: data.token, email: data.email }, '*');
+      }
+    } catch (e) { /* ignore */ }
+    // Scrub any #a= / ?signedin=1 from history so a reload doesn't re-fire.
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+    setTimeout(() => {
+      try { window.close(); } catch (e) { /* blocked */ }
+      setTimeout(() => { window.location.replace('index.html'); }, 600);
+    }, 500);
+  }
+
+  // Post-auth return path. Apps Script redirects here after a successful
+  // Google sign-in. The token is carried in the URL fragment (primary path);
+  // if for any reason it's missing we fall back to a JSONP ?mode=token call.
   async function handleSignedinReturn() {
     show('success');
+    const hashData = parseHashHandoff();
+    if (hashData) { writeBridgeAndClose(hashData, 'url-fragment'); return; }
     try {
       const data = await fetchToken();
-      const payload = JSON.stringify({ token: data.token, email: data.email || '', ts: Date.now() });
-      try { localStorage.setItem('bp_auth_bridge', payload); } catch (e) { /* quota / disabled */ }
-      console.log('[BP-SIGNIN] token delivered via ?mode=token; bridge written');
-      // Backwards-compat: postMessage opener if it's still reachable.
-      try {
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage({ type: 'bp-auth-success', token: data.token, email: data.email }, '*');
-        }
-      } catch (e) { /* ignore */ }
-      // Scrub ?signedin=1 from history so a reload doesn't re-fire.
-      try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
-      setTimeout(() => {
-        try { window.close(); } catch (e) { /* blocked */ }
-        setTimeout(() => { window.location.replace('index.html'); }, 600);
-      }, 500);
+      writeBridgeAndClose(data, '?mode=token');
     } catch (e) {
       console.warn('[BP-SIGNIN] ?mode=token failed:', e && e.message);
       showSignin('Token fetch failed: ' + (e && e.message) + '. Please try again.');
@@ -407,12 +424,12 @@
 
   // Entry point — probe first. If already authed, close or redirect.
   async function run() {
-    // Post-auth return from Apps Script: ?signedin=1 means the popup just
-    // got redirected back from a successful Google login. Fetch a token
-    // via same-origin JSONP instead of relying on postMessage/opener.
+    // Post-auth return from Apps Script: either ?signedin=1 (old path) or
+    // #a=TOKEN in the fragment (new path under DOMAIN access).
     try {
       const qs = new URLSearchParams(location.search);
-      if (qs.get('signedin') === '1') { return handleSignedinReturn(); }
+      const hasHashHandoff = location.hash.indexOf('a=') >= 0;
+      if (qs.get('signedin') === '1' || hasHashHandoff) { return handleSignedinReturn(); }
     } catch (e) { /* fall through to probe */ }
 
     try {

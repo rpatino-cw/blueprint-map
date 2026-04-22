@@ -21,25 +21,45 @@ function doGet(e) {
     var authed = email.indexOf("@coreweave.com") > -1;
     var html;
     if (authed) {
-      // Redirect straight back to signin.html?signedin=1 — same origin as the
-      // main app. That page will JSONP ?mode=token to get a fresh token, write
-      // it to localStorage, and signal the main app via a storage event.
-      // The old postMessage-to-opener path died silently in Incognito because
-      // COOP on Google's auth redirect chain severs window.opener. This path
-      // avoids relying on opener surviving cross-origin nav.
+      // Mint the token here and hand it to signin.html via URL fragment.
+      // Why fragment: access=DOMAIN prevents cross-origin JSONP (no 3P cookie
+      // = no session = Google redirects to sign-in). Fragments never reach
+      // servers, so the token stays client-side.
+      // Why a visible link + target="_top": Apps Script serves this HTML
+      // inside a sandboxed iframe with allow-top-navigation-by-user-activation.
+      // A programmatic top.location.replace without prior user activation is
+      // blocked, so the popup sits on "Signed in" forever. A real anchor the
+      // user clicks generates activation, and target="_top" breaks out of the
+      // sandbox. We still attempt auto-redirect for browsers that allow it.
+      var authToken = Utilities.getUuid();
+      CacheService.getScriptCache().put("bp_tk_" + authToken, email, 3600);
+      var redirectUrl = "https://rpatino-cw.github.io/blueprint-map/signin.html" +
+        "#a=" + encodeURIComponent(authToken) +
+        "&e=" + encodeURIComponent(email);
+      var redirectUrlAttr = redirectUrl.replace(/&/g, "&amp;");
       html =
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Signed in</title>' +
         '<style>body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f5f5f7;display:flex;align-items:center;justify-content:center;min-height:100vh}' +
-        '.c{background:#fff;padding:40px 32px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);text-align:center;max-width:320px}' +
+        '.c{background:#fff;padding:40px 32px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);text-align:center;max-width:360px}' +
         '.ck{width:56px;height:56px;margin:0 auto 16px;background:#ebf9ef;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;color:#22a556;font-weight:700}' +
         'h1{font-size:18px;margin:0 0 8px;color:#1d1d1f;font-weight:600}p{font-size:13px;color:#6e6e73;margin:0;line-height:1.5}' +
-        '.email{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#6e6e73;margin-top:10px}</style>' +
-        '<meta http-equiv="refresh" content="1;url=https://rpatino-cw.github.io/blueprint-map/signin.html?signedin=1">' +
+        '.email{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#6e6e73;margin-top:10px}' +
+        '.btn{display:inline-block;margin-top:20px;padding:11px 22px;border-radius:10px;background:#1d1d1f;color:#fff;text-decoration:none;font-size:14px;font-weight:500}' +
+        '.btn:hover{opacity:.92}' +
+        '</style>' +
         '</head><body>' +
-        '<div class="c"><div class="ck">&#10003;</div><h1>Signed in</h1><p>Continuing&hellip;</p>' +
+        '<div class="c"><div class="ck">&#10003;</div><h1>Signed in</h1>' +
+        '<p>Click Continue to return to Blueprint Map.</p>' +
+        '<a class="btn" id="continue-btn" href="' + redirectUrlAttr + '" target="_top" rel="noopener">Continue to Blueprint Map</a>' +
         '<div class="email">' + email + '</div></div>' +
         '<script>' +
-        'location.replace("https://rpatino-cw.github.io/blueprint-map/signin.html?signedin=1");' +
+        '(function(){' +
+          'var url=' + JSON.stringify(redirectUrl) + ';' +
+          // Best-effort auto-redirect — works when the sandbox allows top nav
+          // (same Google session, no recent COOP event). Fails silently in
+          // Incognito; user clicks the visible button instead.
+          'try{if(window.top&&window.top!==window){window.top.location.replace(url)}else{location.replace(url)}}catch(e){}' +
+        '})();' +
         '</script>' +
         '</body></html>';
     } else {
