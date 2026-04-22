@@ -2,6 +2,126 @@
 // APP — State, event listeners, UI wiring
 // ════════════════════════════════════════════════════════════════
 
+// ── CONNECTION CHECK (status panel) ────────────────────────────
+// A small visible pipeline that shows each boot + fetch step with
+// ○ / ⟳ / ✓ / ✗ icons. Purpose: when something fails, the user (and
+// future bug reporters) see exactly where it broke, instead of a
+// generic "live sheet data couldn't load" toast.
+//
+// The Incognito warning wires in here: if the sheet fetch fails with
+// AUTH despite us believing the session should work, we assume the
+// browser is blocking 3P cookies (Incognito, Safari ITP, etc.) and
+// show a dedicated modal.
+const bpStatus = (function () {
+  const STEPS = [
+    { id: 'boot',    label: 'App loaded' },
+    { id: 'sites',   label: 'Site list loaded' },
+    { id: 'sw',      label: 'Service worker' },
+    { id: 'auth',    label: 'Checking sign-in' },
+    { id: 'fetch',   label: 'Fetching sheet data' },
+    { id: 'parse',   label: 'Parsing layout' },
+    { id: 'render',  label: 'Rendering floor plan' },
+  ];
+  let stepsEl = null;
+  let panelEl = null;
+  let hintEl = null;
+  let built = false;
+
+  function build() {
+    if (built) return;
+    stepsEl = document.getElementById('status-steps');
+    panelEl = document.getElementById('status-panel');
+    hintEl = document.getElementById('status-hint');
+    if (!stepsEl || !panelEl) return;
+    stepsEl.innerHTML = STEPS.map(s =>
+      `<li class="status-step pending" data-step="${s.id}">` +
+      `<span class="status-step-icon" aria-hidden="true"></span>` +
+      `<span class="status-step-label">${s.label}<span class="status-step-note" hidden></span></span>` +
+      `</li>`
+    ).join('');
+    const toggle = document.getElementById('status-toggle');
+    if (toggle) toggle.addEventListener('click', () => {
+      panelEl.classList.toggle('collapsed');
+      toggle.textContent = panelEl.classList.contains('collapsed') ? '+' : '−';
+    });
+    built = true;
+  }
+
+  function setState(id, cls, note) {
+    build();
+    const li = stepsEl && stepsEl.querySelector(`[data-step="${id}"]`);
+    if (!li) return;
+    li.classList.remove('pending', 'running', 'ok', 'fail');
+    li.classList.add(cls);
+    const noteEl = li.querySelector('.status-step-note');
+    if (noteEl) {
+      if (note) { noteEl.textContent = note; noteEl.hidden = false; }
+      else { noteEl.textContent = ''; noteEl.hidden = true; }
+    }
+  }
+
+  function setHint(html) {
+    build();
+    if (!hintEl) return;
+    if (html) { hintEl.innerHTML = html; hintEl.hidden = false; }
+    else { hintEl.innerHTML = ''; hintEl.hidden = true; }
+  }
+
+  function markAllOk() {
+    if (panelEl) {
+      panelEl.classList.remove('fail');
+      panelEl.classList.add('ok');
+    }
+  }
+
+  function markFailure() {
+    if (panelEl) {
+      panelEl.classList.remove('ok');
+      panelEl.classList.add('fail');
+    }
+  }
+
+  return {
+    start(id, note) { setState(id, 'running', note); },
+    ok(id, note)    { setState(id, 'ok', note); },
+    fail(id, reason){ setState(id, 'fail', reason); markFailure(); },
+    hint(html)      { setHint(html); },
+    done()          { markAllOk(); },
+  };
+})();
+
+// Heuristic for browsers that block 3P cookies (Incognito, Safari ITP, strict
+// mode). Not 100% accurate — but any false positive is correctable by the user
+// via the "continue anyway" button, and any false negative is caught later
+// when the first fetch fails with AUTH and we show the warning reactively.
+async function isRestrictedBrowser() {
+  try {
+    // navigator.storage.estimate() reports much smaller quota in Incognito
+    // (~120 MB vs 50+ GB in regular). Not Safari-reliable, but a decent Chrome
+    // sniff. Skip on older browsers (Safari < 17) that don't expose estimate.
+    if (navigator.storage && navigator.storage.estimate) {
+      const est = await navigator.storage.estimate();
+      // Chrome Incognito caps at ~120MB; non-incognito has at least several GB.
+      if (est && typeof est.quota === 'number' && est.quota > 0 && est.quota < 200 * 1024 * 1024) {
+        return 'likely-incognito-quota';
+      }
+    }
+  } catch (_) { /* ignore */ }
+  return null;
+}
+
+let _bpIncognitoShown = false;
+function showIncognitoWarning(reason) {
+  if (_bpIncognitoShown) return;
+  _bpIncognitoShown = true;
+  const el = document.getElementById('incognito-warning');
+  if (!el) return;
+  el.classList.remove('hidden');
+  const dismiss = document.getElementById('incognito-dismiss');
+  if (dismiss) dismiss.addEventListener('click', () => el.classList.add('hidden'), { once: true });
+  console.warn('[BP-STATUS] showing incognito warning:', reason);
+}
+
 // Parser API — when set, CSV is sent to this endpoint instead of parsed locally.
 // Deploy your own: https://github.com/rpatino-cw/blueprint-parser
 const PARSER_API = null; // e.g. 'https://blueprint-parser.your-worker.workers.dev/parse'
@@ -698,6 +818,7 @@ function _bpAcceptToken(token, via) {
   sessionStorage.setItem('bp_auth_token', token);
   try { localStorage.removeItem('bp_auth_bridge'); } catch (e) {}
   hideAuthBanner();
+  if (typeof bpStatus !== 'undefined') bpStatus.ok('auth', 'token via ' + via);
   try { if (_signinWin && !_signinWin.closed) _signinWin.close(); } catch (e) {}
   _postAuthGrace = true;
   _postAuthRetried = false;
@@ -869,8 +990,12 @@ async function loadFromSheets(tab, sheetId) {
     hideSheetLoading();
     const badge = document.getElementById('stale-badge');
     if (badge) badge.classList.remove('show');
+    bpStatus.start('auth', 'no token — waiting for sign-in');
     if (cached) {
+      bpStatus.start('parse', 'from cache');
       await ingest(cached.csv);
+      bpStatus.ok('parse', 'from cache (' + Math.round(cached.csv.length / 1024) + ' KB)');
+      bpStatus.ok('render', 'cached floor plan');
       autoFocusFirstHall();
       showAuthBanner({ stale: true });
     } else {
@@ -933,19 +1058,35 @@ async function loadFromSheets(tab, sheetId) {
 
   // No cache — full fetch with progress bar
   setLoadingIndeterminate('Fetching live sheet...');
+  bpStatus.start('fetch', 'JSONP to script.google.com');
   try {
     const csv = await fetchSheetRaw(tab, sheetId);
+    bpStatus.ok('fetch', Math.round(csv.length / 1024) + ' KB');
     setLoadingProgress(50, 'Parsing layout...');
+    bpStatus.start('parse', 'from live sheet');
     setCachedSheet(sheetId, tab, csv);
     await ingest(csv);
+    bpStatus.ok('parse', state.grid.length + ' rows');
     setLoadingProgress(100, 'Done');
     hideAuthBanner();
     _clearPostAuthGrace();
+    bpStatus.ok('render', 'floor plan visible');
+    bpStatus.done();
 
     // Auto-focus first hall on initial load
     autoFocusFirstHall();
   } catch(e) {
     if (e.message === 'AUTH') {
+      bpStatus.fail('fetch', 'AUTH — token rejected');
+      // If we HAD a token and still got AUTH, the browser context is almost
+      // certainly blocking 3P cookies (Incognito / Safari ITP / strict mode).
+      // Surface the dedicated warning so the user knows what's happening.
+      if (sessionStorage.getItem('bp_auth_token') || _postAuthGrace) {
+        showIncognitoWarning('AUTH after token present');
+      }
+      bpStatus.hint(
+        'Most common cause: private-browsing mode. The Apps Script backend requires a first-party Google session cookie, which Incognito / Safari private / strict-cookie browsers block cross-origin. <strong>Open in regular Chrome</strong> signed into your <strong>@coreweave.com</strong> account.'
+      );
       setLoadingProgress(0, '');
       showAuthBanner({ stale: false });
       const es = document.getElementById('empty-state');
@@ -1269,6 +1410,30 @@ async function prefetchAllSites(currentSheetId) {
 }
 
 (async function autoLoad() {
+  // Pipeline step: app loaded
+  bpStatus.ok('boot', 'v' + (window.BP_VERSION || 'dev'));
+
+  // Preflight Incognito sniff — surfaces the warning modal before the user
+  // wastes time clicking Sign in.
+  const restricted = await isRestrictedBrowser();
+  if (restricted) {
+    showIncognitoWarning(restricted);
+    bpStatus.hint(
+      '<strong>Private browsing detected.</strong> Live sheet fetches will fail because your browser blocks third-party cookies to <code>script.google.com</code>. Open in regular Chrome signed into CoreWeave.'
+    );
+  }
+
+  // Pipeline step: service worker
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    bpStatus.ok('sw', 'active');
+  } else if ('serviceWorker' in navigator) {
+    bpStatus.ok('sw', 'registered, no controller yet');
+  } else {
+    bpStatus.ok('sw', 'not supported');
+  }
+
+  // Pipeline step: sites.json from NetBox
+  bpStatus.start('sites', 'loading data/sites.json');
   const sel = document.getElementById('sheet-site');
   try {
     const res = await fetch('data/sites.json');
@@ -1277,10 +1442,23 @@ async function prefetchAllSites(currentSheetId) {
       populateSiteSelector(data);
       if (typeof Enricher !== 'undefined') Enricher.setSitesMeta(data);
       console.log('[Blueprint Map] Loaded ' + data.count + ' sites from NetBox');
+      bpStatus.ok('sites', data.count + ' sites');
+    } else {
+      bpStatus.ok('sites', 'using HTML fallback (' + res.status + ')');
     }
   } catch (e) {
     console.warn('[Blueprint Map] sites.json not found, using HTML fallback');
+    bpStatus.ok('sites', 'using HTML fallback');
   }
+
+  // Pipeline step: auth — do we have a token already?
+  const hasToken = !!sessionStorage.getItem('bp_auth_token');
+  if (hasToken) {
+    bpStatus.ok('auth', 'token present');
+  } else {
+    bpStatus.start('auth', 'no token yet — waiting for sign-in');
+  }
+
   // Load the selected sheet first, then prefetch the rest in the background
   const sheetId = sel.value;
   if (sheetId && typeof loadFromSheets === 'function') {

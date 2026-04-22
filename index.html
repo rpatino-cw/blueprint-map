@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/cab-theme.css">
-<script>window.BP_VERSION = '2026.04.22-4dbc94a';</script>
+<script>window.BP_VERSION = '2026.04.22-191bbcd';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -230,6 +230,7 @@
 <div class="auth-banner" id="auth-banner" role="alert" aria-live="polite">
   <span class="auth-banner-text" id="auth-banner-text">
     <strong>CoreWeave sign-in required</strong> — live sheet data couldn't load.
+    <small style="display:block;font-weight:400;opacity:.75;margin-top:2px">Not working in Incognito or private browsing — open this in regular Chrome.</small>
   </span>
   <span class="auth-banner-actions">
     <a class="btn btn-primary" id="auth-banner-signin" href="signin.html" target="bp-signin" rel="noopener">Sign in with CoreWeave</a>
@@ -239,6 +240,33 @@
 </div>
 <div class="stale-badge" id="stale-badge">Updating from live sheet...</div>
 <div class="toast" id="toast"></div>
+
+<!-- Connection check — live pipeline status. Clicking any failed step -->
+<!-- expands the reason. -->
+<div class="status-panel" id="status-panel" role="status" aria-live="polite">
+  <div class="status-header">
+    <span class="status-title">Connection check</span>
+    <button class="status-toggle" id="status-toggle" type="button" aria-label="Collapse">−</button>
+  </div>
+  <ul class="status-steps" id="status-steps"></ul>
+  <div class="status-hint" id="status-hint" hidden></div>
+</div>
+
+<!-- Incognito / private-browsing warning. Shown on first paint for browsers -->
+<!-- that likely can't send 3P cookies to script.google.com. Also triggered -->
+<!-- reactively after a fetch fails with AUTH despite no token being sent. -->
+<div class="incognito-warning hidden" id="incognito-warning" role="alertdialog" aria-modal="false">
+  <div class="incognito-inner">
+    <div class="incognito-icon" aria-hidden="true">⚠</div>
+    <h3>Private browsing won't work here</h3>
+    <p>Blueprint Map fetches live data from Google Sheets via your <strong>@coreweave.com</strong> session cookie. Incognito, Safari private, Firefox private, and browsers with third-party cookies disabled block that cookie cross-origin — so the sheet fetch can't authenticate.</p>
+    <p><strong>To use this tool:</strong> open it in a regular Chrome window signed into your CoreWeave Google account.</p>
+    <div class="incognito-actions">
+      <button class="btn btn-secondary" id="incognito-dismiss" type="button">I understand, continue anyway</button>
+    </div>
+  </div>
+</div>
+
 <a class="version-badge" id="version-badge" href="https://github.com/rpatino-cw/blueprint-map/commits/main" target="_blank" rel="noopener"></a>
 
 <script>
