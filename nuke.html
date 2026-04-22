@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint Map — nuke caches</title>
+<style>
+  body { font: 14px/1.5 system-ui, -apple-system, sans-serif; padding: 40px; max-width: 680px; margin: 0 auto; color: #1d1d1f; }
+  h1 { font-size: 20px; margin: 0 0 16px; }
+  pre { background: #f5f5f7; border-radius: 8px; padding: 14px; white-space: pre-wrap; font-size: 12px; }
+  .ok { color: #15803d; font-weight: 600; }
+  .err { color: #b91c1c; font-weight: 600; }
+  .btn { display: inline-block; margin-top: 14px; padding: 10px 20px; background: #1d1d1f; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Blueprint Map — nuke caches</h1>
+<p>Unregister all service workers, delete all caches, clear storage. Then go back to the app.</p>
+<pre id="log">starting...</pre>
+<a class="btn" id="back" href="index.html" style="display:none">Open Blueprint Map</a>
+
+<script>
+(async function() {
+  var log = document.getElementById('log');
+  var back = document.getElementById('back');
+  var lines = [];
+  function emit(msg, cls) {
+    lines.push((cls === 'ok' ? '✓ ' : cls === 'err' ? '✗ ' : '· ') + msg);
+    log.innerHTML = lines.map(function(l) {
+      if (l.charAt(0) === '✓') return '<span class="ok">' + l + '</span>';
+      if (l.charAt(0) === '✗') return '<span class="err">' + l + '</span>';
+      return l;
+    }).join('\n');
+  }
+
+  try {
+    if ('serviceWorker' in navigator) {
+      var regs = await navigator.serviceWorker.getRegistrations();
+      emit('found ' + regs.length + ' service worker registration(s)');
+      for (var i = 0; i < regs.length; i++) {
+        await regs[i].unregister();
+        emit('unregistered SW #' + (i + 1), 'ok');
+      }
+    } else {
+      emit('serviceWorker API not available');
+    }
+  } catch (e) { emit('SW unregister error: ' + e.message, 'err'); }
+
+  try {
+    if (window.caches) {
+      var keys = await caches.keys();
+      emit('found ' + keys.length + ' cache(s): ' + (keys.join(', ') || '(none)'));
+      for (var j = 0; j < keys.length; j++) {
+        await caches.delete(keys[j]);
+        emit('deleted cache "' + keys[j] + '"', 'ok');
+      }
+    }
+  } catch (e) { emit('cache delete error: ' + e.message, 'err'); }
+
+  try {
+    var lsCount = localStorage.length;
+    localStorage.clear();
+    emit('cleared localStorage (' + lsCount + ' keys)', 'ok');
+  } catch (e) { emit('localStorage clear error: ' + e.message, 'err'); }
+
+  try {
+    var ssCount = sessionStorage.length;
+    sessionStorage.clear();
+    emit('cleared sessionStorage (' + ssCount + ' keys)', 'ok');
+  } catch (e) { emit('sessionStorage clear error: ' + e.message, 'err'); }
+
+  emit('');
+  emit('ALL CLEAR. Click below to open a truly fresh Blueprint Map.', 'ok');
+  back.style.display = 'inline-block';
+})();
+</script>
+</body>
+</html>
