@@ -151,11 +151,17 @@ function collectRacks(hall) {
   return racks;
 }
 
-function compareSite(parseResult, refHalls) {
+function compareSite(parseResult, refHalls, opts = {}) {
   const results = refHalls.map(rh => compareHall(parseResult, rh));
   const totalExpected = refHalls.reduce((s, h) => s + h.expected_rack_count, 0);
   const totalFound = results.reduce((s, r) => s + r.found_racks, 0);
   const parserTotalRacks = parseResult.totalRacks || 0;
+
+  // strict=true penalizes over-count (symmetric formula). Default is asymmetric —
+  // only under-count counts as a regression, matching compareHall's per-hall PASS rule.
+  const accuracyPenalty = opts.strict
+    ? Math.abs(totalFound - totalExpected)
+    : Math.max(0, totalExpected - totalFound);
 
   return {
     halls: results,
@@ -164,9 +170,7 @@ function compareSite(parseResult, refHalls) {
     total_delta: totalFound - totalExpected,
     pass_count: results.filter(r => r.status === 'PASS').length,
     total_halls: results.length,
-    // Asymmetric: only penalize under-count. Mirrors compareHall's per-hall PASS rule
-    // (extra racks are fine — parser found more than the named range declares).
-    site_accuracy: totalExpected > 0 ? Math.round((1 - Math.max(0, totalExpected - totalFound) / totalExpected) * 1000) / 10 : 0,
+    site_accuracy: totalExpected > 0 ? Math.round((1 - accuracyPenalty / totalExpected) * 1000) / 10 : 0,
     parser_total_racks: parserTotalRacks,
     flat_delta: parserTotalRacks - totalExpected,
     flat_accuracy: totalExpected > 0 ? Math.round(Math.min(parserTotalRacks, totalExpected) / totalExpected * 1000) / 10 : 0,

@@ -69,8 +69,14 @@ function loadCSV(name) {
   });
 }
 
-// Optional filter: `node run-offline.js US-EWS01` (matches locode or zone).
-const filterArg = process.argv[2] ? process.argv[2].toUpperCase() : null;
+// Args:
+//   node run-offline.js                 — run all fixtures, asymmetric accuracy
+//   node run-offline.js US-EWS01        — filter by locode or zone
+//   node run-offline.js --strict        — penalize over-count (symmetric formula)
+//   node run-offline.js --strict US-EWS01
+const args = process.argv.slice(2);
+const strict = args.includes('--strict');
+const filterArg = args.filter(a => !a.startsWith('--'))[0]?.toUpperCase() || null;
 
 // Run comparisons
 const scorecard = { generated: new Date().toISOString(), sites: [], summary: {} };
@@ -95,7 +101,7 @@ for (const [csvFile, zone] of Object.entries(FIXTURE_MAP)) {
   const locode = refHalls[0].locode;
   if (filterArg && locode !== filterArg && zone !== filterArg) continue;
 
-  const siteResult = compareSite(parseResult, refHalls);
+  const siteResult = compareSite(parseResult, refHalls, { strict });
   scorecard.sites.push({ locode, zone, fixture: csvFile, ...siteResult });
 
   totalPass += siteResult.pass_count;
@@ -104,9 +110,11 @@ for (const [csvFile, zone] of Object.entries(FIXTURE_MAP)) {
   totalFound += siteResult.total_found;
 
   const icon = siteResult.pass_count === siteResult.total_halls ? '\x1b[32m✓\x1b[0m' : '\x1b[33m△\x1b[0m';
+  const fd = siteResult.flat_delta;
+  const fdStr = fd === 0 ? '±0' : (fd > 0 ? `+${fd}` : `${fd}`);
   console.log(`${icon} ${locode} [${zone}]: ${siteResult.pass_count}/${siteResult.total_halls} halls pass | ` +
     `Hall-level: ${siteResult.total_found}/${siteResult.total_expected} racks (${siteResult.site_accuracy}%) | ` +
-    `Flat: ${siteResult.parser_total_racks}/${siteResult.total_expected} (${siteResult.flat_accuracy}%)`);
+    `Flat: ${siteResult.parser_total_racks}/${siteResult.total_expected} (${siteResult.flat_accuracy}%, Δ${fdStr})`);
 
   if (!siteResult.hall_distribution_ok) {
     console.log(`    \x1b[33m⚠\x1b[0m  Hall distribution mismatch: parser found ${siteResult.parser_total_racks} total racks but only ${siteResult.total_found} mapped to correct halls`);
@@ -137,7 +145,8 @@ scorecard.summary = {
   racks_expected: totalExpected,
   racks_found_per_hall: totalFound,
   racks_found_flat: flatTotal,
-  hall_level_accuracy: totalExpected > 0 ? Math.round((1 - Math.max(0, totalExpected - totalFound) / totalExpected) * 1000) / 10 : 0,
+  hall_level_accuracy: totalExpected > 0 ? Math.round((1 - (strict ? Math.abs(totalFound - totalExpected) : Math.max(0, totalExpected - totalFound)) / totalExpected) * 1000) / 10 : 0,
+  strict_mode: strict,
   flat_accuracy: totalExpected > 0 ? Math.round(Math.min(flatTotal, totalExpected) / totalExpected * 1000) / 10 : 0,
   fixtures_tested: scorecard.sites.length,
 };
@@ -145,7 +154,7 @@ scorecard.summary = {
 fs.writeFileSync(path.join(__dirname, 'scorecard.json'), JSON.stringify(scorecard, null, 2));
 
 console.log('\n' + '='.repeat(70));
-console.log('SCORECARD');
+console.log(`SCORECARD${strict ? ' (STRICT — over-count penalized)' : ''}`);
 console.log('-'.repeat(70));
 console.log(`  Hall matching:  ${totalPass}/${totalHalls} halls pass (${scorecard.summary.hall_pass_rate}%)`);
 console.log(`  Hall-level:     ${totalFound}/${totalExpected} racks mapped to correct halls (${scorecard.summary.hall_level_accuracy}%)`);
