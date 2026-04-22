@@ -9,18 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/cab-theme.css">
-<link rel="stylesheet" href="css/intro.css">
-<script>window.BP_VERSION = '2026.04.22-ed64e64';</script>
+<!-- 3D intro disabled for now. Re-enable by uncommenting this + the block below. -->
+<!-- <link rel="stylesheet" href="css/intro.css"> -->
+<script>window.BP_VERSION = '2026.04.22-swbust1';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 
-<!-- 3D intro (additive). Plays once per session; skip button + any key/click dismiss. -->
+<!-- 3D intro disabled for now. Files preserved in js/intro/ + css/intro.css.
+     Re-enable by uncommenting this whole block + the stylesheet link above.
 <canvas id="intro-canvas"></canvas>
 <button id="intro-skip" type="button" aria-label="Skip intro">Skip</button>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"
         onload="window.dispatchEvent(new Event('bm-intro-gsap-ready'))"></script>
 <script type="module" src="js/intro/index.js"></script>
+-->
 
 <div class="app">
   <header class="bar">
@@ -295,17 +298,36 @@
 })();
 </script>
 <script>
-// Service Worker
+// Service Worker — with version-aware kill switch.
+// On BP_VERSION change: unregister all SWs + clear caches + reload once.
+// Prevents stale-cache bugs where the old SW keeps serving old code.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(function(){});
-  navigator.serviceWorker.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'UPDATE_AVAILABLE') {
-      var t = document.getElementById('toast');
-      t.textContent = 'New version available — updating...';
-      t.classList.add('show');
-      setTimeout(function(){ location.reload(); }, 1200);
-    }
-  });
+  var LAST = null;
+  try { LAST = localStorage.getItem('bm_sw_version'); } catch (e) {}
+  if (LAST !== window.BP_VERSION) {
+    try { localStorage.setItem('bm_sw_version', window.BP_VERSION); } catch (e) {}
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      return Promise.all(regs.map(function(r) { return r.unregister(); }));
+    }).then(function() {
+      if (window.caches) {
+        return caches.keys().then(function(keys) {
+          return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+        });
+      }
+    }).then(function() {
+      // Only reload if there actually was a prior version (skip on first visit).
+      if (LAST !== null) location.reload();
+    });
+  } else {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+    navigator.serviceWorker.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'UPDATE_AVAILABLE') {
+        var t = document.getElementById('toast');
+        if (t) { t.textContent = 'New version available — updating...'; t.classList.add('show'); }
+        setTimeout(function(){ location.reload(); }, 1200);
+      }
+    });
+  }
 }
 </script>
 </body>
