@@ -859,6 +859,34 @@ async function loadFromSheets(tab, sheetId) {
   const cached = getCachedSheet(sheetId, tab);
   const isStale = cached && (Date.now() - cached.ts > SHEET_CACHE_MAX_AGE);
 
+  // Short-circuit: if we have no token and aren't in post-auth grace, the fetch
+  // is guaranteed to AUTH-fail. Skip the 4s JSONP timeout + "Updating..." badge
+  // churn, just surface the sign-in prompt directly. If cached data exists we
+  // still show it — no background revalidate until the user auths.
+  const hasToken = !!sessionStorage.getItem('bp_auth_token');
+  if (!hasToken && !_postAuthGrace) {
+    refreshBtn.classList.remove('spinning');
+    hideSheetLoading();
+    const badge = document.getElementById('stale-badge');
+    if (badge) badge.classList.remove('show');
+    if (cached) {
+      await ingest(cached.csv);
+      autoFocusFirstHall();
+      showAuthBanner({ stale: true });
+    } else {
+      showAuthBanner({ stale: false });
+      const wt = document.getElementById('welcome-title');
+      const ws = document.getElementById('welcome-sub');
+      if (wt) wt.textContent = 'CoreWeave sign-in required';
+      if (ws) ws.innerHTML = 'This tool connects to internal Google Sheets.<br>Sign in with your <strong>@coreweave.com</strong> Google account to continue.'
+        + '<div style="margin-top:20px;display:flex;gap:10px;justify-content:center">'
+        + '<a href="signin.html" target="bp-signin" rel="noopener" onclick="openSigninFlow(event)" style="display:inline-block;padding:10px 20px;background:#1d1d1f;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500">Sign in with CoreWeave</a>'
+        + '</div>';
+    }
+    console.log('[BP-FETCH] skipped — no token, no grace. Waiting for sign-in.');
+    return;
+  }
+
   if (cached) {
     // Show cached data immediately
     setLoadingProgress(60, 'Loading cached layout...');
