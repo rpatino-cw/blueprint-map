@@ -17,7 +17,7 @@ const bpStatus = (function () {
     { id: 'boot',    label: 'App loaded' },
     { id: 'sites',   label: 'Site list loaded' },
     { id: 'sw',      label: 'Service worker' },
-    { id: 'auth',    label: 'Checking sign-in' },
+    { id: 'auth',    label: 'Signed in to CoreWeave' },
     { id: 'fetch',   label: 'Fetching sheet data' },
     { id: 'parse',   label: 'Parsing layout' },
     { id: 'render',  label: 'Rendering floor plan' },
@@ -90,6 +90,10 @@ const bpStatus = (function () {
   }
 
   return {
+    // Idle/waiting, empty circle, no spinner. Use when a step is known to be
+    // not-currently-doing-anything (e.g. auth waiting for user to click).
+    pending(id, note) { setState(id, 'pending', note); },
+    // Actively running — spinner. Use only for actual in-flight work.
     start(id, note) { setState(id, 'running', note); },
     ok(id, note)    { setState(id, 'ok', note); },
     fail(id, reason){ setState(id, 'fail', reason); markFailure(); },
@@ -793,13 +797,17 @@ let _signinWin = null;
 function openSigninFlow(e) {
   if (e) e.preventDefault();
   console.log('[BP-AUTH] openSigninFlow — opening signin.html popup');
+  // Mark auth step as actively running now — the popup is in-flight.
+  if (typeof bpStatus !== 'undefined') bpStatus.start('auth', 'opening sign-in popup…');
   // Popup first (cleanest UX); fall back to same-tab if blocked.
   _signinWin = window.open('signin.html', 'bp-signin', 'width=480,height=620,menubar=no,toolbar=no,location=no');
   if (!_signinWin) {
     console.warn('[BP-AUTH] popup blocked — falling back to same-tab nav');
+    if (typeof bpStatus !== 'undefined') bpStatus.fail('auth', 'popup blocked — redirecting');
     window.location.href = 'signin.html';
   } else {
     console.log('[BP-AUTH] signin.html popup opened');
+    if (typeof bpStatus !== 'undefined') bpStatus.start('auth', 'waiting for Google consent…');
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
@@ -821,13 +829,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // `_bpLastBridgeToken` dedupes if more than one path fires for the same token.
 let _bpLastBridgeToken = null;
 
-function _bpAcceptToken(token, via) {
+function _bpAcceptToken(token, via, email) {
   if (!token || token === _bpLastBridgeToken) return false;
   _bpLastBridgeToken = token;
   sessionStorage.setItem('bp_auth_token', token);
+  if (email) sessionStorage.setItem('bp_auth_email', email);
   try { localStorage.removeItem('bp_auth_bridge'); } catch (e) {}
   hideAuthBanner();
-  if (typeof bpStatus !== 'undefined') bpStatus.ok('auth', 'token via ' + via);
+  if (typeof bpStatus !== 'undefined') bpStatus.ok('auth', email || ('signed in via ' + via));
   try { if (_signinWin && !_signinWin.closed) _signinWin.close(); } catch (e) {}
   _postAuthGrace = true;
   _postAuthRetried = false;
@@ -846,7 +855,7 @@ function _bpAcceptToken(token, via) {
 window.addEventListener('message', (ev) => {
   if (!ev.data || ev.data.type !== 'bp-auth-success') return;
   console.log('[BP-AUTH] received bp-auth-success message', ev.data);
-  _bpAcceptToken(ev.data.token, 'postMessage');
+  _bpAcceptToken(ev.data.token, 'postMessage', ev.data.email);
 });
 
 // Path 2: storage event on bp_auth_bridge (Incognito / opener-severed case).
@@ -858,7 +867,7 @@ window.addEventListener('storage', (ev) => {
   try { payload = JSON.parse(ev.newValue); } catch (e) { return; }
   if (!payload || !payload.token) return;
   if (typeof payload.ts === 'number' && Date.now() - payload.ts > 60000) return;
-  _bpAcceptToken(payload.token, 'storage-event');
+  _bpAcceptToken(payload.token, 'storage-event', payload.email);
 });
 
 // Path 3: one-shot read on load — covers main tab reloaded after signin.html
@@ -875,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('bp_auth_bridge');
       return;
     }
-    _bpAcceptToken(payload.token, 'onload');
+    _bpAcceptToken(payload.token, 'onload', payload.email);
   } catch (e) {}
 });
 
@@ -999,15 +1008,22 @@ async function loadFromSheets(tab, sheetId) {
     hideSheetLoading();
     const badge = document.getElementById('stale-badge');
     if (badge) badge.classList.remove('show');
-    bpStatus.start('auth', 'no token — waiting for sign-in');
+    // Idle steps — empty circles, no spinner. Fetch won't happen until sign-in.
+    bpStatus.pending('auth', 'click Sign in to connect');
+    bpStatus.pending('fetch', 'waiting for sign-in');
     if (cached) {
-      bpStatus.start('parse', 'from cache');
-      await ingest(cached.csv);
-      bpStatus.ok('parse', 'from cache (' + Math.round(cached.csv.length / 1024) + ' KB)');
-      bpStatus.ok('render', 'cached floor plan');
+      try {
+        await ingest(cached.csv);
+        bpStatus.ok('parse', 'from cache (' + Math.round(cached.csv.length / 1024) + ' KB)');
+        bpStatus.ok('render', 'cached floor plan');
+      } catch (e) {
+        bpStatus.fail('parse', 'cache ingest failed: ' + (e && e.message));
+      }
       autoFocusFirstHall();
       showAuthBanner({ stale: true });
     } else {
+      bpStatus.pending('parse', 'no data yet');
+      bpStatus.pending('render', 'no data yet');
       showAuthBanner({ stale: false });
       const wt = document.getElementById('welcome-title');
       const ws = document.getElementById('welcome-sub');
@@ -1024,7 +1040,10 @@ async function loadFromSheets(tab, sheetId) {
   if (cached) {
     // Show cached data immediately
     setLoadingProgress(60, 'Loading cached layout...');
+    bpStatus.start('parse', 'ingesting cached CSV…');
     await ingest(cached.csv);
+    bpStatus.ok('parse', 'from cache (' + Math.round(cached.csv.length / 1024) + ' KB)');
+    bpStatus.ok('render', 'cached floor plan');
     setLoadingProgress(100, 'Loaded from cache');
 
     // Auto-focus first hall on initial load
@@ -1037,8 +1056,10 @@ async function loadFromSheets(tab, sheetId) {
       // Background revalidate — show subtle badge
       const badge = document.getElementById('stale-badge');
       badge.classList.add('show');
+      bpStatus.start('fetch', 'background refresh…');
       try {
         const freshCSV = await fetchSheetRaw(tab, sheetId);
+        bpStatus.ok('fetch', Math.round(freshCSV.length / 1024) + ' KB');
         badge.classList.remove('show');
         hideAuthBanner();
         _clearPostAuthGrace();
@@ -1046,20 +1067,36 @@ async function loadFromSheets(tab, sheetId) {
           setCachedSheet(sheetId, tab, freshCSV);
           // Preserve user's current hall selection during background update
           const prevHall = state.hallFilter;
+          bpStatus.start('parse', 'reparse with fresh data…');
           await ingest(freshCSV);
+          bpStatus.ok('parse', 'fresh sheet parsed');
           state.hallFilter = prevHall;
           renderAll();
           fitView();
+          bpStatus.ok('render', 'updated with live data');
           toast('Updated with live data');
         }
+        bpStatus.done();
       } catch(e) {
         badge.classList.remove('show');
         if (e.message === 'AUTH') {
+          bpStatus.fail('fetch', 'AUTH — token rejected');
+          if (sessionStorage.getItem('bp_auth_token') || _postAuthGrace) {
+            showIncognitoWarning('AUTH on background revalidate');
+          }
+          bpStatus.hint(
+            'Live refresh failed — still showing cached data. If you\'re in Incognito or private browsing, this is expected; <strong>open in regular Chrome</strong>.'
+          );
           showAuthBanner({ stale: true });
         } else {
+          bpStatus.fail('fetch', (e && e.message) || 'unknown');
           toast('Using cached data (live fetch failed)', true);
         }
       }
+    } else {
+      // Not stale — mark fetch as not-needed but leave it at ok state.
+      bpStatus.ok('fetch', 'cache fresh, no fetch needed');
+      bpStatus.done();
     }
     refreshBtn.classList.remove('spinning');
     return;
@@ -1462,10 +1499,11 @@ async function prefetchAllSites(currentSheetId) {
 
   // Pipeline step: auth — do we have a token already?
   const hasToken = !!sessionStorage.getItem('bp_auth_token');
+  const savedEmail = sessionStorage.getItem('bp_auth_email') || '';
   if (hasToken) {
-    bpStatus.ok('auth', 'token present');
+    bpStatus.ok('auth', savedEmail || 'signed in');
   } else {
-    bpStatus.start('auth', 'no token yet — waiting for sign-in');
+    bpStatus.pending('auth', 'click Sign in to connect');
   }
 
   // Load the selected sheet first, then prefetch the rest in the background

@@ -9,10 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/cab-theme.css">
-<script>window.BP_VERSION = '2026.04.22-b278e98';</script>
+<link rel="stylesheet" href="css/intro.css">
+<script>window.BP_VERSION = '2026.04.22-ed64e64';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
+
+<!-- 3D intro (additive). Plays once per session; skip button + any key/click dismiss. -->
+<canvas id="intro-canvas"></canvas>
+<button id="intro-skip" type="button" aria-label="Skip intro">Skip</button>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"
+        onload="window.dispatchEvent(new Event('bm-intro-gsap-ready'))"></script>
+<script type="module" src="js/intro/index.js"></script>
 
 <div class="app">
   <header class="bar">
