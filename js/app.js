@@ -1081,13 +1081,22 @@ async function loadFromSheets(tab, sheetId) {
         badge.classList.remove('show');
         if (e.message === 'AUTH') {
           bpStatus.fail('fetch', 'AUTH — token rejected');
-          if (sessionStorage.getItem('bp_auth_token') || _postAuthGrace) {
+          const hadToken = !!sessionStorage.getItem('bp_auth_token') || _postAuthGrace;
+          if (hadToken) {
+            // User already signed in — background revalidate failed (likely
+            // 3P-cookie or network). Don't re-show the sign-in banner; the
+            // user already took that action. Surface a quieter hint instead.
             showIncognitoWarning('AUTH on background revalidate');
+            bpStatus.hint(
+              'Live refresh failed — showing cached data. If you\'re in Incognito / private browsing, <strong>open in regular Chrome</strong>.'
+            );
+            toast('Live refresh blocked — using cached data', true);
+          } else {
+            bpStatus.hint(
+              'Live refresh failed — still showing cached data. Sign in to refresh.'
+            );
+            showAuthBanner({ stale: true });
           }
-          bpStatus.hint(
-            'Live refresh failed — still showing cached data. If you\'re in Incognito or private browsing, this is expected; <strong>open in regular Chrome</strong>.'
-          );
-          showAuthBanner({ stale: true });
         } else {
           bpStatus.fail('fetch', (e && e.message) || 'unknown');
           toast('Using cached data (live fetch failed)', true);
